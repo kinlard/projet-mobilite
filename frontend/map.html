@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco-Escapade | Carte Interactive</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-minimap/3.6.1/Control.MiniMap.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        /* CORRIGÉ BUG 3 : Application globale des variables de thème */
+        :root { 
+            --primary: #10b981; 
+            --secondary: #3b82f6; 
+            --electric: #f59e0b; 
+            --dark: #0f172a; 
+            --glass: rgba(255, 255, 255, 0.1); 
+            --bg-light: #1e293b;
+            --text-color: #ffffff;
+        }
+        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: #111; overflow: hidden; }
+
+        /* LOADER */
+        #map-loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #020617; z-index: 99999; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; transition: opacity 0.8s ease;
+        }
+        .bike-loader { font-size: 3rem; color: var(--primary); animation: ride 1s infinite alternate; }
+        .loading-bar-container { width: 200px; height: 4px; background: #333; margin-top: 20px; border-radius: 2px; overflow: hidden; }
+        .loading-bar { height: 100%; width: 0; background: var(--primary); transition: width 0.2s; }
+        @keyframes ride { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(-10px) rotate(5deg); } }
+        .loading-text { margin-top: 15px; font-family: monospace; color: #64748b; font-size: 0.9rem; }
+
+        /* TUTO BOX */
+        .tuto-box {
+            position: fixed; top: 50%; right: 30px; transform: translateY(-50%) translateX(400px);
+            background: rgba(15, 23, 42, 0.95); border: 2px solid var(--primary); color: white;
+            padding: 25px 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 11000;
+            width: 320px; text-align: left; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: none; flex-direction: column; gap: 15px;
+        }
+        .tuto-box.active { display: flex; transform: translateY(-50%) translateX(0); }
+        .tuto-title { color: var(--primary); font-weight: 800; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
+        .tuto-text { font-size: 0.95rem; line-height: 1.5; color: #cbd5e1; }
+        .tuto-btn { background: var(--primary); border: none; color: #022c22; padding: 10px; border-radius: 50px;
+            cursor: pointer; font-weight: 800; text-transform: uppercase; transition: 0.2s; width: 100%;
+        }
+        .tuto-btn:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+        .tuto-skip-btn { background: transparent; border: 1px solid #475569; color: #94a3b8; padding: 8px;
+            border-radius: 50px; cursor: pointer; font-size: 0.85rem; transition: 0.2s; width: 100%;
+        }
+        .tuto-skip-btn:hover { border-color: #cbd5e1; color: white; background: rgba(255,255,255,0.05); }
+
+        .highlight-target { animation: pulse-border 1.5s infinite; box-shadow: 0 0 0 4px #f59e0b !important; z-index: 1000 !important; position: relative; border-color: #f59e0b !important; }
+        .search-container.highlight-target input { border: 2px solid #f59e0b !important; box-shadow: 0 0 15px rgba(245, 158, 11, 0.5) !important; }
+        @keyframes pulse-border { 0% { box-shadow: 0 0 0 0px rgba(245, 158, 11, 0.6); } 100% { box-shadow: 0 0 0 12px rgba(245, 158, 11, 0); } }
+
+        /* HEADER */
+        .dashboard-header {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            width: 96%; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); color: white;
+            padding: 10px 25px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            z-index: 1000; display: flex; justify-content: space-between; align-items: center; gap: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.5s ease !important;
+        }
+        .brand h1 { margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--primary); }
+        .nav-links a { text-decoration: none; color: #cbd5e1; font-weight: 600; margin: 0 10px; font-size: 0.9rem; transition:0.3s;}
+        .nav-links a:hover { color: var(--primary); }
+
+        .lang-switch {
+            background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.2); cursor: pointer; font-weight: bold;
+            color: white; transition: 0.3s; font-family: 'Inter', sans-serif; font-size: 0.8rem; margin-left: 20px;
+        }
+        .lang-switch:hover { background: var(--primary); color: #000; border-color: var(--primary); }
+
+        .search-container { flex-grow: 1; position: relative; max-width: 300px; transition: 0.3s; }
+        .search-container input { width: 100%; padding: 8px 15px 8px 35px; border: none;
+            border-radius: 20px; background: rgba(255,255,255,0.1); color: white; outline: none; font-family: 'Inter'; transition: 0.3s;
+        }
+        .search-container input:focus { background: rgba(255,255,255,0.15); }
+        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem;}
+
+        .actions { display: flex; gap: 8px; }
+        .btn-tool { border: none; background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 50%;
+            cursor: pointer; color: white; transition: 0.3s; }
+        .btn-tool:hover { background: var(--primary) !important; transform: scale(1.1); }
+
+        .btn-discover {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white;
+            padding: 8px 20px; border-radius: 50px; border: none; cursor: pointer;
+            font-weight: 800; font-size: 0.9rem; letter-spacing: 0.5px;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+            transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;
+            animation: pulse 2s infinite;
+        }
+        .btn-discover:hover { transform: scale(1.05); box-shadow: 0 0 25px rgba(139, 92, 246, 0.8); }
+        @keyframes pulse { 0% {box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);} 70% {box-shadow: 0 0 0 10px rgba(139, 92, 246, 0);} 100% {box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);} }
+
+        #map { height: 100vh; width: 100%; z-index: 1; background: #0b0b0b; }
+        .leaflet-control-layers { background: rgba(15, 23, 42, 0.9) !important; color: white !important; border: none !important; border-radius: 12px !important; }
+        .leaflet-control-minimap { border: 3px solid white !important; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.5) !important; }
+
+        /* MODALE DECOUVERTE */
+        .discover-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); backdrop-filter: blur(8px);
+            z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .discover-modal.active { display: flex; opacity: 1; }
+        .discover-content {
+            background: #1e293b; width: 95%; max-width: 1200px; padding: 40px; border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.1); text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto;
+        }
+        
+        .cat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 30px; }
+        .cat-card {
+            background: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; cursor: pointer;
+            transition: 0.3s; border: 1px solid transparent; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .cat-card:hover { background: rgba(255,255,255,0.1); transform: translateY(-5px); border-color: var(--primary); }
+        .cat-icon { font-size: 2rem; margin-bottom: 8px; display: block; }
+        
+        .results-container { 
+            display: none; margin-top: 30px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+            gap: 25px; animation: slideUp 0.5s ease;
+        }
+        @keyframes slideUp { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
+        
+        .result-card { 
+            background: #0f172a; border-radius: 16px; text-align: left; position: relative; border: 1px solid #334155; 
+            overflow: hidden; display: flex; flex-direction: column; transition: 0.2s;
+        }
+        .result-card:hover { transform: translateY(-5px); border-color: var(--primary); }
+        .rank-badge { position: absolute; top: 10px; left: 10px; background: #f59e0b; color: black; font-weight: bold; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; box-shadow: 0 5px 10px rgba(0,0,0,0.5); z-index: 2; }
+        .street-view-btn {
+            position: absolute; bottom: 10px; right: 10px; width: 35px; height: 35px;
+            background: #F4B400; border-radius: 50%; border: 2px solid white; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: 0.2s;
+        }
+        .street-view-btn:hover { transform: scale(1.1); background: #f59e0b; }
+        .street-view-btn i { color: black; font-size: 0.9rem; }
+
+        /* === NOUVEAUX STYLES BOUTONS FEATURES === */
+        .btn-tool.active {
+            background: var(--primary) !important;
+            color: #022c22 !important;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+        }
+        /* Panneau Sélecteur Thèmes */
+        #themeSelectorPanel {
+            position: fixed; top: 90px; right: 10px;
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px);
+            padding: 15px; border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 2000; display: none; flex-direction: column; gap: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        #themeSelectorPanel.active { display: flex; }
+        .theme-option {
+            padding: 10px 15px; border-radius: 10px; cursor: pointer;
+            font-weight: 600; text-align: center; transition: 0.3s;
+            border: 2px solid transparent;
+        }
+        .theme-option:hover { transform: scale(1.05); border-color: white; }
+        .theme-default { background: linear-gradient(135deg, #10b981, #047857); color: white; }
+        .theme-ocean { background: linear-gradient(135deg, #06b6d4, #0891b2); color: white; }
+        .theme-forest { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
+        .theme-sunset { background: linear-gradient(135deg, #f97316, #ea580c); color: white; }
+        .theme-midnight { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; }
+        /* Panneau Infos Écologiques */
+        #ecoPanelModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 10000;
+            display: none; justify-content: center; align-items: center;
+        }
+        #ecoPanelModal.active { display: flex; }
+        .eco-panel-content {
+            background: #0f172a; border-radius: 20px; padding: 30px;
+            max-width: 600px; max-height: 80vh; overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+            border: 2px solid var(--primary); color: white;
+        }
+
+        /* CORRIGÉ BUG 3 : Visibilité accrue des compteurs et titres */
+        .visible-counter {
+            color: var(--primary) !important;
+            border-color: var(--primary) !important;
+        }
+        h1, h2, h3 {
+            color: var(--primary) !important;
+        }
+        .stats-panel {
+            transition: all 0.5s ease !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map-loader">
+        <i class="fa-solid fa-bicycle bike-loader"></i>
+        <div class="loading-bar-container"><div class="loading-bar" id="loadBar" style="width: 100%;"></div></div>
+        <p class="loading-text" id="loader-msg">Chargement de la carte...</p>
+    </div>
+
+    <div id="tutoBox" class="tuto-box">
+        <div id="tutoTitle" class="tuto-title">TUTORIEL</div>
+        <div id="tutoText" class="tuto-text"></div>
+        <button id="tutoBtn" class="tuto-btn" onclick="nextTutoStep()">SUIVANT ➔</button>
+        <button class="tuto-skip-btn" onclick="skipTuto()">Passer le tuto</button>
+    </div>
+
+    <div class="dashboard-header">
+        <div class="brand"><h1>Eco-Escapade</h1></div>
+        <div class="nav-links">
+            <a href="index.html" id="nav-home">Accueil</a>
+            <a href="carnet.html" id="nav-fav">Mes favoris</a>
+            <a href="apropos.html" id="nav-apropos">À propos</a>
+        </div>
+        <div class="search-container" id="searchBox">
+            <i class="fa-solid fa-search search-icon"></i>
+            <input type="text" id="search-input" list="gares-list" placeholder="Rechercher..." autocomplete="off">
+            <datalist id="gares-list"></datalist>
+        </div>
+        <div class="actions">
+            <button class="btn-discover" onclick="openDiscoverModal()"><i class="fa-solid fa-compass"></i> <span id="btn-discover-text">DÉCOUVRIR</span></button>
+            <button id="btnStats" class="btn-discover" style="background: linear-gradient(135deg, #3b82f6, #2563eb); margin-right: 5px;"><i class="fa-solid fa-chart-column"></i> STATS</button>
+            <button class="btn-tool" title="Me Localiser" onclick="map.locate({setView: true, maxZoom: 12})"><i class="fa-solid fa-location-arrow"></i></button>
+            <button class="btn-tool" title="Gare Aléatoire" onclick="randomGare()"><i class="fa-solid fa-dice"></i></button>
+            
+            <button id="btnHeatmap" class="btn-tool" onclick="toggleHeatmap()" title="Carte de chaleur affluence" style="display:none;">
+                <i class="fa-solid fa-fire"></i>
+            </button>
+            <button id="btnIgn" class="btn-tool" onclick="toggleIgnLayer()" title="Carte topographique IGN">
+                <i class="fa-solid fa-mountain"></i>
+            </button>
+            <button id="btnThemes" class="btn-tool" onclick="openThemeSelector()" title="Changer le thème">
+                <i class="fa-solid fa-palette"></i>
+            </button>
+            <button id="btnEcoInfo" class="btn-tool" onclick="toggleEcoPanel()" title="Infos écologiques avancées">
+                <i class="fa-solid fa-leaf"></i>
+            </button>
+
+            <button class="lang-switch" onclick="switchLangMap()">FR / EN</button>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <div id="discoverModal" class="discover-modal">
+        <div class="discover-content">
+            <button onclick="closeDiscover()" style="position:absolute; top:20px; right:20px; background:none; border:none; color:white; font-size:2rem; cursor:pointer;">×</button>
+            <h2 id="discoverTitle" style="color:white; font-size:2.5rem; margin-bottom:10px;">Envie de partir quelque part ?</h2>
+            <p id="discoverSubtitle" style="color:#94a3b8;">Choisissez un environnement, le site trouve pour vous les gares les plus écologiques.</p>
+            <button id="btnBackCat" onclick="resetDiscover()" style="display:none; background:transparent; color:var(--primary); border:1px solid var(--primary); padding:8px 15px; border-radius:20px; cursor:pointer; margin-bottom:20px;">← Choisir un autre environnement</button>
+            
+            <div id="catGrid" class="cat-grid">
+                <div class="cat-card" onclick="showCategory('mer', '🌊 Mer & Plages')"><span class="cat-icon">🌊</span><h3 id="cat-mer">Mer Méditerranée</h3></div>
+                <div class="cat-card" onclick="showCategory('ocean', '🏄 Océan & Vagues')"><span class="cat-icon">🏄</span><h3 id="cat-ocean">Océan Atlantique</h3></div>
+                <div class="cat-card" onclick="showCategory('montagne', '🏔️ Montagne & Neige')"><span class="cat-icon">🏔️</span><h3 id="cat-montagne">Montagne</h3></div>
+                <div class="cat-card" onclick="showCategory('ville', '🏙️ Grandes Métropoles')"><span class="cat-icon">🏙️</span><h3 id="cat-ville">Grandes Villes</h3></div>
+                <div class="cat-card" onclick="showCategory('paris', '🗼 Capitale')"><span class="cat-icon">🗼</span><h3 id="cat-paris">Paris</h3></div>
+                <div class="cat-card" onclick="showCategory('sud', '☀️ Le Sud')"><span class="cat-icon">☀️</span><h3 id="cat-sud">Le Sud</h3></div>
+                <div class="cat-card" onclick="showCategory('nord', '🍺 Le Nord')"><span class="cat-icon">🍺</span><h3 id="cat-nord">Le Nord</h3></div>
+            </div>
+
+            <div id="resultsContainer" class="results-container"></div>
+        </div>
+    </div>
+
+    <div id="statsPanel" class="stats-panel">
+        <div class="stats-header">
+           <h2 id="stats-title">Tableau de bord national</h2>
+           <button id="closeStats" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card"><span class="stat-label" id="lbl-gares">Gares analysées</span><span class="stat-value" id="stat-gares">–</span></div>
+            <div class="stat-card"><span class="stat-label" id="lbl-score">Score moyen écolo</span><span class="stat-value" id="stat-score">–</span></div>
+            <div class="stat-card"><span class="stat-label" id="lbl-tgv">Part TGV</span><span class="stat-value" id="stat-tgv">–</span></div>
+            <div class="stat-card"><span class="stat-label" id="lbl-velos">Moyenne parkings vélos</span><span class="stat-value" id="stat-velos">–</span></div>
+            <div class="stat-card"><span class="stat-label" id="lbl-bornes">Moyenne bornes IRVE</span><span class="stat-value" id="stat-bornes">–</span></div>
+            <div class="stat-card"><span class="stat-label" id="lbl-covoit">Moyenne aires covoit'</span><span class="stat-value" id="stat-covoit">–</span></div>
+        </div>
+    </div>
+
+    <div id="themeSelectorPanel">
+        <div class="theme-option theme-default" onclick="applyTheme('default')">🌿 Éco-Vert</div>
+        <div class="theme-option theme-ocean" onclick="applyTheme('ocean')">🌊 Océan</div>
+        <div class="theme-option theme-forest" onclick="applyTheme('forest')">🌲 Forêt</div>
+        <div class="theme-option theme-sunset" onclick="applyTheme('sunset')">🌅 Coucher de Soleil</div>
+        <div class="theme-option theme-midnight" onclick="applyTheme('midnight')">🌙 Minuit</div>
+    </div>
+
+    <div id="ecoPanelModal">
+        <div class="eco-panel-content">
+            <button onclick="toggleEcoPanel()" style="float:right; background:transparent; border:none; color:white; font-size:1.5rem; cursor:pointer;">×</button>
+            <h2 style="color:var(--primary); margin-top:0;">
+                <i class="fa-solid fa-leaf"></i> Informations Écologiques Avancées
+            </h2>
+            <div id="ecoDataContainer">
+                <p style="color:#94a3b8;">Sélectionnez une gare sur la carte pour voir ses données écologiques détaillées (qualité de l'air, biodiversité, arbres urbains).</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-minimap/3.6.1/Control.MiniMap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-easyprint/2.1.9/bundle.js"></script>
+    <script src="https://cdn.osmbuildings.org/4.1.1/OSMBuildings-Leaflet.js"></script>
+    <script src="app.js"></script> 
+    
+ 
+    <script>
+        let isFrMap = true;
+        const translationsMap = {
+            navHome: { fr: "Accueil", en: "Home" },
+            navFav: { fr: "Mes favoris", en: "My Favorites" },
+            navApropos: { fr: "À propos", en: "About" },
+            search: { fr: "Rechercher...", en: "Search..." },
+            btnDiscover: { fr: "DÉCOUVRIR", en: "DISCOVER" },
+            discTitle: { fr: "Envie de partir quelque part ?", en: "Want to go somewhere?" },
+            discSub: { fr: "Choisissez un environnement, le site trouve pour vous les gares les plus écologiques.", en: "Choose an environment, the site finds the most eco-friendly stations for you." },
+            btnBack: { fr: "← Choisir un autre environnement", en: "← Choose another environment" },
+            catMer: { fr: "Mer Méditerranée", en: "Mediterranean Sea" },
+            catOcean: { fr: "Océan Atlantique", en: "Atlantic Ocean" },
+            catMontagne: { fr: "Montagne", en: "Mountain" },
+            catVille: { fr: "Grandes Métropoles", en: "Major Metropolises" },
+            catParis: { fr: "Paris", en: "Paris" },
+            catSud: { fr: "Le Sud", en: "The South" },
+            catNord: { fr: "Le Nord", en: "The North" },
+            catNature: { fr: "Nature", en: "Nature" },
+            tutoNext: { fr: "SUIVANT ➔", en: "NEXT ➔" },
+            tutoSkip: { fr: "Passer le tuto", en: "Skip tutorial" },
+            
+            // --- NEW STATS & LOADER TRANSLATIONS ---
+            loader: { fr: "Chargement de la carte...", en: "Loading map..." },
+            statsTitle: { fr: "Tableau de bord national", en: "National Dashboard" },
+            lblGares: { fr: "Gares analysées", en: "Analyzed stations" },
+            lblScore: { fr: "Score moyen écolo", en: "Avg Eco Score" },
+            lblTgv: { fr: "Part TGV", en: "TGV Share" },
+            lblVelos: { fr: "Moyenne parkings vélos", en: "Avg Bike Parking" },
+            lblBornes: { fr: "Moyenne bornes IRVE", en: "Avg Charging St." },
+            lblCovoit: { fr: "Moyenne aires covoit'", en: "Avg Carpool Areas" }
+        };
+        function switchLangMap() {
+            isFrMap = !isFrMap;
+            const t = translationsMap;
+            document.getElementById('nav-home').innerText = isFrMap ? t.navHome.fr : t.navHome.en;
+            document.getElementById('nav-fav').innerText = isFrMap ? t.navFav.fr : t.navFav.en;
+            document.getElementById('nav-apropos').innerText = isFrMap ? t.navApropos.fr : t.navApropos.en;
+            document.getElementById('search-input').placeholder = isFrMap ? t.search.fr : t.search.en;
+            document.getElementById('btn-discover-text').innerText = isFrMap ? t.btnDiscover.fr : t.btnDiscover.en;
+            document.getElementById('discoverTitle').innerText = isFrMap ? t.discTitle.fr : t.discTitle.en;
+            document.getElementById('discoverSubtitle').innerText = isFrMap ? t.discSub.fr : t.discSub.en;
+            document.getElementById('btnBackCat').innerText = isFrMap ? t.btnBack.fr : t.btnBack.en;
+            document.getElementById('cat-mer').innerText = isFrMap ? t.catMer.fr : t.catMer.en;
+            document.getElementById('cat-ocean').innerText = isFrMap ? t.catOcean.fr : t.catOcean.en;
+            document.getElementById('cat-montagne').innerText = isFrMap ? t.catMontagne.fr : t.catMontagne.en;
+            document.getElementById('cat-ville').innerText = isFrMap ? t.catVille.fr : t.catVille.en;
+            document.getElementById('cat-paris').innerText = isFrMap ? t.catParis.fr : t.catParis.en;
+            document.getElementById('cat-sud').innerText = isFrMap ? t.catSud.fr : t.catSud.en;
+            document.getElementById('cat-nord').innerText = isFrMap ? t.catNord.fr : t.catNord.en;
+            
+            document.getElementById('tutoBtn').innerText = isFrMap ? t.tutoNext.fr : t.tutoNext.en;
+            document.querySelector('.tuto-skip-btn').innerText = isFrMap ? t.tutoSkip.fr : t.tutoSkip.en;
+            
+            // --- UPDATING STATS & LOADER ---
+            document.getElementById('loader-msg').innerText = isFrMap ? t.loader.fr : t.loader.en;
+            document.getElementById('stats-title').innerText = isFrMap ? t.statsTitle.fr : t.statsTitle.en;
+            document.getElementById('lbl-gares').innerText = isFrMap ? t.lblGares.fr : t.lblGares.en;
+            document.getElementById('lbl-score').innerText = isFrMap ? t.lblScore.fr : t.lblScore.en;
+            document.getElementById('lbl-tgv').innerText = isFrMap ? t.lblTgv.fr : t.lblTgv.en;
+            document.getElementById('lbl-velos').innerText = isFrMap ? t.lblVelos.fr : t.lblVelos.en;
+            document.getElementById('lbl-bornes').innerText = isFrMap ? t.lblBornes.fr : t.lblBornes.en;
+            document.getElementById('lbl-covoit').innerText = isFrMap ? t.lblCovoit.fr : t.lblCovoit.en;
+
+            if (window.updateAppLanguage) window.updateAppLanguage(isFrMap);
+        }
+    </script>
+</body>
+</html>
