@@ -7,49 +7,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root { --primary: #10b981; --secondary: #3b82f6; --dark: #0f172a; --bg: #0b0b0b; --card-bg: #1e293b; }
-        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: white; overflow-x: hidden; }
-        
-        /* HEADER IDENTIQUE A CARNET.HTML */
-        .dashboard-header { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 96%; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); padding: 12px 30px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); z-index: 1000; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1); }
-        .brand h1 { margin: 0; font-size: 1.4rem; font-weight: 800; color: var(--primary); }
-        .nav-links a { text-decoration: none; color: #cbd5e1; font-weight: 600; margin-left: 20px; transition:0.3s; cursor: pointer; }
-        .nav-links a:hover, .nav-links a.active { color: var(--primary); }
-        
-        /* CONTENU PAGE A PROPOS */
-        .container { max-width: 900px; margin: 120px auto 60px; padding: 0 20px; animation: fadeIn 0.8s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .section-card { background: var(--card-bg); border-radius: 20px; padding: 40px; margin-bottom: 30px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        h2 { color: var(--primary); font-size: 1.8rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        h3 { color: white; margin-top: 25px; font-size: 1.2rem; }
-        p, li { color: #cbd5e1; line-height: 1.7; font-size: 1rem; }
-        ul { list-style-type: none; padding: 0; }
-        li { margin-bottom: 10px; padding-left: 20px; position: relative; }
-        li::before { content: "➔"; color: var(--primary); position: absolute; left: 0; }
-        
-        .hero-section { text-align: center; margin-bottom: 50px; }
-        .hero-title { font-size: 3rem; font-weight: 900; margin-bottom: 10px; background: linear-gradient(135deg, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .hero-subtitle { font-size: 1.2rem; color: var(--primary); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; }
-        
-        .formula-box { background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; border-left: 4px solid var(--secondary); margin: 20px 0; font-family: monospace; color: #60a5fa; font-size: 0.95rem; }
-        
-        .tech-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
-        .tag { background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; color: white; border: 1px solid rgba(255,255,255,0.1); }
-        .tag.backend { border-color: #f59e0b; color: #f59e0b; }
-        .tag.frontend { border-color: #3b82f6; color: #3b82f6; }
-        
-        .btn-float { position: fixed; bottom: 30px; right: 30px; background: var(--primary); color: #022c22; padding: 15px 25px; border-radius: 50px; font-weight: 800; text-decoration: none; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.4); transition: 0.3s; z-index: 1000; display: flex; align-items: center; gap: 10px; }
-        .btn-float:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(16, 185, 129, 0.6); background: white; color: var(--primary); }
-
-        .score-scale { display: flex; gap: 10px; margin-top: 15px; }
-        .scale-item { flex: 1; padding: 10px; text-align: center; border-radius: 8px; font-weight: bold; font-size: 0.9rem; }
-        .scale-bad { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
-        .scale-mid { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
-        .scale-good { background: rgba(16, 185, 129, 0.2); color: #10b981; }
-
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
