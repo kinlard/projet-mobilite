@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eco-Escapade | Carte Interactive</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%8C%BF</text></svg>">
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -27,7 +27,7 @@
     <div id="tutoBox" class="tuto-box">
         <div id="tutoTitle" class="tuto-title">TUTORIEL</div>
         <div id="tutoText" class="tuto-text"></div>
-        <button id="tutoBtn" class="tuto-btn" onclick="nextTutoStep()">SUIVANT ➔</button>
+        <button id="tutoBtn" class="tuto-btn" onclick="nextTutoStep()">SUIVANT ➡️</button>
         <button class="tuto-skip-btn" onclick="skipTuto()">Passer le tuto</button>
     </div>
 
@@ -47,7 +47,7 @@
             <button class="btn-discover" onclick="openDiscoverModal()"><i class="fa-solid fa-compass"></i> <span id="btn-discover-text">DÉCOUVRIR</span></button>
             <button id="btnStats" class="btn-discover" style="background: linear-gradient(135deg, #3b82f6, #2563eb); margin-right: 5px;"><i class="fa-solid fa-chart-column"></i> STATS</button>
             <button class="btn-tool" title="Me Localiser" onclick="map.locate({setView: true, maxZoom: 12})"><i class="fa-solid fa-location-arrow"></i></button>
-            <button class="btn-tool" title="Gare Aléatoire" onclick="randomGare()"><i class="fa-solid fa-dice"></i></button>
+            <button id="btnRandomGare" class="btn-tool" title="Gare Aléatoire" onclick="randomGare()"><i class="fa-solid fa-dice"></i></button>
             
             <button id="btnHeatmap" class="btn-tool" onclick="toggleHeatmap()" title="Carte de chaleur affluence" style="display:none;">
                 <i class="fa-solid fa-fire"></i>
@@ -70,19 +70,19 @@
 
     <div id="discoverModal" class="discover-modal">
         <div class="discover-content">
-            <button onclick="closeDiscover()" style="position:absolute; top:20px; right:20px; background:none; border:none; color:white; font-size:2rem; cursor:pointer;">×</button>
+            <button onclick="closeDiscover()" style="position:absolute; top:20px; right:20px; background:none; border:none; color:white; font-size:2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
             <h2 id="discoverTitle" style="color:white; font-size:2.5rem; margin-bottom:10px;">Envie de partir quelque part ?</h2>
             <p id="discoverSubtitle" style="color:#94a3b8;">Choisissez un environnement, le site trouve pour vous les gares les plus écologiques.</p>
             <button id="btnBackCat" onclick="resetDiscover()" style="display:none; background:transparent; color:var(--primary); border:1px solid var(--primary); padding:8px 15px; border-radius:20px; cursor:pointer; margin-bottom:20px;">← Choisir un autre environnement</button>
             
             <div id="catGrid" class="cat-grid">
-                <div class="cat-card" onclick="showCategory('mer', '🌊 Mer & Plages')"><span class="cat-icon">🌊</span><h3 id="cat-mer">Mer Méditerranée</h3></div>
-                <div class="cat-card" onclick="showCategory('ocean', '🏄 Océan & Vagues')"><span class="cat-icon">🏄</span><h3 id="cat-ocean">Océan Atlantique</h3></div>
-                <div class="cat-card" onclick="showCategory('montagne', '🏔️ Montagne & Neige')"><span class="cat-icon">🏔️</span><h3 id="cat-montagne">Montagne</h3></div>
-                <div class="cat-card" onclick="showCategory('ville', '🏙️ Grandes Métropoles')"><span class="cat-icon">🏙️</span><h3 id="cat-ville">Grandes Villes</h3></div>
-                <div class="cat-card" onclick="showCategory('paris', '🗼 Capitale')"><span class="cat-icon">🗼</span><h3 id="cat-paris">Paris</h3></div>
-                <div class="cat-card" onclick="showCategory('sud', '☀️ Le Sud')"><span class="cat-icon">☀️</span><h3 id="cat-sud">Le Sud</h3></div>
-                <div class="cat-card" onclick="showCategory('nord', '🍺 Le Nord')"><span class="cat-icon">🍺</span><h3 id="cat-nord">Le Nord</h3></div>
+                <div class="cat-card" onclick="showCategory('mer', 'Mer & Plages')"><h3 id="cat-mer">Mer Méditerranée</h3></div>
+                <div class="cat-card" onclick="showCategory('ocean', 'Océan & Vagues')"><h3 id="cat-ocean">Océan Atlantique</h3></div>
+                <div class="cat-card" onclick="showCategory('montagne', 'Montagne & Neige')"><h3 id="cat-montagne">Montagne</h3></div>
+                <div class="cat-card" onclick="showCategory('ville', 'Grandes Métropoles')"><h3 id="cat-ville">Grandes Villes</h3></div>
+                <div class="cat-card" onclick="showCategory('paris', 'Capitale')"><h3 id="cat-paris">Paris</h3></div>
+                <div class="cat-card" onclick="showCategory('sud', 'Le Sud')"><h3 id="cat-sud">Le Sud</h3></div>
+                <div class="cat-card" onclick="showCategory('nord', 'Le Nord')"><h3 id="cat-nord">Le Nord</h3></div>
             </div>
 
             <div id="resultsContainer" class="results-container"></div>
@@ -97,26 +97,23 @@
         <div class="stats-grid">
             <div class="stat-card"><span class="stat-label" id="lbl-gares">Gares analysées</span><span class="stat-value" id="stat-gares">–</span></div>
             <div class="stat-card"><span class="stat-label" id="lbl-score">Score moyen écolo</span><span class="stat-value" id="stat-score">–</span></div>
-            <div class="stat-card"><span class="stat-label" id="lbl-tgv">Part TGV</span><span class="stat-value" id="stat-tgv">–</span></div>
+            <div class="stat-card"><span class="stat-label" id="lbl-tgv">Part TGV</span><span class="stat-value" id="stat-tgv">â€“</span></div>
             <div class="stat-card"><span class="stat-label" id="lbl-velos">Moyenne parkings vélos</span><span class="stat-value" id="stat-velos">–</span></div>
-            <div class="stat-card"><span class="stat-label" id="lbl-bornes">Moyenne bornes IRVE</span><span class="stat-value" id="stat-bornes">–</span></div>
+            <div class="stat-card"><span class="stat-label" id="lbl-bornes">Moyenne bornes IRVE</span><span class="stat-value" id="stat-bornes">â€“</span></div>
             <div class="stat-card"><span class="stat-label" id="lbl-covoit">Moyenne aires covoit'</span><span class="stat-value" id="stat-covoit">–</span></div>
         </div>
     </div>
 
     <div id="themeSelectorPanel">
-        <div class="theme-option theme-default" onclick="applyTheme('default')">🌿 Éco-Vert</div>
-        <div class="theme-option theme-ocean" onclick="applyTheme('ocean')">🌊 Océan</div>
-        <div class="theme-option theme-forest" onclick="applyTheme('forest')">🌲 Forêt</div>
-        <div class="theme-option theme-sunset" onclick="applyTheme('sunset')">🌅 Coucher de Soleil</div>
-        <div class="theme-option theme-midnight" onclick="applyTheme('midnight')">🌙 Minuit</div>
+        <div class="theme-option theme-default" onclick="applyTheme('default')">Eco-Vert</div>
+        <div class="theme-option theme-ocean" onclick="applyTheme('ocean')">Océan</div>
     </div>
 
     <div id="ecoPanelModal">
         <div class="eco-panel-content">
-            <button onclick="toggleEcoPanel()" style="float:right; background:transparent; border:none; color:white; font-size:1.5rem; cursor:pointer;">×</button>
+            <button onclick="toggleEcoPanel()" style="float:right; background:transparent; border:none; color:white; font-size:1.5rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
             <h2 style="color:var(--primary); margin-top:0;">
-                <i class="fa-solid fa-leaf"></i> Informations Écologiques Avancées
+                <i class="fa-solid fa-leaf"></i> Informations écologiques avancées
             </h2>
             <div id="ecoDataContainer">
                 <p style="color:#94a3b8;">Sélectionnez une gare sur la carte pour voir ses données écologiques détaillées (qualité de l'air, biodiversité, arbres urbains).</p>
@@ -151,7 +148,7 @@
             catSud: { fr: "Le Sud", en: "The South" },
             catNord: { fr: "Le Nord", en: "The North" },
             catNature: { fr: "Nature", en: "Nature" },
-            tutoNext: { fr: "SUIVANT ➔", en: "NEXT ➔" },
+            tutoNext: { fr: "SUIVANT ➡️", en: "NEXT ➡️" },
             tutoSkip: { fr: "Passer le tuto", en: "Skip tutorial" },
             
             // --- NEW STATS & LOADER TRANSLATIONS ---
@@ -166,6 +163,7 @@
         };
         function switchLangMap() {
             isFrMap = !isFrMap;
+            console.log('🔄 switchLangMap() appelé - isFrMap maintenant:', isFrMap);
             const t = translationsMap;
             document.getElementById('nav-home').innerText = isFrMap ? t.navHome.fr : t.navHome.en;
             document.getElementById('nav-fav').innerText = isFrMap ? t.navFav.fr : t.navFav.en;
@@ -183,21 +181,39 @@
             document.getElementById('cat-sud').innerText = isFrMap ? t.catSud.fr : t.catSud.en;
             document.getElementById('cat-nord').innerText = isFrMap ? t.catNord.fr : t.catNord.en;
             
-            document.getElementById('tutoBtn').innerText = isFrMap ? t.tutoNext.fr : t.tutoNext.en;
-            document.querySelector('.tuto-skip-btn').innerText = isFrMap ? t.tutoSkip.fr : t.tutoSkip.en;
+            // Note: Les boutons du tutoriel et le contenu sont mis à jour par updateAppLanguage() dans app.js
+            // pour gérer correctement l'étape courante du tutoriel
             
-            // --- UPDATING STATS & LOADER ---
-            document.getElementById('loader-msg').innerText = isFrMap ? t.loader.fr : t.loader.en;
-            document.getElementById('stats-title').innerText = isFrMap ? t.statsTitle.fr : t.statsTitle.en;
-            document.getElementById('lbl-gares').innerText = isFrMap ? t.lblGares.fr : t.lblGares.en;
-            document.getElementById('lbl-score').innerText = isFrMap ? t.lblScore.fr : t.lblScore.en;
-            document.getElementById('lbl-tgv').innerText = isFrMap ? t.lblTgv.fr : t.lblTgv.en;
-            document.getElementById('lbl-velos').innerText = isFrMap ? t.lblVelos.fr : t.lblVelos.en;
-            document.getElementById('lbl-bornes').innerText = isFrMap ? t.lblBornes.fr : t.lblBornes.en;
-            document.getElementById('lbl-covoit').innerText = isFrMap ? t.lblCovoit.fr : t.lblCovoit.en;
+            // --- UPDATING STATS & LOADER (avec vérification null) ---
+            const loaderMsg = document.getElementById('loader-msg');
+            const statsTitle = document.getElementById('stats-title');
+            const lblGares = document.getElementById('lbl-gares');
+            const lblScore = document.getElementById('lbl-score');
+            const lblTgv = document.getElementById('lbl-tgv');
+            const lblVelos = document.getElementById('lbl-velos');
+            const lblBornes = document.getElementById('lbl-bornes');
+            const lblCovoit = document.getElementById('lbl-covoit');
+            
+            if (loaderMsg) loaderMsg.innerText = isFrMap ? t.loader.fr : t.loader.en;
+            if (statsTitle) statsTitle.innerText = isFrMap ? t.statsTitle.fr : t.statsTitle.en;
+            if (lblGares) lblGares.innerText = isFrMap ? t.lblGares.fr : t.lblGares.en;
+            if (lblScore) lblScore.innerText = isFrMap ? t.lblScore.fr : t.lblScore.en;
+            if (lblTgv) lblTgv.innerText = isFrMap ? t.lblTgv.fr : t.lblTgv.en;
+            if (lblVelos) lblVelos.innerText = isFrMap ? t.lblVelos.fr : t.lblVelos.en;
+            if (lblBornes) lblBornes.innerText = isFrMap ? t.lblBornes.fr : t.lblBornes.en;
+            if (lblCovoit) lblCovoit.innerText = isFrMap ? t.lblCovoit.fr : t.lblCovoit.en;
 
             if (window.updateAppLanguage) window.updateAppLanguage(isFrMap);
         }
     </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,1 @@
+﻿@("frontend/app.js", "frontend/map.html", "frontend/index.html", "frontend/apropos.html", "frontend/carnet.html", "frontend/style.css", "backend/server.js") | % { $c = [System.IO.File]::ReadAllText($_); $c = $c.Replace([char]0xC3 + [char]0xA9, "é"); [System.IO.File]::WriteAllText($_, $c, [System.Text.Encoding]::UTF8) }

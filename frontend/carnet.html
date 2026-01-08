@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -36,17 +36,17 @@ margin: 20px auto;">Scanner la carte</a></div>
     <div id="toast" class="toast"><i class="fa-solid fa-circle-info" style="color:var(--primary)"></i><span id="toast-msg">Message</span></div>
     <div id="onboardingModal" class="modal-overlay">
         <div class="modal-box">
-            <button class="close-modal" onclick="closeAll()">×</button>
+            <button class="close-modal" onclick="closeAll()"><i class="fa-solid fa-xmark"></i></button>
             <h3 id="onb-title" style="color:var(--primary);
 font-size:1.8rem; margin-bottom:20px;">Bienvenue !</h3>
             <p id="onb-text" style="text-align:left; line-height:1.6;
-color:#cbd5e1;">Voici votre carnet de voyage intelligent. Comparez deux gares... Images de la ville trouvées... QR Code pour partager... Carte de situation en haut à droite.</p>
+color:#cbd5e1;">Voici votre carnet de voyage intelligent. Comparez deux gares, trouvez des images de la ville, générez un QR Code pour partager. Carte de situation en haut à droite.</p>
             <button id="onb-btn" class="btn-main" onclick="closeAll()" style="margin-top:20px;">C'est parti !</button>
         </div>
     </div>
     <div id="googlePhotosModal" class="modal-overlay">
         <div class="modal-box">
-            <button class="close-modal" onclick="closeAll()">×</button>
+            <button class="close-modal" onclick="closeAll()"><i class="fa-solid fa-xmark"></i></button>
             <h3 class="google-title" id="google-title" style="margin-bottom:20px;
 font-size:1.5rem; color:white;"><i class="fa-brands fa-wikipedia-w"></i> Images de la ville</h3>
             <p id="googleQuery" style="color:#94a3b8;
@@ -57,7 +57,7 @@ padding:20px;">Chargement des images...</div></div>
     </div>
     <div id="qrModal" class="modal-overlay">
         <div class="modal-box">
-            <button class="close-modal" onclick="closeAll()">×</button>
+            <button class="close-modal" onclick="closeAll()"><i class="fa-solid fa-xmark"></i></button>
             <h3 id="qr-title">Partager</h3>
             <div id="qrcode" style="margin: 20px auto;
 width: 128px; background:white; padding:10px;"></div>
@@ -99,7 +99,7 @@ background: #ef4444; border:none; color:white; border-radius:8px; font-weight:bo
     <div id="vsModal" class="modal-overlay">
         <div class="modal-box" style="max-width: 700px;
 background: linear-gradient(145deg, #1e293b, #0f172a);">
-            <button class="close-modal" onclick="closeAll()">×</button>
+            <button class="close-modal" onclick="closeAll()"><i class="fa-solid fa-xmark"></i></button>
             <h2 id="vs-title" style="color:#f59e0b;
 font-style:italic; font-size:2rem; margin-bottom:10px;">COMPARATEUR</h2>
             <div id="vsContent"></div>
@@ -109,7 +109,7 @@ font-style:italic; font-size:2rem; margin-bottom:10px;">COMPARATEUR</h2>
     <script>
         const escapeHTML = (str) => str ? str.replace(/[&<>'"]/g, tag => ({ '&': '&', '<': '<', '>': '>', "'": "'", '"': '"' }[tag])) : '';
 
-        // MODIFIÉ : Variable langue déplacée en haut pour être accessible dans render()
+        // MODIFIÉ‰ : Variable langue dÉ©placÉ©e en haut pour Éªtre accessible dans render()
         let isFrCarnet = true;
 
         let favoris = JSON.parse(localStorage.getItem('eco_favoris')) || [];
@@ -204,7 +204,7 @@ document.getElementById('toast-msg').innerText = msg;
 document.getElementById('googleQuery').innerText = `${isFrCarnet ? 'Recherche pour :' : 'Search for:'} "${cleanCity}"`;
             openModal('googlePhotosModal');
             const grid = document.getElementById('googleGrid');
-            // MODIFIÉ : Utilisation de translationsCarnet
+            // MODIFIÉ‰ : Utilisation de translationsCarnet
             grid.innerHTML = `<div style="color:#94a3b8; padding:20px;">${isFrCarnet ? translationsCarnet.imgLoad.fr : translationsCarnet.imgLoad.en}</div>`;
 try {
                 const url = `https://fr.wikipedia.org/w/api.php?action=query&titles=${cleanCity}&prop=pageimages&format=json&pithumbsize=600&origin=*`;
@@ -223,12 +223,14 @@ grid.innerHTML = `<img src="${imgSrc}" class="google-pic">`;
 }
         }
 
-        window.openGoogleMaps = (nom) => { window.open(`https://www.google.com/maps/search/?api=1&query=Gare+$${encodeURIComponent(nom.replace(/Gare de\s?/gi, ''))}`);
-};
+        // FIX: Removed extra "$" before template interpolation which produced malformed URLs
+        window.openGoogleMaps = (nom) => { window.open(`https://www.google.com/maps/search/?api=1&query=Gare+${encodeURIComponent(nom.replace(/Gare de\s?/gi, ''))}`);
+    };
         window.openQr = (nom) => {
             const container = document.getElementById('qrcode');
 container.innerHTML = '';
-            new QRCode(container, { text: `https://www.google.com/maps/search/?api=1&query=Gare+$${encodeURIComponent(nom)}`, width: 128, height: 128 });
+            // FIX: QR Code URL must not contain stray "$" before interpolation
+            new QRCode(container, { text: `https://www.google.com/maps/search/?api=1&query=Gare+${encodeURIComponent(nom)}`, width: 128, height: 128 });
             openModal('qrModal');
         };
 window.askDelete = (index) => { itemToDeleteIndex = index; openModal('deleteSingleModal'); };
@@ -236,14 +238,14 @@ document.getElementById('confirmDeleteBtn').onclick = () => {
             if(itemToDeleteIndex !== null) {
                 favoris.splice(itemToDeleteIndex, 1);
 localStorage.setItem('eco_favoris', JSON.stringify(favoris));
-                // MODIFIÉ : Toast traduit
+                // MODIFIÉ‰ : Toast traduit
                 render(); closeAll(); showToast(isFrCarnet ? translationsCarnet.toastDel.fr : translationsCarnet.toastDel.en);
             }
         };
 window.toggleVs = (index, checkbox) => {
             if (checkbox.checked) {
                 if (selectedVs.length >= 2) { checkbox.checked = false;
-// MODIFIÉ : Toast traduit
+// MODIFIÉ‰ : Toast traduit
 showToast(isFrCarnet ? translationsCarnet.toastMax.fr : translationsCarnet.toastMax.en); return; }
                 selectedVs.push(index);
 } else {
@@ -260,7 +262,7 @@ const f2 = favoris[selectedVs[1]];
             const winner = (v1, v2) => v1 > v2 ?
 'val-win' : (v1 < v2 ? 'val-lose' : '');
             
-            // MODIFIÉ : Labels dynamiques pour la modale VS
+            // MODIFIÉ‰ : Labels dynamiques pour la modale VS
             const lblScore = isFrCarnet ? "SCORE GLOBAL" : "GLOBAL SCORE";
             const lblVelos = isFrCarnet ? "VÉLOS" : "BIKES";
             const lblBornes = isFrCarnet ? "BORNES" : "TERMINALS";
@@ -294,8 +296,8 @@ font-size:0.8rem;">${lblCovoit}</td><td class="${winner(f2.details.covoit, f1.de
             const timer = setInterval(() => {
                 
 count--; screen.innerHTML = count;
-                // MODIFIÉ : Traduction PURGE COMPLETE
-                if(count <= 0) { clearInterval(timer); screen.innerHTML = isFrCarnet ? "PURGE COMPLETE" : "PURGE COMPLETE"; localStorage.removeItem('eco_favoris'); setTimeout(() => location.reload(), 2000); }
+                // MODIFIÉ‰ : Traduction PURGE COMPLETE
+                if(count <= 0) { clearInterval(timer); screen.innerHTML = isFrCarnet ? "PURGE TERMINÉE" : "PURGE COMPLETE"; localStorage.removeItem('eco_favoris'); setTimeout(() => location.reload(), 2000); } // FIX: Changed French text for better localization.
             }, 1000);
         };
 window.openOnboarding = () => document.getElementById('onboardingModal').classList.add('active');
@@ -303,59 +305,73 @@ window.openOnboarding = () => document.getElementById('onboardingModal').classLi
 }
         
 const translationsCarnet = {
-            navCarte: { fr: "Carte", en: "Map" }, navAide: { fr: "Aide", en: "Help" }, mainTitle: { fr: "Tableau de Bord", en: "Dashboard" }, mainSub: { fr: "Gérez vos futures aventures bas carbone.", en: "Manage your future low-carbon adventures."
-}, emptyText: { fr: "Aucune donnée.", en: "No data." }, btnScan: { fr: "Scanner la carte", en: "Scan map" }, btnNuke: { fr: "⚠️ SÉQUENCE D’AUTODESTRUCTION", en: "⚠️ SELF-DESTRUCT SEQUENCE" }, btnCompare: { fr: "COMPARER", en: "COMPARE" }, onbTitle: { fr: "Bienvenue !", en: "Welcome!"
-}, onbText: { fr: "Voici votre carnet de voyage intelligent. Comparez deux gares... Images de la ville trouvées... QR Code pour partager... Carte de situation en haut à droite.", en: "Here is your smart travel journal. Compare two stations... City images found... QR Code to share... Location map on top right."
-}, onbBtn: { fr: "C'est parti !", en: "Let's go!"
-}, delTitle: { fr: "Supprimer ce favori ?", en: "Delete this favorite?"
-}, delText: { fr: "Cette action est irréversible.", en: "This action is irreversible."
-}, delNo: { fr: "Annuler", en: "Cancel" }, confirmDeleteBtn: { fr: "Supprimer", en: "Delete" }, nukeTitle: { fr: "ATTENTION", en: "WARNING" }, nukeText: { fr: "Voulez-vous vraiment détruire tout le carnet ?", en: "Do you really want to destroy the entire journal?"
-}, nukeNo: { fr: "Non", en: "No" }, nukeYes: { fr: "OUI, DETRUIRE", en: "YES, DESTROY" }, vsTitle: { fr: "COMPARATEUR", en: "COMPARATOR" }, qrTitle: { fr: "Partager", en: "Share" }, qrText: { fr: "Scannez pour ouvrir Google Maps", en: "Scan to open Google Maps" }, txtGo: { fr: "Y aller", en: "Go there" },
-            
-            // --- NEW TRANSLATIONS ---
-            googleTitle: { fr: '<i class="fa-brands fa-wikipedia-w"></i> Images de la ville', en: '<i class="fa-brands fa-wikipedia-w"></i> City Images' },
-            toastMax: { fr: "Maximum 2 gares !", en: "Maximum 2 stations!" },
-            toastDel: { fr: "Favori supprimé", en: "Favorite deleted" },
+            navCarte: { fr: "Carte", en: "Map" }, 
+            navAide: { fr: "Aide", en: "Help" }, 
+            mainTitle: { fr: "Tableau de Bord", en: "Dashboard" }, 
+            mainSub: { fr: "Gérez vos futures aventures bas carbone.", en: "Manage your future low-carbon adventures." }, 
+            emptyText: { fr: "Aucune donnée.", en: "No data." }, 
+            btnScan: { fr: "Scanner la carte", en: "Scan map" }, 
+            btnNuke: { fr: "⚠️ SÉQUENCE D'AUTODESTRUCTION", en: "⚠️ SELF-DESTRUCT SEQUENCE" }, 
+            btnCompare: { fr: "COMPARER", en: "COMPARE" }, 
+            onbTitle: { fr: "Bienvenue !", en: "Welcome!" },
+            onbText: { fr: "Voici votre carnet de voyage intelligent. Comparez deux gares, trouvez des images de la ville, générez un QR Code pour partager. Carte de situation en haut à droite.", en: "Here is your smart travel notebook. Compare two stations, find city images, generate a QR Code to share. Location map at the top right." },
+            onbBtn: { fr: "C'est parti !", en: "Let's go!" },
+            googleTitle: { fr: "Images de la ville", en: "City Images" },
+            qrTitle: { fr: "Partager", en: "Share" },
+            qrText: { fr: "Scannez pour ouvrir Google Maps", en: "Scan to open Google Maps" },
+            nukeTitle: { fr: "ATTENTION", en: "WARNING" },
+            nukeText: { fr: "Voulez-vous vraiment détruire tout le carnet ?", en: "Do you really want to destroy the entire notebook?" },
+            nukeNo: { fr: "Non", en: "No" },
+            nukeYes: { fr: "OUI, DETRUIRE", en: "YES, DESTROY" },
+            delTitle: { fr: "Supprimer ce favori ?", en: "Delete this favorite?" },
+            delText: { fr: "Cette action est irréversible.", en: "This action is irreversible." },
+            delNo: { fr: "Annuler", en: "Cancel" },
+            delYes: { fr: "Supprimer", en: "Delete" },
+            vsTitle: { fr: "COMPARATEUR", en: "COMPARATOR" },
             imgLoad: { fr: "Chargement des images...", en: "Loading images..." },
             imgError: { fr: "Aucune image trouvée.", en: "No image found." },
-            conError: { fr: "Erreur de connexion.", en: "Connection error." }
+            conError: { fr: "Erreur de connexion.", en: "Connection error." },
+            toastDel: { fr: "Favori supprimé.", en: "Favorite deleted." },
+            toastMax: { fr: "Maximum 2 sélections.", en: "Maximum 2 selections." },
+            txtGo: { fr: "Y aller", en: "Go there" },
+            lblVelos: { fr: "Vélos", en: "Bikes" },
+            lblBornes: { fr: "Bornes", en: "Terminals" },
+            lblCovoit: { fr: "Covoit", en: "Carpool" }
         };
-function switchLangCarnet() {
+
+        function switchLangCarnet() {
             isFrCarnet = !isFrCarnet;
-const t = translationsCarnet;
+            const t = translationsCarnet;
             document.getElementById('nav-carte').innerText = isFrCarnet ? t.navCarte.fr : t.navCarte.en;
             document.getElementById('nav-aide').innerText = isFrCarnet ? t.navAide.fr : t.navAide.en;
-document.getElementById('main-title').innerText = isFrCarnet ? t.mainTitle.fr : t.mainTitle.en;
+            document.getElementById('main-title').innerText = isFrCarnet ? t.mainTitle.fr : t.mainTitle.en;
             document.getElementById('main-subtitle').innerText = isFrCarnet ? t.mainSub.fr : t.mainSub.en;
-            document.getElementById('empty-text').innerText = isFrCarnet ?
-t.emptyText.fr : t.emptyText.en;
+            document.getElementById('empty-text').innerText = isFrCarnet ? t.emptyText.fr : t.emptyText.en;
             document.getElementById('btn-scan').innerText = isFrCarnet ? t.btnScan.fr : t.btnScan.en;
             document.getElementById('btn-nuke').innerText = isFrCarnet ? t.btnNuke.fr : t.btnNuke.en;
-document.getElementById('btn-compare').innerText = isFrCarnet ? t.btnCompare.fr : t.btnCompare.en;
+            document.getElementById('btn-compare').innerText = isFrCarnet ? t.btnCompare.fr : t.btnCompare.en;
             document.getElementById('onb-title').innerText = isFrCarnet ? t.onbTitle.fr : t.onbTitle.en;
-            document.getElementById('onb-text').innerText = isFrCarnet ?
-t.onbText.fr : t.onbText.en;
+            document.getElementById('onb-text').innerText = isFrCarnet ? t.onbText.fr : t.onbText.en;
             document.getElementById('onb-btn').innerText = isFrCarnet ? t.onbBtn.fr : t.onbBtn.en;
-            document.getElementById('del-title').innerText = isFrCarnet ? t.delTitle.fr : t.delTitle.en;
-document.getElementById('del-text').innerText = isFrCarnet ? t.delText.fr : t.delText.en;
-            document.getElementById('del-no').innerText = isFrCarnet ? t.delNo.fr : t.delNo.en;
-            document.getElementById('confirmDeleteBtn').innerText = isFrCarnet ?
-t.confirmDeleteBtn.fr : t.confirmDeleteBtn.en;
-            document.getElementById('nuke-title').innerText = isFrCarnet ? t.nukeTitle.fr : t.nukeTitle.en;
-            document.getElementById('nuke-text').innerText = isFrCarnet ? t.nukeText.fr : t.nukeText.en;
-document.getElementById('nuke-no').innerText = isFrCarnet ? t.nukeNo.fr : t.nukeNo.en;
-            document.getElementById('nuke-yes').innerText = isFrCarnet ? t.nukeYes.fr : t.nukeYes.en;
-            document.getElementById('vs-title').innerText = isFrCarnet ?
-t.vsTitle.fr : t.vsTitle.en;
+            document.getElementById('google-title').innerHTML = '<i class="fa-brands fa-wikipedia-w"></i> ' + (isFrCarnet ? t.googleTitle.fr : t.googleTitle.en);
             document.getElementById('qr-title').innerText = isFrCarnet ? t.qrTitle.fr : t.qrTitle.en;
             document.getElementById('qr-text').innerText = isFrCarnet ? t.qrText.fr : t.qrText.en;
-            document.getElementById('google-title').innerHTML = isFrCarnet ? t.googleTitle.fr : t.googleTitle.en;
-            
-document.querySelectorAll('.txt-go').forEach(el => el.innerText = isFrCarnet ? t.txtGo.fr : t.txtGo.en);
-
-            // Re-render les cartes pour mettre à jour Vélos/Bikes etc.
+            document.getElementById('nuke-title').innerText = isFrCarnet ? t.nukeTitle.fr : t.nukeTitle.en;
+            document.getElementById('nuke-text').innerText = isFrCarnet ? t.nukeText.fr : t.nukeText.en;
+            document.getElementById('nuke-no').innerText = isFrCarnet ? t.nukeNo.fr : t.nukeNo.en;
+            document.getElementById('nuke-yes').innerText = isFrCarnet ? t.nukeYes.fr : t.nukeYes.en;
+            document.getElementById('del-title').innerText = isFrCarnet ? t.delTitle.fr : t.delTitle.en;
+            document.getElementById('del-text').innerText = isFrCarnet ? t.delText.fr : t.delText.en;
+            document.getElementById('del-no').innerText = isFrCarnet ? t.delNo.fr : t.delNo.en;
+            document.getElementById('confirmDeleteBtn').innerText = isFrCarnet ? t.delYes.fr : t.delYes.en;
+            document.getElementById('vs-title').innerText = isFrCarnet ? t.vsTitle.fr : t.vsTitle.en;
+            // Re-render cards with new language
             render();
         }
-    </script>
-</body>
-</html>
+
+
+
+
+
+
+

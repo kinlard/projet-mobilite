@@ -1,0 +1,32 @@
+# Système de backup automatique
+$backupNumber = 1
+while (Test-Path "site_code_v$backupNumber.txt") { $backupNumber++ }
+$outputFile = "site_code_v$backupNumber.txt"
+
+# Force UTF-8 propre (accents + emojis OK)
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [Console]::OutputEncoding
+
+# Export avec UTF-8 forcé
+"--- backend\server.js ---`n" | Out-File -FilePath $outputFile -Encoding UTF8
+(Get-Content "backend\server.js" -Raw) | Out-File -FilePath $outputFile -Append -Encoding UTF8
+
+"`n`n--- frontend\app.js ---`n" | Out-File -FilePath $outputFile -Append -Encoding UTF8
+(Get-Content "frontend\app.js" -Raw) | Out-File -FilePath $outputFile -Append -Encoding UTF8
+
+"`n`n--- frontend\apropos.html ---`n" | Out-File -FilePath $outputFile -Append -Encoding UTF8
+(Get-Content "frontend\apropos.html" -Raw) | Out-File -FilePath $outputFile -Append -Encoding UTF8
+
+"`n`n--- frontend\carnet.html ---`n" | Out-File -FilePath $outputFile -Append -Encoding UTF8
+(Get-Content "frontend\carnet.html" -Raw) | Out-File -FilePath $outputFile -Append -Encoding UTF8
+
+"`n`n--- frontend\index.html ---`n" | Out-File -FilePath $outputFile -Append -Encoding UTF8
+(Get-Content "frontend\index.html" -Raw) | Out-File -FilePath $outputFile -Append -Encoding UTF8
+
+"`n`n--- frontend\map.html ---`n" | Out-File -FilePath $outputFile -Append -Encoding UTF8
+(Get-Content "frontend\map.html" -Raw) | Out-File -FilePath $outputFile -Append -Encoding UTF8
+
+"`n`n--- frontend\style.css ---`n" | Out-File -FilePath $outputFile -Append -Encoding UTF8
+(Get-Content "frontend\style.css" -Raw) | Out-File -FilePath $outputFile -Append -Encoding UTF8
+
+Write-Host "✅ Backup créé : $outputFile (UTF-8 accents/emoji OK)" -ForegroundColor Green

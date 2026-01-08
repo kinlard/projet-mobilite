@@ -1,6 +1,6 @@
-// ============================================================
+﻿// ============================================================
 // NOM FICHIER : backend/server.js
-// FUSION COMPLÈTE : API vélo prioritaire + Cache + Air & Bio
+// FUSION COMPLÉˆTE : API vÉ©lo prioritaire + Cache + Air & Bio
 // DATE : 06/01/2026
 // ============================================================
 
@@ -21,16 +21,16 @@ const apiCache = new NodeCache({ stdTTL: 3600 });
 app.use(cors());
 app.use(express.json());
 
-// --- CHARGEMENT FICHIER VÉLO LOCAL (FALLBACK) ---
+// --- CHARGEMENT FICHIER VÉ‰LO LOCAL (FALLBACK) ---
 let veloDataCache = { type: "FeatureCollection", features: [] };
 try {
     const filePath = path.join(__dirname, 'velo.geojson');
     if (fs.existsSync(filePath)) {
         veloDataCache = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-        console.log(`🚲 Fichier vélo de secours chargé : ${veloDataCache.features.length} points`);
+        console.log(`ðŸš² Fichier vÉ©lo de secours chargÉ© : ${veloDataCache.features.length} points`);
     }
 } catch (e) { 
-    console.warn("⚠️ Fichier velo.geojson introuvable");
+    console.warn("âš ï¸ Fichier velo.geojson introuvable");
 }
 
 // --- ROUTES API ---
@@ -55,7 +55,7 @@ app.get('/api/gares', async (req, res) => {
 
         res.json(d);
     } catch (e) {
-        console.error('❌ Erreur API Gares:', e.message);
+        console.error('âŒ Erreur API Gares:', e.message);
         res.json([]);
     }
 });
@@ -68,12 +68,12 @@ app.get('/api/wfs-rails', async (req, res) => {
         );
         res.json(r.data);
     } catch (e) {
-        console.error('❌ Erreur API Rails:', e.message);
+        console.error('âŒ Erreur API Rails:', e.message);
         res.json({ type: 'FeatureCollection', features: [] });
     }
 });
 
-// 3. BORNES ÉLECTRIQUES (IRVE)
+// 3. BORNES É‰LECTRIQUES (IRVE)
 app.get('/api/irve', async (req, res) => {
     try {
         const r = await axios.get(
@@ -81,7 +81,7 @@ app.get('/api/irve', async (req, res) => {
         );
         res.json(r.data);
     } catch (e) {
-        console.error('❌ Erreur API IRVE:', e.message);
+        console.error('âŒ Erreur API IRVE:', e.message);
         res.json({ type: 'FeatureCollection', features: [] });
     }
 });
@@ -94,12 +94,12 @@ app.get('/api/covoiturage', async (req, res) => {
         );
         res.json(r.data);
     } catch (e) {
-        console.error('❌ Erreur API Covoiturage:', e.message);
+        console.error('âŒ Erreur API Covoiturage:', e.message);
         res.json({ type: 'FeatureCollection', features: [] });
     }
 });
 
-// 5. PARKINGS VÉLOS (API prioritaire, fichier local en fallback)
+// 5. PARKINGS VÉ‰LOS (API prioritaire, fichier local en fallback)
 app.get('/api/parking-velo', async (req, res) => {
     const { minLat, maxLat, minLon, maxLon } = req.query;
 
@@ -107,11 +107,11 @@ app.get('/api/parking-velo', async (req, res) => {
         return res.json({ type: 'FeatureCollection', features: [] });
     }
 
-    // PRIORITÉ 1 : Tenter l'API Opendatasoft
+    // PRIORITÉ‰ 1 : Tenter l'API Opendatasoft
     try {
         const url = 'https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/osm-france-bicycle-parking/exports/geojson?limit=-1';
         
-        console.log('🔄 Tentative récupération API vélos...');
+        console.log('ðŸ”„ Tentative rÉ©cupÉ©ration API vÉ©los...');
         const r = await axios.get(url, { timeout: 8000 }); // Timeout 8s
         const data = r.data;
 
@@ -132,13 +132,13 @@ app.get('/api/parking-velo', async (req, res) => {
             ? resList.filter((_, i) => i % Math.ceil(resList.length / 5000) === 0)
             : resList;
 
-        console.log(`✅ API vélos OK : ${final.length} points renvoyés`);
+        console.log(`âœ… API vÉ©los OK : ${final.length} points renvoyÉ©s`);
         return res.json({ type: 'FeatureCollection', features: final });
 
     } catch (apiError) {
-        console.warn('⚠️ API vélos échouée, basculement sur fichier local...');
+        console.warn('âš ï¸ API vÉ©los É©chouÉ©e, basculement sur fichier local...');
         
-        // PRIORITÉ 2 : Utiliser le fichier local
+        // PRIORITÉ‰ 2 : Utiliser le fichier local
         if (veloDataCache.features.length > 0) {
             const resList = veloDataCache.features.filter(f => {
                 if (!f.geometry || !f.geometry.coordinates) return false;
@@ -155,17 +155,17 @@ app.get('/api/parking-velo', async (req, res) => {
                 ? resList.filter((_, i) => i % Math.ceil(resList.length / 5000) === 0)
                 : resList;
 
-            console.log(`🗂️ Fichier local utilisé : ${final.length} points`);
+            console.log(`ðŸ—‚ï¸ Fichier local utilisÉ© : ${final.length} points`);
             return res.json({ type: 'FeatureCollection', features: final });
         }
 
         // Aucune source disponible
-        console.error('❌ Aucune source vélo disponible');
+        console.error('âŒ Aucune source vÉ©lo disponible');
         res.json({ type: 'FeatureCollection', features: [] });
     }
 });
 
-// 6. QUALITÉ DE L'AIR (OpenAQ)
+// 6. QUALITÉ‰ DE L'AIR (OpenAQ)
 app.get('/api/air-quality', async (req, res) => {
     const { lat, lon } = req.query;
     
@@ -176,7 +176,7 @@ app.get('/api/air-quality', async (req, res) => {
     const cacheKey = `air_${lat}_${lon}`;
     const cached = apiCache.get(cacheKey);
     if (cached) {
-        console.log('📦 Cache air-quality utilisé');
+        console.log('ðŸ“¦ Cache air-quality utilisÉ©');
         return res.json(cached);
     }
     
@@ -204,7 +204,7 @@ app.get('/api/air-quality', async (req, res) => {
                 if (value < 10) quality = 'Excellent';
                 else if (value < 20) quality = 'Bon';
                 else if (value < 25) quality = 'Moyen';
-                else if (value < 50) quality = 'Médiocre';
+                else if (value < 50) quality = 'MÉ©diocre';
                 else quality = 'Mauvais';
             }
             
@@ -212,7 +212,7 @@ app.get('/api/air-quality', async (req, res) => {
                 success: true,
                 data: {
                     value: value,
-                    unit: 'µg/m³',
+                    unit: 'Âµg/mÂ³',
                     quality: quality,
                     color: value < 10 ? '#10b981' : value < 25 ? '#f59e0b' : '#ef4444',
                     station: station.name
@@ -220,19 +220,134 @@ app.get('/api/air-quality', async (req, res) => {
             };
             
             apiCache.set(cacheKey, result, 3600);
-            console.log(`✅ Air quality récupérée : ${quality}`);
+            console.log(`âœ… Air quality rÉ©cupÉ©rÉ©e : ${quality}`);
             res.json(result);
         } else {
             res.json({ success: false, error: 'No data' });
         }
         
     } catch (error) {
-        console.error('❌ OpenAQ error:', error.message);
+        console.error('âŒ OpenAQ error:', error.message);
         res.json({ success: false, error: error.message });
     }
 });
 
-// 7. BIODIVERSITÉ (iNaturalist)
+// 7. PROPRETÉ EN GARE (SNCF Open Data)
+app.get('/api/proprete-gares', async (req, res) => {
+    const cacheKey = 'proprete_gares';
+    const cached = apiCache.get(cacheKey);
+    if (cached) {
+        console.log('📦 Cache propreté-gares utilisé');
+        return res.json(cached);
+    }
+    
+    try {
+        const r = await axios.get(
+            'https://ressources.data.sncf.com/api/records/1.0/search/?dataset=proprete-en-gare&q=&rows=1000'
+        );
+        
+        // API SNCF : taux_de_conformite (%) → conversion en note sur 5
+        const data = r.data.records
+            .map(record => {
+                const fields = record.fields || {};
+                const tauxConformite = fields.taux_de_conformite;
+                // Conversion taux (0-100%) vers note (0-5)
+                const noteProprete = tauxConformite ? Math.round((tauxConformite / 20) * 10) / 10 : null;
+                
+                return {
+                    nom_gare: fields.nom_gare || fields.libellecourt || fields.libellelong,
+                    note_proprete: noteProprete,
+                    taux_conformite: tauxConformite,
+                    date_mesure: fields.mois || fields.periode,
+                    nom_exploitant: fields.nomexploitant || 'SNCF'
+                };
+            })
+            .filter(g => g.nom_gare && g.note_proprete !== null);
+        
+        // Dédoublonner : garder la mesure la plus récente par gare
+        const garesMap = {};
+        data.forEach(g => {
+            const key = g.nom_gare.toLowerCase();
+            if (!garesMap[key] || (g.date_mesure > garesMap[key].date_mesure)) {
+                garesMap[key] = g;
+            }
+        });
+        const uniqueData = Object.values(garesMap);
+        
+        apiCache.set(cacheKey, uniqueData, 86400); // Cache 24h
+        console.log(`✅ Propreté gares récupérée : ${uniqueData.length} gares`);
+        res.json(uniqueData);
+        
+    } catch (e) {
+        console.error('❌ Erreur API Propreté:', e.message);
+        res.json([]);
+    }
+});
+
+// 8. DÉFIBRILLATEURS EN GARE (SNCF Open Data)
+app.get('/api/defibrillateurs-gares', async (req, res) => {
+    const cacheKey = 'defibrillateurs_gares';
+    const cached = apiCache.get(cacheKey);
+    if (cached) {
+        console.log('📦 Cache défibrillateurs utilisé');
+        return res.json(cached);
+    }
+    
+    try {
+        const r = await axios.get(
+            'https://ressources.data.sncf.com/api/records/1.0/search/?dataset=equipements-defibrillateurs&q=&rows=2000'
+        );
+        
+        // Grouper les défibrillateurs par gareid et compter
+        const garesMap = {};
+        r.data.records.forEach(record => {
+            const fields = record.fields || {};
+            const gareid = fields.gareid;
+            if (!gareid) return;
+            
+            // Parser les coordonnées
+            let lat = null, lon = null;
+            if (fields.position_geographique) {
+                const coords = fields.position_geographique.split(',').map(c => parseFloat(c.trim()));
+                if (coords.length === 2) {
+                    lat = coords[0];
+                    lon = coords[1];
+                }
+            }
+            
+            if (!garesMap[gareid]) {
+                garesMap[gareid] = {
+                    gareid: gareid,
+                    lat: lat,
+                    lon: lon,
+                    nb_appareils: 0,
+                    emplacements: []
+                };
+            }
+            
+            garesMap[gareid].nb_appareils++;
+            if (fields.localisationdescriptive) {
+                garesMap[gareid].emplacements.push(fields.localisationdescriptive);
+            }
+        });
+        
+        // Convertir en tableau avec emplacements uniques
+        const data = Object.values(garesMap).map(g => ({
+            ...g,
+            emplacement: [...new Set(g.emplacements)].slice(0, 3).join(', ') || 'Hall principal'
+        }));
+        
+        apiCache.set(cacheKey, data, 86400); // Cache 24h
+        console.log(`✅ Défibrillateurs récupérés : ${data.length} gares équipées`);
+        res.json(data);
+        
+    } catch (e) {
+        console.error('❌ Erreur API Défibrillateurs:', e.message);
+        res.json([]);
+    }
+});
+
+// 9. BIODIVERSITÉ (iNaturalist)
 app.get('/api/biodiversity', async (req, res) => {
     const { lat, lon, radius = 5 } = req.query;
     
@@ -243,7 +358,7 @@ app.get('/api/biodiversity', async (req, res) => {
     const cacheKey = `bio_${lat}_${lon}_${radius}`;
     const cached = apiCache.get(cacheKey);
     if (cached) {
-        console.log('📦 Cache biodiversity utilisé');
+        console.log('ðŸ“¦ Cache biodiversity utilisÉ©');
         return res.json(cached);
     }
     
@@ -256,13 +371,16 @@ app.get('/api/biodiversity', async (req, res) => {
         
         const observations = response.data.results;
         
-        const species = observations.map(obs => ({
-            name: obs.taxon.preferred_common_name || obs.taxon.name,
-            scientificName: obs.taxon.name,
-            photo: obs.taxon.default_photo?.medium_url || null,
-            category: obs.taxon.iconic_taxon_name,
-            rarity: obs.taxon.threatened ? '🔴 Menacée' : '🟢 Commune'
-        }));
+        // FIX: Protection contre obs.taxon undefined pour éviter crash
+        const species = observations
+            .filter(obs => obs.taxon) // Filtrer les observations sans taxon
+            .map(obs => ({
+                name: obs.taxon.preferred_common_name || obs.taxon.name,
+                scientificName: obs.taxon.name,
+                photo: obs.taxon.default_photo?.medium_url || null,
+                category: obs.taxon.iconic_taxon_name,
+                rarity: obs.taxon.threatened ? '🔴 Menacée' : '🟢 Commune'
+            }));
         
         const result = {
             success: true,
@@ -273,11 +391,11 @@ app.get('/api/biodiversity', async (req, res) => {
         };
         
         apiCache.set(cacheKey, result, 86400); // Cache 24h
-        console.log(`✅ Biodiversité récupérée : ${species.length} espèces`);
+        console.log(`âœ… BiodiversitÉ© rÉ©cupÉ©rÉ©e : ${species.length} espÉ¨ces`);
         res.json(result);
         
     } catch (error) {
-        console.error('❌ iNaturalist error:', error.message);
+        console.error('âŒ iNaturalist error:', error.message);
         res.json({ success: false, error: error.message });
     }
 });
@@ -289,12 +407,12 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-// --- DÉMARRAGE DU SERVEUR ---
+// --- DÉ‰MARRAGE DU SERVEUR ---
 app.listen(port, () => {
-    console.log(`🚀 Serveur démarré sur le port ${port}`);
-    console.log(`📍 Frontend : http://localhost:${port}`);
+    console.log(`ðŸš€ Serveur dÉ©marrÉ© sur le port ${port}`);
+    console.log(`ðŸ“ Frontend : http://localhost:${port}`);
 });
 
 // ============================================================
-// FIN DU FICHIER
+// FIN DU FICHIER (ttl 06/01/2026)
 // ============================================================

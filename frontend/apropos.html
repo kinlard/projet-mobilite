@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eco-Escapade | À Propos</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌿</text></svg>">
+    <title>Eco-Escapade | À propos</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>ðŸŒ¿</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -35,18 +35,24 @@
 
         <section class="section-card">
             <h2><i class="fa-solid fa-calculator"></i> Méthodologie</h2>
-            <p>Le cœur du projet repose sur un algorithme de notation exclusif qui attribue un score de 0 à 10 à chaque gare. Ce score est calculé en temps réel côté client.</p>
+            <p>Le cœur du projet repose sur un algorithme qui attribue un score écologique de 0 à 10 à chaque gare. Ce score est calculé dynamiquement en fonction des services de mobilité douce à proximité.</p>
             
             <h3>Formule de calcul :</h3>
             <div class="formula-box">
-                SCORE = ( Parkings vélos (800m) × 3 + Bornes IRVE (2km) × 2 + Aires covoiturage (3km) × 1 ) / 10
+                Note = Bonus TGV (1pt) + Points Vélos (max 7pts) + Points Bornes (max 2pts) + Points Covoiturage (max 1pt)
+                <br><br>
+                - <strong>Vélos (10 min à pied) :</strong> 1 point par parking, plafonné à 7 points.
+                <br>
+                - <strong>Bornes IRVE (3km) :</strong> 0,5 point par borne, plafonné à 2 points.
+                <br>
+                - <strong>Covoiturage (3km) :</strong> 0,5 point par aire, plafonné à 1 point.
             </div>
 
             <h3>Échelle de notation :</h3>
             <div class="score-scale">
-                <div class="scale-item scale-bad">0 - 3 : ❌ Peu écologique</div>
-                <div class="scale-item scale-mid">4 - 6 : ⚠️ Correct</div>
-                <div class="scale-item scale-good">7 - 10 : ✅ Excellent</div>
+                <div class="scale-item scale-bad">0 - 4.9 : ❌ Potentiel limité</div>
+                <div class="scale-item scale-mid">5 - 7.9 : 👍 Bon potentiel</div>
+                <div class="scale-item scale-good">8 - 10 : ✅ Excellent</div>
             </div>
         </section>
 
@@ -95,3 +101,10 @@
 
 </body>
 </html>
+
+
+
+
+
+
+
