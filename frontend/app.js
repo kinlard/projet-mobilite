@@ -952,23 +952,90 @@ function generatePopupContent(g) {
         </div>`;
 }
 
-// Fonction pour charger une photo de la ville/gare
+// Fonction pour charger une photo de la gare via Wikimedia Commons
 async function loadPhoto(nom, id) {
     const img = document.getElementById(`photo-${id}`);
-    if (!img) return;
+    if (!img) {
+        console.log(`Photo element not found for id: ${id}`);
+        return;
+    }
     
-    // Extraire le nom de ville (premier mot avant tiret ou espace)
-    const cleanName = nom.split(/[-\s]/)[0].replace(/[^a-zA-ZÀ-ÿ]/g, '');
+    // Afficher un placeholder pendant le chargement
+    img.style.background = '#e2e8f0';
+    img.alt = 'Chargement...';
     
-    // Utiliser loremflickr ou une image de fallback
-    const imgUrl = `https://loremflickr.com/400/150/${cleanName},city,france/all?lock=${id}`;
+    // Nettoyer le nom de la gare pour la recherche
+    const cleanName = nom.replace(/['']/g, "'").trim();
+    // Extraire le nom de ville principal
+    const villeName = cleanName.split(/[-\s]/)[0];
     
-    img.src = imgUrl;
-    img.onerror = () => {
-        // Si l'image échoue, utiliser une image de fallback
-        const fallbackIndex = id % FALLBACK_IMAGES.length;
-        img.src = FALLBACK_IMAGES[fallbackIndex];
-    };
+    console.log(`Loading photo for: ${nom} (ville: ${villeName})`);
+    
+    // Construire les termes de recherche pour Wikimedia Commons
+    const searchTerms = [
+        `Gare de ${cleanName}`,
+        `Gare ${villeName}`,
+        `${villeName} gare SNCF`,
+        `${villeName} train station`
+    ];
+    
+    // Fonction pour chercher une image sur Wikimedia Commons
+    async function searchWikimediaImage(searchTerm) {
+        try {
+            const url = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(searchTerm)}&srnamespace=6&srlimit=10&format=json&origin=*`;
+            console.log(`Searching Wikimedia: ${searchTerm}`);
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.query && data.query.search && data.query.search.length > 0) {
+                console.log(`Found ${data.query.search.length} results for "${searchTerm}"`);
+                // Chercher une image valide parmi les résultats
+                for (const result of data.query.search) {
+                    const title = result.title;
+                    console.log(`Checking: ${title}`);
+                    // Vérifier que c'est bien une image (jpg, jpeg, png, gif, webp)
+                    if (/\.(jpg|jpeg|png|gif|webp)$/i.test(title)) {
+                        // Extraire le nom du fichier sans le préfixe "File:"
+                        const fileName = title.replace(/^File:/i, '');
+                        // Construire l'URL de l'image via le service de thumbnails Wikimedia
+                        const imageUrl = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}?width=500`;
+                        console.log(`Image URL: ${imageUrl}`);
+                        return imageUrl;
+                    }
+                }
+            }
+        } catch (e) {
+            console.error(`Wikimedia search error for "${searchTerm}":`, e);
+        }
+        return null;
+    }
+    
+    // Essayer chaque terme de recherche successivement
+    for (const term of searchTerms) {
+        const imageUrl = await searchWikimediaImage(term);
+        if (imageUrl) {
+            img.onload = () => {
+                img.classList.add('loaded');
+                console.log(`Photo loaded successfully for ${nom}`);
+            };
+            img.onerror = () => {
+                console.log(`Image load failed, using fallback`);
+                // Si l'image Wikimedia échoue, utiliser fallback
+                const fallbackIndex = id % FALLBACK_IMAGES.length;
+                img.src = FALLBACK_IMAGES[fallbackIndex];
+                img.classList.add('loaded');
+            };
+            img.src = imageUrl;
+            console.log(`Photo URL set for ${nom}: ${imageUrl}`);
+            return;
+        }
+    }
+    
+    // Si aucune image trouvée, utiliser une image de fallback nature/paysage
+    console.log(`No image found for ${nom}, using fallback`);
+    const fallbackIndex = id % FALLBACK_IMAGES.length;
+    img.onload = () => img.classList.add('loaded');
+    img.src = FALLBACK_IMAGES[fallbackIndex];
 }
 
 async function loadWeather(lat, lon, id) {
