@@ -727,20 +727,59 @@ async function loadFranceMask() {
     try {
         const r = await fetch('https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/metropole.geojson');
         const d = await r.json();
-        const mask = [
-            [
-                [-180, 90],
-                [180, 90],
-                [180, -90],
-                [-180, -90]
-            ]
+        
+        // FIX: Gestion correcte du MultiPolygon pour éviter le bug du contour
+        // Le GeoJSON de la France métropolitaine est un MultiPolygon avec plusieurs polygones
+        // (Corse, îles, etc.). Chaque polygone doit être ajouté comme un trou séparé.
+        
+        // Rectangle mondial en sens horaire (masque externe)
+        const worldRect = [
+            [-180, -90],
+            [-180, 90],
+            [180, 90],
+            [180, -90],
+            [-180, -90]
         ];
-        d.geometry.coordinates.forEach(p => mask.push(p[0]));
+        
+        // Fonction pour inverser les coordonnées si nécessaire (sens anti-horaire pour les trous)
+        function ensureCounterClockwise(ring) {
+            // Calcul de l'aire signée pour déterminer le sens
+            let area = 0;
+            for (let i = 0; i < ring.length - 1; i++) {
+                area += (ring[i + 1][0] - ring[i][0]) * (ring[i + 1][1] + ring[i][1]);
+            }
+            // Si l'aire est positive, les coordonnées sont dans le sens horaire, on inverse
+            if (area > 0) {
+                return ring.slice().reverse();
+            }
+            return ring;
+        }
+        
+        // Construction des trous pour chaque polygone de la France
+        const holes = [];
+        if (d.geometry.type === 'MultiPolygon') {
+            // MultiPolygon: coordinates est un tableau de polygones
+            d.geometry.coordinates.forEach(polygon => {
+                // polygon[0] est l'anneau extérieur de chaque polygone
+                if (polygon[0] && polygon[0].length > 0) {
+                    holes.push(ensureCounterClockwise(polygon[0]));
+                }
+            });
+        } else if (d.geometry.type === 'Polygon') {
+            // Polygon simple: coordinates[0] est l'anneau extérieur
+            if (d.geometry.coordinates[0] && d.geometry.coordinates[0].length > 0) {
+                holes.push(ensureCounterClockwise(d.geometry.coordinates[0]));
+            }
+        }
+        
+        // Création du masque: rectangle mondial + trous pour la France
+        const maskCoordinates = [worldRect, ...holes];
+        
         L.geoJSON({
             type: "Feature",
             geometry: {
                 type: "Polygon",
-                coordinates: mask
+                coordinates: maskCoordinates
             }
         }, {
             style: {
@@ -751,7 +790,9 @@ async function loadFranceMask() {
                 interactive: false
             }
         }).addTo(map);
-    } catch (e) {}
+    } catch (e) {
+        console.error('Erreur chargement masque France:', e);
+    }
 }
 
 function initMapMarkers() {
