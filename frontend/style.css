@@ -108,6 +108,7 @@ font-size: 0.9rem; }
     .simple-popup-header { padding: 15px; color: white; font-weight: bold; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
     .header-irve { background: linear-gradient(135deg, #f59e0b, #d97706); }
     .header-covoit { background: linear-gradient(135deg, #a855f7, #7e22ce); }
+    .header-velo { background: linear-gradient(135deg, #3b82f6, #2563eb); }
     .simple-popup-body { padding: 15px; background: #f8fafc; color: #334155; }
     .simple-popup-body div { margin-bottom: 8px; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
     .simple-popup-body .btn-maps { display: block; width: 100%; text-align: center; margin-top: 15px; background: #cbd5e1; color: #1e293b; padding: 8px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.8rem; transition: 0.2s; }

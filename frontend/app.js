@@ -435,6 +435,17 @@ const JS_TEXTS = {
         type: { fr: "Aire publique", en: "Public area" }
     },
 
+    veloPopup: {
+        title: { fr: "Parking vélo", en: "Bike Parking" },
+        capacity: { fr: "places", en: "spots" },
+        unknown: { fr: "Capacité inconnue", en: "Unknown capacity" },
+        covered: { fr: "Couvert", en: "Covered" },
+        uncovered: { fr: "Non couvert", en: "Not covered" },
+        type: { fr: "Type", en: "Type" },
+        commune: { fr: "Commune", en: "City" },
+        maps: { fr: "Voir sur Google Maps", en: "View on Google Maps" }
+    },
+
     // Biodiversité
     biodiversity: {
         title: { fr: "Biodiversité Locale", en: "Local Biodiversity" },
@@ -560,19 +571,22 @@ const escapeHTML = (str) => {
 async function loadEverything() {
     console.log("Début du chargement...");
     const loaderText = document.getElementById('loader-msg');
+    const startTime = Date.now();
+    const MIN_LOADING_TIME = 5000; // Temps de chargement minimum : 5 secondes
 
-    // CORRIGÉ BUG URGENT 2 : Initialisation première phrase drôle aléatoire
+    // Phase 1 : Afficher "Démarrage du serveur..." pendant 1 seconde
     if (loaderText) {
-        loaderText.innerText = LOADING_PHRASES[Math.floor(Math.random() * LOADING_PHRASES.length)];
+        loaderText.innerText = "Démarrage du serveur...";
     }
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // CORRIGÉ BUG URGENT 2 : Rotation automatique des phrases toutes les 500ms
+    // Phase 2 : Rotation automatique des phrases aléatoires toutes les 1 seconde
     const msgInterval = setInterval(() => {
         if (loaderText) {
             const randomPhrase = LOADING_PHRASES[Math.floor(Math.random() * LOADING_PHRASES.length)];
             loaderText.innerText = randomPhrase;
         }
-    }, 500);
+    }, 1000);
 
     try {
         // === DÉBUT DU CHARGEMENT DES DONNÉES ===
@@ -661,13 +675,26 @@ async function loadEverything() {
         GLOBAL_STATS = computeGlobalStats();
         await loadFranceMask();
 
-        // CORRIGÉ BUG URGENT 2 : Arrêt de la rotation avant masquage du loader
+        // Attendre le temps minimum de chargement (5 secondes au total)
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = MIN_LOADING_TIME - elapsedTime;
+        if (remainingTime > 0) {
+            await new Promise(resolve => setTimeout(resolve, remainingTime));
+        }
+
+        // Arrêt de la rotation des phrases aléatoires
         clearInterval(msgInterval);
+        
+        // Phase 3 : Afficher "Chargement de la page..." avant de terminer
+        if (loaderText) {
+            loaderText.innerText = "Chargement de la page...";
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
     } catch (error) {
         console.error("Erreur critique chargement:", error);
         showToast("Erreur critique de chargement", true);
-        // CORRIGÉ BUG URGENT 2 : Arrêt rotation en cas d'erreur
+        // Arrêt rotation en cas d'erreur
         clearInterval(msgInterval);
         if (loaderText) {
             loaderText.innerText = 'Erreur de chargement...';
@@ -828,6 +855,32 @@ function getPropreteData(nomGare) {
 }
 
 /**
+ * Récupère les données de défibrillateurs pour une gare par matching géographique.
+ * Cherche un défibrillateur dans un rayon de 500m de la gare.
+ * @param {number} lat - Latitude de la gare.
+ * @param {number} lon - Longitude de la gare.
+ * @returns {Object|null} Les données de défibrillateur ou null si non trouvées.
+ */
+function getDefibData(lat, lon) {
+    if (!DATA.defibrillateurs || DATA.defibrillateurs.length === 0 || !lat || !lon) return null;
+    
+    // Chercher un défibrillateur dans un rayon de 500m (0.005 degrés ≈ 500m)
+    const tolerance = 0.005;
+    
+    for (const defib of DATA.defibrillateurs) {
+        if (defib.lat && defib.lon) {
+            const dLat = Math.abs(defib.lat - lat);
+            const dLon = Math.abs(defib.lon - lon);
+            if (dLat <= tolerance && dLon <= tolerance) {
+                return defib;
+            }
+        }
+    }
+    
+    return null;
+}
+
+/**
  * Génère le contenu HTML du popup pour une gare donnée.
  * Inclut le score, l'avis, et les boutons d'action.
  * @param {Object} g - L'objet gare contenant nom, id, type, lat, lon.
@@ -844,26 +897,36 @@ function generatePopupContent(g) {
     const lang = currentLang;
     const safeNom = escapeHTML(g.nom);
 
-    // === PROPRETÉ GARE ===
+    // === PROPRETÉ & DÉFIBRILLATEURS (affichage compact sur une ligne) ===
     const propreteData = getPropreteData(g.nom);
-    let propreteHtml = '';
-    if (propreteData) {
-        const propreteColor = propreteData.note_proprete >= 4 ? '10b981' : 
-                              propreteData.note_proprete >= 2 ? 'f59e0b' : 'ef4444';
-        const stars = '★'.repeat(Math.round(propreteData.note_proprete)) + 
-                      '☆'.repeat(5 - Math.round(propreteData.note_proprete));
-        propreteHtml = `
-            <div style="background:#f8fafc;padding:10px;border-radius:8px;margin:10px 0;border-left:4px solid #${propreteColor}">
-                <h4 style="margin:0 0 5px 0;color:#${propreteColor};font-size:0.9rem;">
-                    <i class="fa-solid fa-broom"></i> Propreté
-                </h4>
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <span style="font-size:1.1rem;color:#${propreteColor};">${stars}</span>
-                    <strong style="color:#${propreteColor};">${propreteData.note_proprete}/5</strong>
+    const defibData = getDefibData(g.lat, g.lon);
+    
+    let servicesHtml = '';
+    const hasPropreteData = propreteData !== null;
+    const hasDefibData = defibData && defibData.nb_appareils > 0;
+    
+    // Icône SVG défibrillateur (cœur + éclair)
+    const defibSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="${hasDefibData ? '#ef4444' : '#cbd5e1'}"/>
+        <path d="M13 7h-2l-1 4h2l-1 5 4-6h-3l1-3z" fill="#ffffff"/>
+    </svg>`;
+    
+    if (hasPropreteData || hasDefibData !== undefined) {
+        const propreteColor = hasPropreteData ? 
+            (propreteData.note_proprete >= 4 ? '#10b981' : propreteData.note_proprete >= 2 ? '#f59e0b' : '#ef4444') : '#94a3b8';
+        
+        servicesHtml = `
+            <div style="display:flex;gap:12px;margin:10px 0;padding:8px 10px;background:#f8fafc;border-radius:8px;align-items:center;font-size:0.8rem;">
+                ${hasPropreteData ? `
+                <div style="display:flex;align-items:center;gap:4px;">
+                    <span>🧹</span>
+                    <span style="color:#475569;">Propreté:</span>
+                    <span style="font-weight:700;color:${propreteColor};">${propreteData.note_proprete}/5</span>
+                </div>` : ''}
+                <div style="display:flex;align-items:center;gap:4px;">
+                    <span style="color:#475569;">Défib.${defibSvg}:</span>
+                    <span style="font-weight:700;color:${hasDefibData ? '#10b981' : '#94a3b8'};">${hasDefibData ? 'Oui' : 'Non'}</span>
                 </div>
-                <small style="color:#64748b;display:block;margin-top:5px;">
-                    ${propreteData.date_mesure || ''} • ${propreteData.nom_exploitant || 'SNCF'}
-                </small>
             </div>`;
     }
 
@@ -879,8 +942,8 @@ function generatePopupContent(g) {
                     <i id="fav-${g.id}" onclick="toggleFavori(${g.id}, '${safeNom.replace(/'/g, "\\'")}', '${g.type}')" class="fa-solid fa-heart fav-btn ${isFavori(g.id)?'fav-active':'fav-inactive'}"></i>
                 </div>
                 
-                <div style="background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:15px; font-style:italic; font-size:0.9rem; color:#475569; border-left: 3px solid ${colorScore};">" ${avis} "</div>
-                ${propreteHtml}
+                <div style="background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:10px; font-style:italic; font-size:0.9rem; color:#475569; border-left: 3px solid ${colorScore};">" ${avis} "</div>
+                ${servicesHtml}
                 <div id="action-container-${g.id}">
                     <button class="btn-analyse" onclick="event.stopPropagation(); lancerAnalyseComplete(${g.id})" style="width:100%; background:#0f172a; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; margin-bottom:5px;">${t.analyse[lang]}</button>
                     <button class="btn-walk" onclick="event.stopPropagation(); showWalkZone(${g.lat}, ${g.lon})"><i class="fa-solid fa-person-walking"></i> ${t.zone[lang]}</button>
@@ -998,15 +1061,33 @@ function initSecondaryMarkers(irve, covoit, velos) {
     });
 
     // Vélos
+    const tVelo = JS_TEXTS.veloPopup;
     (velos.features || []).forEach(f => {
         if (f.geometry.coordinates) {
+            const props = f.properties || {};
+            const commune = escapeHTML(props.meta_name_com || props.nom || "Parking vélo");
+            const capacite = props.capacite ? `${props.capacite} ${tVelo.capacity[lang]}` : tVelo.unknown[lang];
+            const mobilier = props.mobilier ? props.mobilier.charAt(0) + props.mobilier.slice(1).toLowerCase() : "";
+            const couverture = props.couverture === "true" ? tVelo.covered[lang] : tVelo.uncovered[lang];
+
+            let h = `
+            <div style="font-family:'Inter',sans-serif; width:250px;">
+                <div class="simple-popup-header header-velo"><i class="fa-solid fa-bicycle"></i> ${tVelo.title[lang]}</div>
+                <div class="simple-popup-body">
+                    <div style="font-weight:bold; color:#0f172a; margin-bottom:10px;">${commune}</div>
+                    <div><i class="fa-solid fa-square-parking" style="color:#10b981"></i> ${capacite}</div>
+                    ${mobilier ? `<div><i class="fa-solid fa-lock" style="color:#64748b"></i> ${mobilier}</div>` : ''}
+                    <div><i class="fa-solid fa-umbrella" style="color:#64748b"></i> ${couverture}</div>
+                    <a href="https://www.google.com/maps?q=${f.geometry.coordinates[1]},${f.geometry.coordinates[0]}" target="_blank" class="btn-maps"><i class="fa-solid fa-map-location-dot"></i> ${tVelo.maps[lang]}</a>
+                </div>
+            </div>`;
             vBuf.push(L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
                 icon: L.divIcon({
                     className: 'c',
                     html: `<div class="marker-pin velo"><i class="fa-solid fa-bicycle"></i></div>`,
                     iconSize: [30, 30]
                 })
-            }));
+            }).bindPopup(h));
         }
     });
 
