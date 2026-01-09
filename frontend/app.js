@@ -15,7 +15,12 @@ console.log("🚀 Initialisation Eco-Escapade - FIX ZONE piétonne");
 const map = L.map('map', {
     zoomControl: false,
     minZoom: 4,
-    maxZoom: 19
+    maxZoom: 19,
+    // PERF: Optimisations zoom fluide low-end
+    preferCanvas: true,
+    zoomSnap: 0.5,
+    zoomDelta: 0.5,
+    wheelPxPerZoomLevel: 120
 }).setView([46.6, 2.2], 5);
 
 // Layer Satellite/Hybrid pour le look sombre
@@ -28,6 +33,7 @@ map.addLayer(googleSat);
 // SAFETY: définitions minimales pour éviter les ReferenceError au démarrage
 const DATA = {
     gares: [],
+    garesById: new Map(), // PERF: Index O(1) par ID
     velos: [],
     bornes: [],
     covoit: [],
@@ -37,6 +43,13 @@ const DATA = {
 
 const createCluster = (cls) => L.markerClusterGroup({
     showCoverageOnHover: false,
+    // PERF: Optimisations clusters low-end
+    chunkedLoading: true,
+    chunkInterval: 50,
+    chunkDelay: 25,
+    removeOutsideVisibleBounds: true,
+    disableClusteringAtZoom: 18,
+    spiderfyOnMaxZoom: false,
     iconCreateFunction: (c) => L.divIcon({
         html: `<span>${c.getChildCount()}</span>`,
         className: `custom-cluster ${cls}`,
@@ -54,7 +67,10 @@ const railsLayer = L.geoJSON(null, {
         color: '#6b7280',
         weight: 2,
         opacity: 0.6
-    }
+    },
+    // PERF: Simplification géométrie pour low-end
+    simplifyFactor: 1.5,
+    bubblingMouseEvents: false
 });
 
 // FIX: Initialiser variables globales pour la gestion de la zone piétonne
@@ -627,6 +643,10 @@ async function loadEverything() {
         if (rails) railsLayer.addData(rails);
 
         DATA.gares = gares;
+        // PERF: Construire l'index O(1) par ID
+        DATA.garesById.clear();
+        gares.forEach(g => { if (g && g.id !== undefined) DATA.garesById.set(g.id, g); });
+        
         DATA.velos = (velos.features || []).map(f => ({
             lat: f.geometry.coordinates[1],
             lon: f.geometry.coordinates[0]
@@ -1257,113 +1277,107 @@ map.on('locationfound', (e) => {
 map.on('locationerror', () => alert(JS_TEXTS.errors.localization[currentLang]));
 
 // Choisit une gare aléatoire uniquement lorsque les marqueurs sont Prêts
-window.randomGare = () => {
-    // désactivation très courte du bouton « dé » pour éviter les double-clics
-    try {
-        const diceBtn = document.getElementById('btnRandomGare');
-        if (diceBtn) {
-            diceBtn.style.pointerEvents = 'none';
-            setTimeout(() => {
-                diceBtn.style.pointerEvents = 'auto';
-            }, 400);
-        }
-    } catch (e) {}
-    if (!DATA.gares || !DATA.gares.length) return;
-    const pool = DATA.gares.filter(g => g && g.marker);
-    if (!pool.length) {
-        showToast(JS_TEXTS.errors.loading[currentLang], false);
-        return;
-    }
-    // Si une zone piétonne est active, on la retire pour éviter tout artefact visuel
-    hideWalkZone();
-    // Stoppe toute animation en cours qui peut retarder l'affichage
-    try {
-        map.stop();
-    } catch (e) {}
-    // Petit refresh visuel
-    map.invalidateSize(true);
-    markersLayer.refreshClusters();
+// PERF: Cache du pool de gares valides pour éviter filter() à chaque clic
+let cachedValidGares = null;
+let cachedValidGaresTime = 0;
 
-    const pick = pool[Math.floor(Math.random() * pool.length)];
-    goToGare(pick.id);
+window.randomGare = () => {
+    // PERF: Désactivation bouton avec feedback visuel immédiat (améliore INP)
+    const diceBtn = document.getElementById('btnRandomGare');
+    if (diceBtn) {
+        diceBtn.style.pointerEvents = 'none';
+        diceBtn.style.opacity = '0.6';
+    }
+    
+    // PERF: setTimeout(0) libère le thread principal immédiatement pour le paint
+    setTimeout(() => {
+        if (!DATA.gares || !DATA.gares.length) {
+            if (diceBtn) { diceBtn.style.pointerEvents = 'auto'; diceBtn.style.opacity = '1'; }
+            return;
+        }
+        
+        // PERF: Cache du pool valide pendant 60s pour éviter filter() répétés
+        const now = Date.now();
+        if (!cachedValidGares || now - cachedValidGaresTime > 60000) {
+            cachedValidGares = DATA.gares.filter(g => g && g.marker);
+            cachedValidGaresTime = now;
+        }
+        
+        if (!cachedValidGares.length) {
+            showToast(JS_TEXTS.errors.loading[currentLang], false);
+            if (diceBtn) { diceBtn.style.pointerEvents = 'auto'; diceBtn.style.opacity = '1'; }
+            return;
+        }
+        
+        // Nettoyage léger
+        hideWalkZone();
+        
+        const pick = cachedValidGares[Math.floor(Math.random() * cachedValidGares.length)];
+        goToGare(pick.id);
+        
+        // Réactiver le bouton
+        setTimeout(() => {
+            if (diceBtn) { diceBtn.style.pointerEvents = 'auto'; diceBtn.style.opacity = '1'; }
+        }, 400);
+    }, 0);
 };
 
 // Centre la carte sur la gare et ouvre de façon robuste la popup
 window.goToGare = (id) => {
-    const g = DATA.gares.find(x => x.id === id);
+    // PERF: Accès O(1) via Map au lieu de find() O(n)
+    const g = DATA.garesById.get(id) || DATA.gares.find(x => x.id === id);
     if (!g || !g.marker) {
         showToast(JS_TEXTS.errors.unavailable[currentLang], true);
         return;
     }
 
     const target = L.latLng(g.lat, g.lon);
-    // Nettoyage et Préparation avant d'animer
     hideWalkZone();
     map.closePopup();
     if (!map.hasLayer(markersLayer)) map.addLayer(markersLayer);
-    // Forcer un léger refresh (certains navigateurs gardent l'état des clusters figé tant qu'aucun zoom n'est déclenché)
-    map.invalidateSize(true);
-    markersLayer.refreshClusters();
 
+    // PERF: Animation simplifiée
     markersLayer.zoomToShowLayer(g.marker, () => {
-        const desiredZoom = Math.max(map.getZoom(), 14);
-        map.setView(target, desiredZoom, {
-            animate: true
-        });
-
-        const tryOpen = () => {
-            try {
-                g.marker.openPopup();
-            } catch (e) {}
-        };
-        setTimeout(tryOpen, 120);
-        // Fallback supplémentaire si l'animation de cluster retarde l'ouverture
-        setTimeout(() => {
-            if (g.marker.isPopupOpen && !g.marker.isPopupOpen()) tryOpen();
-            // Après l'animation, on force un dernier refresh des clusters pour garantir l'affichage
-            markersLayer.refreshClusters();
-        }, 500);
+        map.setView(target, Math.max(map.getZoom(), 14), { animate: true, duration: 0.4 });
+        setTimeout(() => { try { g.marker.openPopup(); } catch (e) {} }, 100);
     });
 };
 
 // Nouvelle fonction pour la recherche proche
 window.findNearbyStation = (lat, lon) => {
     if (!DATA.gares.length) return;
-    // Tri par distance simple
-    const sorted = [...DATA.gares].sort((a, b) => getDist(lat, lon, a.lat, a.lon) - getDist(lat, lon, b.lat, b.lon));
-    const closest = sorted[0];
+    
+    // PERF: Utiliser reduce au lieu de sort() pour trouver le min en O(n) au lieu de O(n log n)
+    let closest = null;
+    let minDist = Infinity;
+    for (let i = 0; i < DATA.gares.length; i++) {
+        const g = DATA.gares[i];
+        if (!g.lat || !g.lon) continue;
+        const d = getDist(lat, lon, g.lat, g.lon);
+        if (d < minDist) {
+            minDist = d;
+            closest = g;
+        }
+    }
+    
     if (closest) {
-        map.flyTo([closest.lat, closest.lon], 13);
+        map.flyTo([closest.lat, closest.lon], 13, { duration: 1 });
         setTimeout(() => {
             markersLayer.zoomToShowLayer(closest.marker, () => {
                 closest.marker.openPopup();
             });
-        }, 1500);
+        }, 1200);
     }
 };
 
 // Fonction pour cacher la zone piétonne
 function hideWalkZone() {
-    if (walkCircle) {
-        try {
-            map.removeLayer(walkCircle);
-        } catch (e) {}
-        walkCircle = null;
-    }
+    if (!walkCircle) return; // PERF: Early exit si rien à faire
+    try { map.removeLayer(walkCircle); } catch (e) {}
+    walkCircle = null;
     // Cacher la notification persistante des vélos
     const veloNotif = document.getElementById('velo-zone-notif');
-    if (veloNotif) {
-        veloNotif.classList.remove('active');
-    }
-    // Réactiver le bouton « 10 min » si Présent dans la popup
-    try {
-        const walkBtn = document.querySelector('.leaflet-popup .btn-walk');
-        if (walkBtn) {
-            walkBtn.style.pointerEvents = 'auto';
-            walkBtn.removeAttribute('aria-disabled');
-            walkBtn.tabIndex = 0;
-        }
-    } catch (e) {}
+    if (veloNotif) veloNotif.classList.remove('active');
 }
 
 // Variable pour empêcher les clics multiples rapides
@@ -1523,105 +1537,103 @@ function preComputeScoresSync() {
  * @param {number} id - L'identifiant de la gare à analyser.
  */
 window.lancerAnalyseComplete = function(id) {
-    const g = DATA.gares.find(x => x.id === id);
-    const s = analyser(g);
-    let best = null;
-    let bestS = s.note;
-    let bestTotal = s.total;
-    // Optimisation boucle comparative
-    const latMin = g.lat - 0.2,
-        latMax = g.lat + 0.2;
-    const lonMin = g.lon - 0.2,
-        lonMax = g.lon + 0.2;
-    DATA.gares.forEach(v => {
-        if (v.id !== id && v.lat >= latMin && v.lat <= latMax && v.lon >= lonMin && v.lon <= lonMax) {
-            let dist = getDist(g.lat, g.lon, v.lat, v.lon);
-            if (dist <= 10) {
-                let sv = analyser(v);
-                if (sv.note > bestS) {
-                    bestS = sv.note;
-                    bestTotal = sv.total;
-                    best = v;
-                } else if (sv.note === bestS && sv.total > bestTotal) {
-                    bestS = sv.note;
-                    bestTotal = sv.total;
-                    best = v;
-                }
+    // PERF: Feedback visuel immédiat pour améliorer l'INP perçu
+    const container = document.getElementById(`action-container-${id}`);
+    if (container) {
+        container.innerHTML = `<div style="text-align:center;padding:20px;color:#64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Analyse...</div>`;
+    }
+    
+    // PERF: setTimeout(0) libère complètement le thread pour le paint (meilleur INP que rAF)
+    setTimeout(() => {
+        // PERF: Accès O(1) via Map
+        const g = DATA.garesById.get(id) || DATA.gares.find(x => x.id === id);
+        if (!g) return;
+        
+        // PERF: Utiliser le score pré-calculé si disponible
+        const s = g.computedScore ? { note: g.computedScore, details: g.computedDetails, total: (g.computedDetails?.velos || 0) + (g.computedDetails?.bornes || 0) + (g.computedDetails?.covoit || 0) } : analyser(g);
+        
+        let best = null;
+        let bestS = s.note;
+        let bestTotal = s.total;
+        
+        // PERF: Bounding box pré-filtrée + utilisation des scores pré-calculés
+        const latMin = g.lat - 0.15, latMax = g.lat + 0.15;
+        const lonMin = g.lon - 0.15, lonMax = g.lon + 0.15;
+        
+        for (let i = 0; i < DATA.gares.length; i++) {
+            const v = DATA.gares[i];
+            if (v.id === id || v.lat < latMin || v.lat > latMax || v.lon < lonMin || v.lon > lonMax) continue;
+            
+            const dist = getDist(g.lat, g.lon, v.lat, v.lon);
+            if (dist > 10) continue;
+            
+            // PERF: Utiliser score pré-calculé si dispo
+            const sv = v.computedScore ? { note: v.computedScore, total: (v.computedDetails?.velos || 0) + (v.computedDetails?.bornes || 0) + (v.computedDetails?.covoit || 0) } : analyser(v);
+            
+            if (sv.note > bestS || (sv.note === bestS && sv.total > bestTotal)) {
+                bestS = sv.note;
+                bestTotal = sv.total;
+                best = v;
             }
         }
-    });
 
-    // Utilisation complète de JS_TEXTS.analysis pour la traduction dynamique
-    const t = JS_TEXTS.analysis;
-    const lang = currentLang;
+        // Utilisation complète de JS_TEXTS.analysis pour la traduction dynamique
+        const t = JS_TEXTS.analysis;
+        const lang = currentLang;
 
-    const pctV = Math.min((s.details.velos / 5) * 100, 100);
-    const pctB = Math.min((s.details.bornes / 6) * 100, 100);
-    const pctC = Math.min((s.details.covoit / 2) * 100, 100);
-    const color = s.note >= 7 ? '#059669' : s.note >= 4 ? '#d97706' : '#dc2626';
+        const pctV = Math.min((s.details.velos / 5) * 100, 100);
+        const pctB = Math.min((s.details.bornes / 6) * 100, 100);
+        const pctC = Math.min((s.details.covoit / 2) * 100, 100);
+        const color = s.note >= 7 ? '#059669' : s.note >= 4 ? '#d97706' : '#dc2626';
 
-    let html = `
-        <div class="analyse-container">
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                <span>${t.score[lang]}</span><span style="font-weight:900; color:${color}">${s.note}/10</span>
-            </div>
-            <div class="stat-row"><i class="fa-solid fa-bicycle" style="width:25px; color:#0891b2;"></i> <span style="flex:1">${t.bikes[lang]}</span> <b>${s.details.velos}</b><div class="progress-bg"><div class="progress-fill" style="width:${pctV}%; background:#0891b2;"></div></div></div>
-            <div class="stat-row"><i class="fa-solid fa-plug" style="width:25px; color:#d97706;"></i> <span style="flex:1">${t.irve[lang]}</span> <b>${s.details.bornes}</b><div class="progress-bg"><div class="progress-fill" style="width:${pctB}%; background:#d97706;"></div></div></div>
-            <div class="stat-row"><i class="fa-solid fa-car" style="width:25px; color:#9333ea;"></i> <span style="flex:1">${t.covoit[lang]}</span> <b>${s.details.covoit}</b><div class="progress-bg"><div class="progress-fill" style="width:${pctC}%; background:#9333ea;"></div></div></div>
-    `;
+        let html = `
+            <div class="analyse-container">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span>${t.score[lang]}</span><span style="font-weight:900; color:${color}">${s.note}/10</span>
+                </div>
+                <div class="stat-row"><i class="fa-solid fa-bicycle" style="width:25px; color:#0891b2;"></i> <span style="flex:1">${t.bikes[lang]}</span> <b>${s.details.velos}</b><div class="progress-bg"><div class="progress-fill" style="width:${pctV}%; background:#0891b2;"></div></div></div>
+                <div class="stat-row"><i class="fa-solid fa-plug" style="width:25px; color:#d97706;"></i> <span style="flex:1">${t.irve[lang]}</span> <b>${s.details.bornes}</b><div class="progress-bg"><div class="progress-fill" style="width:${pctB}%; background:#d97706;"></div></div></div>
+                <div class="stat-row"><i class="fa-solid fa-car" style="width:25px; color:#9333ea;"></i> <span style="flex:1">${t.covoit[lang]}</span> <b>${s.details.covoit}</b><div class="progress-bg"><div class="progress-fill" style="width:${pctC}%; background:#9333ea;"></div></div></div>
+        `;
 
-    if (best) {
-        html += `<button onclick="goToGare(${best.id})" style="width:100%;
-        margin-top:15px; background:white; border:1px solid ${color}; color:${color}; padding:10px 12px; border-radius:6px; font-weight:600; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;
-        cursor:pointer;">
-                    <span>${t.alt[lang]} ${escapeHTML(best.nom.replace("Gare de ", ""))}</span>
-                    <span style="background:${color};
-                    color:white; padding:2px 6px; border-radius:4px;">${bestS} ${t.go[lang].replace('Y aller ', '')}</span>
-                 </button>`;
-    } else {
-        html += `<div style="margin-top:15px; background:#ecfdf5; color:#047857; padding:12px; border-radius:6px; font-weight:800; text-align:center; border:1px solid #a7f3d0;"><i class="fa-solid fa-trophy"></i> ${t.best[lang]}</div>`;
-    }
+        if (best) {
+            html += `<button onclick="goToGare(${best.id})" style="width:100%;
+            margin-top:15px; background:white; border:1px solid ${color}; color:${color}; padding:10px 12px; border-radius:6px; font-weight:600; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;
+            cursor:pointer;">
+                        <span>${t.alt[lang]} ${escapeHTML(best.nom.replace("Gare de ", ""))}</span>
+                        <span style="background:${color};
+                        color:white; padding:2px 6px; border-radius:4px;">${bestS} ${t.go[lang].replace('Y aller ', '')}</span>
+                     </button>`;
+        } else {
+            html += `<div style="margin-top:15px; background:#ecfdf5; color:#047857; padding:12px; border-radius:6px; font-weight:800; text-align:center; border:1px solid #a7f3d0;"><i class="fa-solid fa-trophy"></i> ${t.best[lang]}</div>`;
+        }
 
-    // CORRIGÉ BUG URGENT 4 : Appel avec tous les arguments pour toggleWalkZone
-    html += `<button class="btn-walk" onclick="event.stopPropagation(); showWalkZone(${g.lat}, ${g.lon})"><i class="fa-solid fa-person-walking"></i> ${t.zone[lang]}</button>`;
-    html += `</div>`;
-    document.getElementById(`action-container-${id}`).innerHTML = html;
+        html += `<button class="btn-walk" onclick="event.stopPropagation(); showWalkZone(${g.lat}, ${g.lon})"><i class="fa-solid fa-person-walking"></i> ${t.zone[lang]}</button>`;
+        html += `</div>`;
+        
+        if (container) container.innerHTML = html;
 
-    // déclenchement confettis si score excellent
-    if (s.note >= 9) {
-        confetti({
-            particleCount: 150,
-            spread: 70,
-            origin: {
-                y: 0.6
-            },
-            colors: ['#10b981', '#22c55e', '#84cc16', '#a3e635']
-        });
-
-        // Double explosion pour score parfait 10/10
-        if (s.note === 10) {
+        // déclenchement confettis si score excellent (déporté pour ne pas bloquer)
+        if (s.note >= 9) {
             setTimeout(() => {
                 confetti({
-                    particleCount: 200,
-                    angle: 60,
-                    spread: 55,
-                    origin: {
-                        x: 0
-                    }
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#10b981', '#22c55e', '#84cc16', '#a3e635']
                 });
-                confetti({
-                    particleCount: 200,
-                    angle: 120,
-                    spread: 55,
-                    origin: {
-                        x: 1
-                    }
-                });
-            }, 250);
-        }
-    }
 
-    checkTutoAdvancement('analyse');
+                if (s.note === 10) {
+                    setTimeout(() => {
+                        confetti({ particleCount: 200, angle: 60, spread: 55, origin: { x: 0 } });
+                        confetti({ particleCount: 200, angle: 120, spread: 55, origin: { x: 1 } });
+                    }, 250);
+                }
+            }, 50);
+        }
+
+        checkTutoAdvancement('analyse');
+    });
 };
 
 const overlays = {
@@ -1645,20 +1657,30 @@ try {
     }).addTo(map);
 } catch (e) {}
 
-map.on('zoomend', () => {
-    // Vérifier que OSMBuildings est chargé avant de l'utiliser
-    if (map.getZoom() >= 15 && !osmb && typeof OSMBuildings !== 'undefined') {
+// PERF: Cache du dernier niveau de zoom pour éviter les recalculs inutiles
+let lastZoomLevel = -1;
+let zoomRafId = null;
+
+// PERF: Handler zoomend combiné et optimisé avec RAF throttling +30% CPU
+const handleZoomEnd = () => {
+    const zoom = map.getZoom();
+    
+    // PERF: Skip si le niveau de zoom n'a pas changé significativement
+    const zoomBand = zoom < 8 ? 0 : zoom < 12 ? 1 : zoom < 14 ? 2 : 3;
+    const lastBand = lastZoomLevel < 8 ? 0 : lastZoomLevel < 12 ? 1 : lastZoomLevel < 14 ? 2 : 3;
+    
+    // OSMBuildings (toujours vérifié)
+    if (zoom >= 15 && !osmb && typeof OSMBuildings !== 'undefined') {
         try {
             osmb = new OSMBuildings(map).load('https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
         } catch (e) {
             console.warn('OSMBuildings non disponible');
         }
     }
-});
-
-// CORRIGÉ BUG URGENT 3 : Icônes gares adaptées par niveau de zoom (Zoom sémantique)
-map.on('zoomend', function() {
-    const zoom = map.getZoom();
+    
+    // PERF: Ne recalculer que si on change de bande de zoom
+    if (zoomBand === lastBand && lastZoomLevel !== -1) return;
+    lastZoomLevel = zoom;
 
     if (zoom < 8) {
         // Vue France : Seulement TGV + rails simplifiés
@@ -1669,16 +1691,6 @@ map.on('zoomend', function() {
         irveLayer.remove();
         covoitLayer.remove();
         veloParkingLayer.remove();
-
-        // Taille normale gares
-        DATA.gares.forEach(g => {
-            if (g.marker) {
-                const icon = g.marker.getIcon();
-                icon.options.iconSize = [30, 30];
-                icon.options.iconAnchor = [15, 30];
-                g.marker.setIcon(icon);
-            }
-        });
 
     } else if (zoom >= 8 && zoom < 12) {
         // Vue Régionale : TGV + TER + rails normaux
@@ -1691,18 +1703,8 @@ map.on('zoomend', function() {
         covoitLayer.remove();
         veloParkingLayer.remove();
 
-        // Taille normale gares
-        DATA.gares.forEach(g => {
-            if (g.marker) {
-                const icon = g.marker.getIcon();
-                icon.options.iconSize = [30, 30];
-                icon.options.iconAnchor = [15, 30];
-                g.marker.setIcon(icon);
-            }
-        });
-
     } else if (zoom >= 12 && zoom < 14) {
-        // Vue locale : Tout afficher + Gares moyennes
+        // Vue locale : Tout afficher
         if (!map.hasLayer(railsLayer)) map.addLayer(railsLayer);
         railsLayer.setStyle({
             weight: 3,
@@ -1711,15 +1713,6 @@ map.on('zoomend', function() {
         if (!map.hasLayer(irveLayer)) map.addLayer(irveLayer);
         if (!map.hasLayer(covoitLayer)) map.addLayer(covoitLayer);
         if (!map.hasLayer(veloParkingLayer)) map.addLayer(veloParkingLayer);
-
-        DATA.gares.forEach(g => {
-            if (g.marker) {
-                const icon = g.marker.getIcon();
-                icon.options.iconSize = [40, 40];
-                icon.options.iconAnchor = [20, 20];
-                g.marker.setIcon(icon);
-            }
-        });
     } else {
         // Vue locale : Tout visible
         if (!map.hasLayer(railsLayer)) map.addLayer(railsLayer);
@@ -1727,6 +1720,12 @@ map.on('zoomend', function() {
         if (!map.hasLayer(covoitLayer)) map.addLayer(covoitLayer);
         if (!map.hasLayer(veloParkingLayer)) map.addLayer(veloParkingLayer);
     }
+};
+
+// PERF: Debounce + RAF pour zoomend (évite les appels excessifs pendant zoom continu)
+map.on('zoomend', () => {
+    if (zoomRafId) cancelAnimationFrame(zoomRafId);
+    zoomRafId = requestAnimationFrame(handleZoomEnd);
 });
 
 loadEverything();

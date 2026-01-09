@@ -57,12 +57,19 @@ li::before { content: "âž”"; color: var(--primary); position: absolute; left
 /* STYLES DYNAMIQUES DEPUIS APP.JS                            */
 /* ============================================================ */
 
+/* PERF: GPU compositing optimizations for smooth animations */
+#map { will-change: transform; }
+.leaflet-tile-container { will-change: transform; }
+.leaflet-zoom-animated { will-change: transform; }
+.leaflet-marker-pane { will-change: transform; }
+
 /* PINS & UI DYNAMIQUES (ComplÉ©ment du CSS HTML) */
 .marker-pin { width: 30px;
-height: 30px; border-radius: 50% 50% 50% 0; position: absolute; transform: rotate(-45deg); left: 50%; top: 50%; margin: -15px 0 0 -15px;
-border: 2px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; transition: all 0.3s ease;
+height: 30px; border-radius: 50% 50% 50% 0; position: absolute; transform: rotate(-45deg) translateZ(0); left: 50%; top: 50%; margin: -15px 0 0 -15px;
+border: 2px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; transition: transform 0.2s ease;
+will-change: transform;
 }
-    .marker-pin:hover { transform: rotate(-45deg) scale(1.3); z-index:999; box-shadow: 0 0 20px var(--primary);
+    .marker-pin:hover { transform: rotate(-45deg) scale(1.3) translateZ(0); z-index:999; box-shadow: 0 0 20px var(--primary);
 }
     .marker-pin i { transform: rotate(45deg); font-size: 14px;
 margin-top: 2px;}

@@ -1,6 +1,6 @@
 ﻿// ============================================================
 // NOM FICHIER : backend/server.js
-// FUSION COMPLÉˆTE : API vÉ©lo prioritaire + Cache + Air & Bio
+// FUSION COMPLÈTE : API vélo prioritaire + Cache + Air & Bio
 // DATE : 06/01/2026
 // ============================================================
 
@@ -21,16 +21,16 @@ const apiCache = new NodeCache({ stdTTL: 3600 });
 app.use(cors());
 app.use(express.json());
 
-// --- CHARGEMENT FICHIER VÉ‰LO LOCAL (FALLBACK) ---
+// --- CHARGEMENT FICHIER VÉLO LOCAL (FALLBACK) ---
 let veloDataCache = { type: "FeatureCollection", features: [] };
 try {
     const filePath = path.join(__dirname, 'velo.geojson');
     if (fs.existsSync(filePath)) {
         veloDataCache = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-        console.log(`ðŸš² Fichier vÉ©lo de secours chargÉ© : ${veloDataCache.features.length} points`);
+        console.log(`🚲 Fichier vélo de secours chargé : ${veloDataCache.features.length} points`);
     }
 } catch (e) { 
-    console.warn("âš ï¸ Fichier velo.geojson introuvable");
+    console.warn("⚠️ Fichier velo.geojson introuvable");
 }
 
 // --- ROUTES API ---
@@ -55,7 +55,7 @@ app.get('/api/gares', async (req, res) => {
 
         res.json(d);
     } catch (e) {
-        console.error('âŒ Erreur API Gares:', e.message);
+        console.error('❌ Erreur API Gares:', e.message);
         res.json([]);
     }
 });
@@ -68,12 +68,12 @@ app.get('/api/wfs-rails', async (req, res) => {
         );
         res.json(r.data);
     } catch (e) {
-        console.error('âŒ Erreur API Rails:', e.message);
+        console.error('❌ Erreur API Rails:', e.message);
         res.json({ type: 'FeatureCollection', features: [] });
     }
 });
 
-// 3. BORNES É‰LECTRIQUES (IRVE)
+// 3. BORNES ÉLECTRIQUES (IRVE)
 app.get('/api/irve', async (req, res) => {
     try {
         const r = await axios.get(
@@ -81,7 +81,7 @@ app.get('/api/irve', async (req, res) => {
         );
         res.json(r.data);
     } catch (e) {
-        console.error('âŒ Erreur API IRVE:', e.message);
+        console.error('❌ Erreur API IRVE:', e.message);
         res.json({ type: 'FeatureCollection', features: [] });
     }
 });
@@ -94,12 +94,12 @@ app.get('/api/covoiturage', async (req, res) => {
         );
         res.json(r.data);
     } catch (e) {
-        console.error('âŒ Erreur API Covoiturage:', e.message);
+        console.error('❌ Erreur API Covoiturage:', e.message);
         res.json({ type: 'FeatureCollection', features: [] });
     }
 });
 
-// 5. PARKINGS VÉ‰LOS (API prioritaire, fichier local en fallback)
+// 5. PARKINGS VÉLOS (API prioritaire, fichier local en fallback)
 app.get('/api/parking-velo', async (req, res) => {
     const { minLat, maxLat, minLon, maxLon } = req.query;
 
@@ -107,11 +107,11 @@ app.get('/api/parking-velo', async (req, res) => {
         return res.json({ type: 'FeatureCollection', features: [] });
     }
 
-    // PRIORITÉ‰ 1 : Tenter l'API Opendatasoft
+    // PRIORITÉ 1 : Tenter l'API Opendatasoft
     try {
         const url = 'https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/osm-france-bicycle-parking/exports/geojson?limit=-1';
         
-        console.log('ðŸ”„ Tentative rÉ©cupÉ©ration API vÉ©los...');
+        console.log('🔄 Tentative récupération API vélos...');
         const r = await axios.get(url, { timeout: 8000 }); // Timeout 8s
         const data = r.data;
 
@@ -132,13 +132,13 @@ app.get('/api/parking-velo', async (req, res) => {
             ? resList.filter((_, i) => i % Math.ceil(resList.length / 5000) === 0)
             : resList;
 
-        console.log(`âœ… API vÉ©los OK : ${final.length} points renvoyÉ©s`);
+        console.log(`✅ API vélos OK : ${final.length} points renvoyés`);
         return res.json({ type: 'FeatureCollection', features: final });
 
     } catch (apiError) {
-        console.warn('âš ï¸ API vÉ©los É©chouÉ©e, basculement sur fichier local...');
+        console.warn('⚠️ API vélos échouée, basculement sur fichier local...');
         
-        // PRIORITÉ‰ 2 : Utiliser le fichier local
+        // PRIORITÉ 2 : Utiliser le fichier local
         if (veloDataCache.features.length > 0) {
             const resList = veloDataCache.features.filter(f => {
                 if (!f.geometry || !f.geometry.coordinates) return false;
@@ -155,17 +155,17 @@ app.get('/api/parking-velo', async (req, res) => {
                 ? resList.filter((_, i) => i % Math.ceil(resList.length / 5000) === 0)
                 : resList;
 
-            console.log(`ðŸ—‚ï¸ Fichier local utilisÉ© : ${final.length} points`);
+            console.log(`🗂️ Fichier local utilisé : ${final.length} points`);
             return res.json({ type: 'FeatureCollection', features: final });
         }
 
         // Aucune source disponible
-        console.error('âŒ Aucune source vÉ©lo disponible');
+        console.error('❌ Aucune source vélo disponible');
         res.json({ type: 'FeatureCollection', features: [] });
     }
 });
 
-// 6. QUALITÉ‰ DE L'AIR (OpenAQ)
+// 6. QUALITÉ DE L'AIR (OpenAQ)
 app.get('/api/air-quality', async (req, res) => {
     const { lat, lon } = req.query;
     
@@ -176,7 +176,7 @@ app.get('/api/air-quality', async (req, res) => {
     const cacheKey = `air_${lat}_${lon}`;
     const cached = apiCache.get(cacheKey);
     if (cached) {
-        console.log('ðŸ“¦ Cache air-quality utilisÉ©');
+        console.log('📦 Cache air-quality utilisé');
         return res.json(cached);
     }
     
@@ -204,7 +204,7 @@ app.get('/api/air-quality', async (req, res) => {
                 if (value < 10) quality = 'Excellent';
                 else if (value < 20) quality = 'Bon';
                 else if (value < 25) quality = 'Moyen';
-                else if (value < 50) quality = 'MÉ©diocre';
+                else if (value < 50) quality = 'Médiocre';
                 else quality = 'Mauvais';
             }
             
@@ -212,7 +212,7 @@ app.get('/api/air-quality', async (req, res) => {
                 success: true,
                 data: {
                     value: value,
-                    unit: 'Âµg/mÂ³',
+                    unit: 'µg/m³',
                     quality: quality,
                     color: value < 10 ? '#10b981' : value < 25 ? '#f59e0b' : '#ef4444',
                     station: station.name
@@ -220,14 +220,14 @@ app.get('/api/air-quality', async (req, res) => {
             };
             
             apiCache.set(cacheKey, result, 3600);
-            console.log(`âœ… Air quality rÉ©cupÉ©rÉ©e : ${quality}`);
+            console.log(`✅ Air quality récupérée : ${quality}`);
             res.json(result);
         } else {
             res.json({ success: false, error: 'No data' });
         }
         
     } catch (error) {
-        console.error('âŒ OpenAQ error:', error.message);
+        console.error('❌ OpenAQ error:', error.message);
         res.json({ success: false, error: error.message });
     }
 });
@@ -358,7 +358,7 @@ app.get('/api/biodiversity', async (req, res) => {
     const cacheKey = `bio_${lat}_${lon}_${radius}`;
     const cached = apiCache.get(cacheKey);
     if (cached) {
-        console.log('ðŸ“¦ Cache biodiversity utilisÉ©');
+        console.log('📦 Cache biodiversity utilisé');
         return res.json(cached);
     }
     
@@ -391,11 +391,11 @@ app.get('/api/biodiversity', async (req, res) => {
         };
         
         apiCache.set(cacheKey, result, 86400); // Cache 24h
-        console.log(`âœ… BiodiversitÉ© rÉ©cupÉ©rÉ©e : ${species.length} espÉ¨ces`);
+        console.log(`✅ Biodiversité récupérée : ${species.length} espèces`);
         res.json(result);
         
     } catch (error) {
-        console.error('âŒ iNaturalist error:', error.message);
+        console.error('❌ iNaturalist error:', error.message);
         res.json({ success: false, error: error.message });
     }
 });
@@ -407,10 +407,10 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-// --- DÉ‰MARRAGE DU SERVEUR ---
+// --- DÉMARRAGE DU SERVEUR ---
 app.listen(port, () => {
-    console.log(`ðŸš€ Serveur dÉ©marrÉ© sur le port ${port}`);
-    console.log(`ðŸ“ Frontend : http://localhost:${port}`);
+    console.log(`🚀 Serveur démarré sur le port ${port}`);
+    console.log(`📍 Frontend : http://localhost:${port}`);
 });
 
 // ============================================================
