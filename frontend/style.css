@@ -173,10 +173,204 @@ justify-content:space-between; margin-bottom:10px; }
 color:#9ca3af; cursor:pointer; font-size:1.1rem; }
     .stats-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
     .stat-card { background:#020617; border-radius:14px;
-padding:10px 12px; border:1px solid rgba(51,65,85,0.9); }
+padding:10px 12px; border:1px solid rgba(51,65,85,0.9); position: relative; }
     .stat-label { display:block; font-size:0.75rem; color:#9ca3af; margin-bottom:4px;
 }
     .stat-value { font-size:1.1rem; font-weight:800; color:#22c55e; }
+
+/* ============================================================ */
+/* STYLES PANNEAU STATS ENHANCED                               */
+/* ============================================================ */
+
+.stats-panel-enhanced {
+    width: 420px;
+    max-height: 85vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148,163,184,0.3) transparent;
+}
+
+.stats-panel-enhanced::-webkit-scrollbar {
+    width: 6px;
+}
+
+.stats-panel-enhanced::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.stats-panel-enhanced::-webkit-scrollbar-thumb {
+    background: rgba(148,163,184,0.3);
+    border-radius: 3px;
+}
+
+.stats-section {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(51,65,85,0.5);
+}
+
+.stats-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 10px;
+}
+
+.stats-section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Cartes stats highlight avec emoji */
+.stat-highlight {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.stat-emoji {
+    font-size: 1.2rem;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    opacity: 0.8;
+}
+
+/* Couleurs des valeurs */
+.stat-blue { color: #3b82f6 !important; }
+.stat-purple { color: #a855f7 !important; }
+.stat-orange { color: #f59e0b !important; }
+.stat-green { color: #22c55e !important; }
+.stat-gold { color: #eab308 !important; }
+.stat-red { color: #ef4444 !important; }
+
+/* Cartes météo */
+.stats-grid-weather {
+    grid-template-columns: 1fr 1fr;
+}
+
+.stat-weather {
+    text-align: center;
+    padding: 12px 10px;
+}
+
+.stat-weather .stat-emoji {
+    position: static;
+    font-size: 1.5rem;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.stat-weather .stat-label {
+    text-align: center;
+}
+
+.stat-weather .stat-value {
+    font-size: 0.95rem;
+}
+
+.stat-hot {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(249, 115, 22, 0.15)) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.stat-hot .stat-value {
+    color: #f97316 !important;
+}
+
+.stat-cold {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(6, 182, 212, 0.15)) !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+.stat-cold .stat-value {
+    color: #06b6d4 !important;
+}
+
+/* Carte champion */
+.stat-champion {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(245, 158, 11, 0.1)) !important;
+    border-color: rgba(234, 179, 8, 0.3) !important;
+}
+
+/* Carte alerte */
+.stat-alert {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1)) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Footer stats */
+.stats-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
+    border-top: 1px solid rgba(51,65,85,0.5);
+    margin-top: 5px;
+}
+
+.stats-footer span {
+    font-size: 0.7rem;
+    color: #64748b;
+}
+
+.btn-refresh-stats {
+    background: rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    color: #3b82f6;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-refresh-stats:hover {
+    background: rgba(59, 130, 246, 0.3);
+    transform: scale(1.1);
+}
+
+.btn-refresh-stats.spinning i {
+    animation: spin 0.5s linear;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive pour mobile */
+@media (max-width: 480px) {
+    .stats-panel-enhanced {
+        width: 95vw;
+        right: 2.5vw;
+        left: 2.5vw;
+        transform: translateX(0);
+        top: 100px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    
+    .stat-card {
+        padding: 8px 10px;
+    }
+    
+    .stat-value {
+        font-size: 0.95rem;
+    }
+}
 
 /* ============================================================ */
 /* STYLES FROM MAP.HTML                                       */

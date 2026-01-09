@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -89,18 +89,57 @@
         </div>
     </div>
 
-    <div id="statsPanel" class="stats-panel">
+    <div id="statsPanel" class="stats-panel stats-panel-enhanced">
         <div class="stats-header">
-           <h2 id="stats-title">Tableau de bord national</h2>
+           <h2 id="stats-title">📊 Tableau de bord national</h2>
            <button id="closeStats" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="stats-grid">
-            <div class="stat-card"><span class="stat-label" id="lbl-gares">Gares analysées</span><span class="stat-value" id="stat-gares">–</span></div>
-            <div class="stat-card"><span class="stat-label" id="lbl-score">Score moyen écolo</span><span class="stat-value" id="stat-score">–</span></div>
-            <div class="stat-card"><span class="stat-label" id="lbl-tgv">Part TGV</span><span class="stat-value" id="stat-tgv">â€“</span></div>
-            <div class="stat-card"><span class="stat-label" id="lbl-velos">Moyenne parkings vélos</span><span class="stat-value" id="stat-velos">–</span></div>
-            <div class="stat-card"><span class="stat-label" id="lbl-bornes">Moyenne bornes IRVE</span><span class="stat-value" id="stat-bornes">â€“</span></div>
-            <div class="stat-card"><span class="stat-label" id="lbl-covoit">Moyenne aires covoit'</span><span class="stat-value" id="stat-covoit">–</span></div>
+        
+        <!-- ANCIENNES STATS (conservées) -->
+        <div class="stats-section">
+            <div class="stats-section-title" id="section-analysis">🔍 Analyse des gares</div>
+            <div class="stats-grid">
+                <div class="stat-card"><span class="stat-label" id="lbl-gares">Gares analysées</span><span class="stat-value" id="stat-gares">-</span></div>
+                <div class="stat-card"><span class="stat-label" id="lbl-score">Score moyen écolo</span><span class="stat-value" id="stat-score">-</span></div>
+                <div class="stat-card"><span class="stat-label" id="lbl-tgv">Part TGV</span><span class="stat-value" id="stat-tgv">-</span></div>
+                <div class="stat-card"><span class="stat-label" id="lbl-velos">Moy. parkings vélos</span><span class="stat-value" id="stat-velos">-</span></div>
+                <div class="stat-card"><span class="stat-label" id="lbl-bornes">Moy. bornes IRVE</span><span class="stat-value" id="stat-bornes">-</span></div>
+                <div class="stat-card"><span class="stat-label" id="lbl-covoit">Moy. aires covoit</span><span class="stat-value" id="stat-covoit">-</span></div>
+            </div>
+        </div>
+        
+        <!-- NOUVELLES STATS (8 nouvelles) -->
+        <div class="stats-section">
+            <div class="stats-section-title" id="section-totals">📈 Totaux nationaux</div>
+            <div class="stats-grid">
+                <div class="stat-card stat-highlight"><span class="stat-emoji">🚲</span><span class="stat-label" id="lbl-total-velos">Parkings vélo</span><span class="stat-value stat-blue" id="stat-total-velos">-</span></div>
+                <div class="stat-card stat-highlight"><span class="stat-emoji">🚗</span><span class="stat-label" id="lbl-total-covoit">Points covoiturage</span><span class="stat-value stat-purple" id="stat-total-covoit">-</span></div>
+                <div class="stat-card stat-highlight"><span class="stat-emoji">🔌</span><span class="stat-label" id="lbl-total-irve">Bornes IRVE</span><span class="stat-value stat-orange" id="stat-total-irve">-</span></div>
+                <div class="stat-card stat-highlight"><span class="stat-emoji">🚂</span><span class="stat-label" id="lbl-gares-velo">Gares avec vélo (10min)</span><span class="stat-value stat-green" id="stat-gares-velo">-</span></div>
+            </div>
+        </div>
+        
+        <div class="stats-section">
+            <div class="stats-section-title" id="section-weather">🌡️ Météo en direct</div>
+            <div class="stats-grid stats-grid-weather">
+                <div class="stat-card stat-weather stat-hot"><span class="stat-emoji">☀️</span><span class="stat-label" id="lbl-hottest">Plus chaud</span><span class="stat-value" id="stat-hottest">-</span></div>
+                <div class="stat-card stat-weather stat-cold"><span class="stat-emoji">❄️</span><span class="stat-label" id="lbl-coldest">Plus froid</span><span class="stat-value" id="stat-coldest">-</span></div>
+            </div>
+        </div>
+        
+        <div class="stats-section">
+            <div class="stats-section-title" id="section-ranking">🏆 Classement vélos</div>
+            <div class="stats-grid">
+                <div class="stat-card stat-champion"><span class="stat-emoji">🥇</span><span class="stat-label" id="lbl-top-velo">Gare top vélo (10min)</span><span class="stat-value stat-gold" id="stat-top-velo">-</span></div>
+                <div class="stat-card stat-alert"><span class="stat-emoji">⚠️</span><span class="stat-label" id="lbl-no-velo">Gares sans vélo (10min)</span><span class="stat-value stat-red" id="stat-no-velo">-</span></div>
+            </div>
+        </div>
+        
+        <div class="stats-footer">
+            <span id="stats-refresh-text">🔄 Actualisation auto: 30s</span>
+            <button id="btnRefreshStats" class="btn-refresh-stats" onclick="forceRefreshStats()">
+                <i class="fa-solid fa-sync"></i>
+            </button>
         </div>
     </div>
 
@@ -153,13 +192,28 @@
             
             // --- NEW STATS & LOADER TRANSLATIONS ---
             loader: { fr: "Chargement de la carte...", en: "Loading map..." },
-            statsTitle: { fr: "Tableau de bord national", en: "National Dashboard" },
+            statsTitle: { fr: "📊 Tableau de bord national", en: "📊 National Dashboard" },
             lblGares: { fr: "Gares analysées", en: "Analyzed stations" },
             lblScore: { fr: "Score moyen écolo", en: "Avg Eco Score" },
             lblTgv: { fr: "Part TGV", en: "TGV Share" },
-            lblVelos: { fr: "Moyenne parkings vélos", en: "Avg Bike Parking" },
-            lblBornes: { fr: "Moyenne bornes IRVE", en: "Avg Charging St." },
-            lblCovoit: { fr: "Moyenne aires covoit'", en: "Avg Carpool Areas" }
+            lblVelos: { fr: "Moy. parkings vélos", en: "Avg Bike Parking" },
+            lblBornes: { fr: "Moy. bornes IRVE", en: "Avg Charging St." },
+            lblCovoit: { fr: "Moy. aires covoit", en: "Avg Carpool Areas" },
+            
+            // --- NOUVELLES STATS (8 nouvelles) ---
+            sectionAnalysis: { fr: "🔍 Analyse des gares", en: "🔍 Station Analysis" },
+            sectionTotals: { fr: "📈 Totaux nationaux", en: "📈 National Totals" },
+            sectionWeather: { fr: "🌡️ Météo en direct", en: "🌡️ Live Weather" },
+            sectionRanking: { fr: "🏆 Classement vélos", en: "🏆 Bike Ranking" },
+            lblTotalVelos: { fr: "Parkings vélo", en: "Bike Parkings" },
+            lblTotalCovoit: { fr: "Points covoiturage", en: "Carpool Points" },
+            lblTotalIrve: { fr: "Bornes IRVE", en: "EV Charging" },
+            lblGaresVelo: { fr: "Gares avec vélo (10min)", en: "Stations w/ bike (10min)" },
+            lblHottest: { fr: "Plus chaud", en: "Hottest" },
+            lblColdest: { fr: "Plus froid", en: "Coldest" },
+            lblTopVelo: { fr: "Gare top vélo (10min)", en: "Top bike station (10min)" },
+            lblNoVelo: { fr: "Gares sans vélo (10min)", en: "Stations w/o bike (10min)" },
+            statsRefresh: { fr: "🔄 Actualisation auto: 30s", en: "🔄 Auto-refresh: 30s" }
         };
         function switchLangMap() {
             isFrMap = !isFrMap;
@@ -202,6 +256,35 @@
             if (lblVelos) lblVelos.innerText = isFrMap ? t.lblVelos.fr : t.lblVelos.en;
             if (lblBornes) lblBornes.innerText = isFrMap ? t.lblBornes.fr : t.lblBornes.en;
             if (lblCovoit) lblCovoit.innerText = isFrMap ? t.lblCovoit.fr : t.lblCovoit.en;
+            
+            // --- NOUVELLES STATS (8 nouvelles traductions) ---
+            const sectionAnalysis = document.getElementById('section-analysis');
+            const sectionTotals = document.getElementById('section-totals');
+            const sectionWeather = document.getElementById('section-weather');
+            const sectionRanking = document.getElementById('section-ranking');
+            const lblTotalVelos = document.getElementById('lbl-total-velos');
+            const lblTotalCovoit = document.getElementById('lbl-total-covoit');
+            const lblTotalIrve = document.getElementById('lbl-total-irve');
+            const lblGaresVelo = document.getElementById('lbl-gares-velo');
+            const lblHottest = document.getElementById('lbl-hottest');
+            const lblColdest = document.getElementById('lbl-coldest');
+            const lblTopVelo = document.getElementById('lbl-top-velo');
+            const lblNoVelo = document.getElementById('lbl-no-velo');
+            const statsRefresh = document.getElementById('stats-refresh-text');
+            
+            if (sectionAnalysis) sectionAnalysis.innerText = isFrMap ? t.sectionAnalysis.fr : t.sectionAnalysis.en;
+            if (sectionTotals) sectionTotals.innerText = isFrMap ? t.sectionTotals.fr : t.sectionTotals.en;
+            if (sectionWeather) sectionWeather.innerText = isFrMap ? t.sectionWeather.fr : t.sectionWeather.en;
+            if (sectionRanking) sectionRanking.innerText = isFrMap ? t.sectionRanking.fr : t.sectionRanking.en;
+            if (lblTotalVelos) lblTotalVelos.innerText = isFrMap ? t.lblTotalVelos.fr : t.lblTotalVelos.en;
+            if (lblTotalCovoit) lblTotalCovoit.innerText = isFrMap ? t.lblTotalCovoit.fr : t.lblTotalCovoit.en;
+            if (lblTotalIrve) lblTotalIrve.innerText = isFrMap ? t.lblTotalIrve.fr : t.lblTotalIrve.en;
+            if (lblGaresVelo) lblGaresVelo.innerText = isFrMap ? t.lblGaresVelo.fr : t.lblGaresVelo.en;
+            if (lblHottest) lblHottest.innerText = isFrMap ? t.lblHottest.fr : t.lblHottest.en;
+            if (lblColdest) lblColdest.innerText = isFrMap ? t.lblColdest.fr : t.lblColdest.en;
+            if (lblTopVelo) lblTopVelo.innerText = isFrMap ? t.lblTopVelo.fr : t.lblTopVelo.en;
+            if (lblNoVelo) lblNoVelo.innerText = isFrMap ? t.lblNoVelo.fr : t.lblNoVelo.en;
+            if (statsRefresh) statsRefresh.innerText = isFrMap ? t.statsRefresh.fr : t.statsRefresh.en;
 
             if (window.updateAppLanguage) window.updateAppLanguage(isFrMap);
         }

@@ -102,12 +102,148 @@ veloNotifDiv.innerHTML = `
             <span class="velo-notif-title" id="velo-zone-title">Zone piétonne active</span>
             <span class="velo-notif-count"><span id="velo-zone-count">0</span> <span id="velo-zone-label">parkings vélos à 10 min</span></span>
         </div>
+        <div class="notif-arrows" id="velo-nav-arrows" style="display:none;margin-left:12px;gap:6px;align-items:center;">
+            <svg class="arrow-left" id="velo-arrow-left" viewBox="0 0 24 24" width="28" height="28" style="cursor:pointer;background:#0A74D6;border-radius:50%;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:all 0.2s ease;">
+                <path d="M15 18l-6-6 6-6" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg class="arrow-right" id="velo-arrow-right" viewBox="0 0 24 24" width="28" height="28" style="cursor:pointer;background:#0A74D6;border-radius:50%;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:all 0.2s ease;">
+                <path d="M9 18l6-6-6-6" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
         <button class="velo-notif-close" onclick="hideWalkZone()" title="Fermer la zone">
             <i class="fa-solid fa-xmark"></i>
         </button>
     </div>
 `;
 document.body.appendChild(veloNotifDiv);
+
+// === NAVIGATION VÉLOS DANS ZONE 10 MIN ===
+let velosInZone = [];
+let velosZoneIndex = 0;
+
+// Fonction pour afficher la popup d'un vélo et centrer la vue
+function showVeloPopup() {
+    if (velosInZone.length === 0) return;
+    const velo = velosInZone[velosZoneIndex];
+    const lat = velo.lat;
+    const lon = velo.lon;
+    
+    // Créer le contenu de la popup
+    const popupContent = `
+        <div style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;padding:8px;min-width:180px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <div style="width:32px;height:32px;background:linear-gradient(135deg,#0A74D6,#0891b2);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                    <i class="fa-solid fa-bicycle" style="color:white;font-size:0.9rem;"></i>
+                </div>
+                <div>
+                    <div style="font-weight:700;color:#0A74D6;font-size:0.85rem;">Parking Vélo</div>
+                    <div style="font-size:0.7rem;color:#64748b;">${velosZoneIndex + 1} / ${velosInZone.length}</div>
+                </div>
+            </div>
+            <div style="font-size:0.8rem;color:#334155;">
+                ${velo.nom || velo.name || 'Station vélo'}
+            </div>
+            ${velo.capacite ? `<div style="font-size:0.75rem;color:#64748b;margin-top:4px;"><i class="fa-solid fa-parking" style="margin-right:4px;"></i>Capacité: ${velo.capacite} places</div>` : ''}
+        </div>
+    `;
+    
+    // Ouvrir la popup sur la carte
+    L.popup({
+        closeButton: true,
+        className: 'velo-zone-popup'
+    })
+        .setLatLng([lat, lon])
+        .setContent(popupContent)
+        .openOn(map);
+    
+    // Centrer la carte sur le vélo
+    map.setView([lat, lon], 17, { animate: true, duration: 0.5 });
+}
+
+// Configuration des event listeners pour les flèches
+document.addEventListener('DOMContentLoaded', function() {
+    const arrowLeft = document.getElementById('velo-arrow-left');
+    const arrowRight = document.getElementById('velo-arrow-right');
+    const veloNotif = document.getElementById('velo-zone-notif');
+    
+    if (arrowLeft) {
+        arrowLeft.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (velosInZone.length > 1) {
+                velosZoneIndex = (velosZoneIndex - 1 + velosInZone.length) % velosInZone.length;
+                showVeloPopup();
+            }
+        });
+        // Hover effect
+        arrowLeft.addEventListener('mouseenter', function() {
+            this.style.background = '#085bb5';
+            this.style.transform = 'scale(1.1)';
+        });
+        arrowLeft.addEventListener('mouseleave', function() {
+            this.style.background = '#0A74D6';
+            this.style.transform = 'scale(1)';
+        });
+    }
+    
+    if (arrowRight) {
+        arrowRight.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (velosInZone.length > 1) {
+                velosZoneIndex = (velosZoneIndex + 1) % velosInZone.length;
+                showVeloPopup();
+            }
+        });
+        // Hover effect
+        arrowRight.addEventListener('mouseenter', function() {
+            this.style.background = '#085bb5';
+            this.style.transform = 'scale(1.1)';
+        });
+        arrowRight.addEventListener('mouseleave', function() {
+            this.style.background = '#0A74D6';
+            this.style.transform = 'scale(1)';
+        });
+    }
+    
+    // Support tactile (swipe) pour mobile sur la notification
+    if (veloNotif) {
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const minSwipeDistance = 50;
+        
+        veloNotif.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        
+        veloNotif.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            const swipeDistance = touchEndX - touchStartX;
+            
+            if (velosInZone.length > 1) {
+                if (swipeDistance > minSwipeDistance) {
+                    // Swipe droite → vélo précédent
+                    velosZoneIndex = (velosZoneIndex - 1 + velosInZone.length) % velosInZone.length;
+                    showVeloPopup();
+                } else if (swipeDistance < -minSwipeDistance) {
+                    // Swipe gauche → vélo suivant
+                    velosZoneIndex = (velosZoneIndex + 1) % velosInZone.length;
+                    showVeloPopup();
+                }
+            }
+        }, { passive: true });
+    }
+});
+
+// Fonction pour mettre à jour les flèches de navigation
+function updateVeloNavArrows(count) {
+    const arrows = document.getElementById('velo-nav-arrows');
+    if (arrows) {
+        if (count > 1) {
+            arrows.style.display = 'flex';
+        } else {
+            arrows.style.display = 'none';
+        }
+    }
+}
 
 // Fonction debounce pour performance
 function debounce(func, wait) {
@@ -1103,15 +1239,39 @@ async function loadWeather(lat, lon, id) {
     const el = document.getElementById(`weather-${id}`);
     if (!el) return;
     try {
-        const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
-        const d = await r.json();
-        const w = d.current_weather || d.current;
+        // Charger la météo
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+        const weatherData = await weatherRes.json();
+        const w = weatherData.current_weather || weatherData.current;
 
         if (w) {
+            // Afficher d'abord la météo
             el.innerHTML = `
                 <div class="weather-item"><i class="fa-solid fa-temperature-half weather-icon"></i> ${w.temperature}°C</div>
                 <div class="weather-item"><i class="fa-solid fa-wind weather-icon"></i> ${w.windspeed} km/h</div>
+                <div class="weather-item air-quality-loading"><i class="fa-solid fa-lungs weather-icon"></i> <span style="color:#64748b">...</span></div>
             `;
+            
+            // Puis charger la qualité de l'air en arrière-plan
+            try {
+                const airRes = await fetch(`${API_BASE_URL}/api/air-quality?lat=${lat}&lon=${lon}`);
+                const airData = await airRes.json();
+                
+                if (airData.success && airData.data) {
+                    const note = airData.data.note;
+                    const color = airData.data.color;
+                    const airEl = el.querySelector('.air-quality-loading');
+                    if (airEl) {
+                        airEl.innerHTML = `<i class="fa-solid fa-lungs weather-icon" style="color:${color}"></i> <span style="color:${color}">${note}/10</span>`;
+                        airEl.classList.remove('air-quality-loading');
+                    }
+                }
+            } catch (airErr) {
+                console.log('Air quality non disponible:', airErr.message);
+                // Enlever le placeholder si erreur
+                const airEl = el.querySelector('.air-quality-loading');
+                if (airEl) airEl.remove();
+            }
         } else {
             throw new Error('No Data');
         }
@@ -1375,9 +1535,14 @@ function hideWalkZone() {
     if (!walkCircle) return; // PERF: Early exit si rien à faire
     try { map.removeLayer(walkCircle); } catch (e) {}
     walkCircle = null;
+    // Reset des variables de navigation vélos
+    velosInZone = [];
+    velosZoneIndex = 0;
     // Cacher la notification persistante des vélos
     const veloNotif = document.getElementById('velo-zone-notif');
     if (veloNotif) veloNotif.classList.remove('active');
+    // Cacher les flèches de navigation
+    updateVeloNavArrows(0);
 }
 
 // Variable pour empêcher les clics multiples rapides
@@ -1431,8 +1596,10 @@ window.showWalkZone = function(lat, lon) {
             }
         }, 50);
 
-        // Comptage des parkings vélos dans la zone pour l'info-bulle
+        // Comptage et collecte des parkings vélos dans la zone pour la navigation
         let count = 0;
+        velosInZone = []; // Reset du tableau global
+        velosZoneIndex = 0; // Reset de l'index
         const bounds = walkCircle.getBounds();
         DATA.velos.forEach(v => {
             if (bounds.contains({
@@ -1440,6 +1607,7 @@ window.showWalkZone = function(lat, lon) {
                     lng: v.lon
                 })) {
                 count++;
+                velosInZone.push(v); // Stocker le vélo pour navigation
             }
         });
 
@@ -1455,6 +1623,8 @@ window.showWalkZone = function(lat, lon) {
             if (veloTitleEl) veloTitleEl.textContent = JS_TEXTS.veloZone.title[currentLang];
             if (veloLabelEl) veloLabelEl.textContent = JS_TEXTS.veloZone.count[currentLang];
             veloNotif.classList.add('active');
+            // Mettre à jour les flèches de navigation
+            updateVeloNavArrows(count);
         }
 
         // FIX: Réactiver les clics après un court délai
@@ -1852,6 +2022,13 @@ function computeGlobalStats() {
     let sumBornes = 0;
     let sumCovoit = 0;
     let n = 0;
+    
+    // Nouvelles stats
+    let garesAvecVelo = 0;
+    let garesSansVelo = 0;
+    let topVeloGare = null;
+    let topVeloCount = 0;
+    
     DATA.gares.forEach(g => {
         if (!g.computedScore || !g.computedDetails) return;
         n++;
@@ -1860,6 +2037,18 @@ function computeGlobalStats() {
         sumVelos += g.computedDetails.velos;
         sumBornes += g.computedDetails.bornes;
         sumCovoit += g.computedDetails.covoit;
+        
+        // Compter les gares avec/sans vélo dans zone 10min (800m)
+        if (g.computedDetails.velos > 0) {
+            garesAvecVelo++;
+            // Trouver la gare avec le plus de vélos
+            if (g.computedDetails.velos > topVeloCount) {
+                topVeloCount = g.computedDetails.velos;
+                topVeloGare = g.nom;
+            }
+        } else {
+            garesSansVelo++;
+        }
     });
     if (n === 0) return null;
     return {
@@ -1869,6 +2058,15 @@ function computeGlobalStats() {
         moyVelos: (sumVelos / n).toFixed(1),
         moyBornes: (sumBornes / n).toFixed(1),
         moyCovoit: (sumCovoit / n).toFixed(1),
+        // Nouvelles stats
+        totalVelos: DATA.velos.length,
+        totalCovoit: DATA.covoit.length,
+        totalIrve: DATA.bornes.length,
+        garesAvecVelo: garesAvecVelo,
+        garesSansVelo: garesSansVelo,
+        topVeloGare: topVeloGare,
+        topVeloCount: topVeloCount,
+        totalGares: n
     };
 }
 
@@ -1876,19 +2074,131 @@ const statsPanel = document.getElementById('statsPanel');
 const btnStats = document.getElementById('btnStats');
 const btnStatsClose = document.getElementById('closeStats');
 
+// Cache pour les données météo enrichies
+let enrichedStatsCache = null;
+let enrichedStatsLastFetch = 0;
+let statsRefreshInterval = null;
+
+// Fonction pour récupérer les stats météo enrichies depuis le backend
+async function fetchEnrichedStats() {
+    try {
+        const center = map.getCenter();
+        const url = `${API_BASE_URL}/api/enriched-stats?centerLat=${center.lat}&centerLon=${center.lng}`;
+        const response = await fetch(url);
+        if (response.ok) {
+            enrichedStatsCache = await response.json();
+            enrichedStatsLastFetch = Date.now();
+            console.log('📊 Enriched stats loaded:', enrichedStatsCache);
+        }
+    } catch (e) {
+        console.warn('⚠️ Impossible de charger les stats enrichies:', e.message);
+    }
+}
+
 function refreshStatsPanel() {
+    if (!GLOBAL_STATS) {
+        // Recalculer si nécessaire
+        GLOBAL_STATS = computeGlobalStats();
+    }
     if (!GLOBAL_STATS) return;
+    
+    // Anciennes stats
     document.getElementById('stat-gares').innerText = GLOBAL_STATS.gares;
     document.getElementById('stat-score').innerText = GLOBAL_STATS.scoreMoyen + '/10';
     document.getElementById('stat-tgv').innerText = GLOBAL_STATS.partTGV;
     document.getElementById('stat-velos').innerText = GLOBAL_STATS.moyVelos;
     document.getElementById('stat-bornes').innerText = GLOBAL_STATS.moyBornes;
     document.getElementById('stat-covoit').innerText = GLOBAL_STATS.moyCovoit;
+    
+    // Nouvelles stats - Totaux nationaux
+    const totalVelosEl = document.getElementById('stat-total-velos');
+    const totalCovoitEl = document.getElementById('stat-total-covoit');
+    const totalIrveEl = document.getElementById('stat-total-irve');
+    const garesVeloEl = document.getElementById('stat-gares-velo');
+    const topVeloEl = document.getElementById('stat-top-velo');
+    const noVeloEl = document.getElementById('stat-no-velo');
+    const hottestEl = document.getElementById('stat-hottest');
+    const coldestEl = document.getElementById('stat-coldest');
+    
+    if (totalVelosEl) totalVelosEl.innerText = GLOBAL_STATS.totalVelos || DATA.velos.length || 0;
+    if (totalCovoitEl) totalCovoitEl.innerText = GLOBAL_STATS.totalCovoit || DATA.covoit.length || 0;
+    if (totalIrveEl) totalIrveEl.innerText = GLOBAL_STATS.totalIrve || DATA.bornes.length || 0;
+    if (garesVeloEl) garesVeloEl.innerText = `${GLOBAL_STATS.garesAvecVelo || 0}/${GLOBAL_STATS.totalGares || 0}`;
+    
+    // Classement vélos
+    if (topVeloEl) {
+        if (GLOBAL_STATS.topVeloGare) {
+            // Tronquer le nom si trop long
+            const nom = GLOBAL_STATS.topVeloGare.length > 15 
+                ? GLOBAL_STATS.topVeloGare.substring(0, 15) + '...'
+                : GLOBAL_STATS.topVeloGare;
+            topVeloEl.innerText = `${nom} (${GLOBAL_STATS.topVeloCount})`;
+        } else {
+            topVeloEl.innerText = '-';
+        }
+    }
+    if (noVeloEl) noVeloEl.innerText = GLOBAL_STATS.garesSansVelo || 0;
+    
+    // Météo - depuis les stats enrichies
+    if (enrichedStatsCache && enrichedStatsCache.weather) {
+        const weather = enrichedStatsCache.weather;
+        if (hottestEl && weather.hottest) {
+            hottestEl.innerText = `${weather.hottest.name} (${weather.hottest.temp}°C)`;
+        }
+        if (coldestEl && weather.coldest) {
+            coldestEl.innerText = `${weather.coldest.name} (${weather.coldest.temp}°C)`;
+        }
+    } else {
+        // Charger les données météo si pas encore fait
+        if (Date.now() - enrichedStatsLastFetch > 30000) {
+            fetchEnrichedStats();
+        }
+        if (hottestEl) hottestEl.innerText = 'Chargement...';
+        if (coldestEl) coldestEl.innerText = 'Chargement...';
+    }
 }
+
+// Fonction pour forcer le rafraîchissement des stats
+window.forceRefreshStats = async function() {
+    const btn = document.getElementById('btnRefreshStats');
+    if (btn) {
+        btn.classList.add('spinning');
+    }
+    
+    // Recalculer les stats globales
+    GLOBAL_STATS = computeGlobalStats();
+    
+    // Recharger les données météo
+    await fetchEnrichedStats();
+    
+    // Rafraîchir l'affichage
+    refreshStatsPanel();
+    
+    if (btn) {
+        setTimeout(() => btn.classList.remove('spinning'), 500);
+    }
+    
+    showToast(currentLang === 'fr' ? 'Stats actualisées !' : 'Stats refreshed!');
+};
+
+// Démarrer le rafraîchissement automatique toutes les 30s quand le panneau est ouvert
+function startStatsAutoRefresh() {
+    if (statsRefreshInterval) clearInterval(statsRefreshInterval);
+    statsRefreshInterval = setInterval(() => {
+        if (statsPanel && statsPanel.classList.contains('active')) {
+            GLOBAL_STATS = computeGlobalStats();
+            fetchEnrichedStats().then(() => refreshStatsPanel());
+        }
+    }, 30000);
+}
+
 if (btnStats && statsPanel) {
     btnStats.addEventListener('click', () => {
+        GLOBAL_STATS = computeGlobalStats();
         refreshStatsPanel();
+        fetchEnrichedStats().then(() => refreshStatsPanel());
         statsPanel.classList.add('active');
+        startStatsAutoRefresh();
     });
 }
 if (btnStatsClose && statsPanel) {
@@ -1896,6 +2206,16 @@ if (btnStatsClose && statsPanel) {
         statsPanel.classList.remove('active');
     });
 }
+
+// Fermer le statsPanel en cliquant en dehors
+document.addEventListener('click', (e) => {
+    if (statsPanel && statsPanel.classList.contains('active')) {
+        // Vérifier si le clic est en dehors du panel et du bouton stats
+        if (!statsPanel.contains(e.target) && !btnStats.contains(e.target)) {
+            statsPanel.classList.remove('active');
+        }
+    }
+});
 
 let tutoStep = 0;
 let currentTutoTarget = null;
