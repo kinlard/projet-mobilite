@@ -348,6 +348,28 @@ padding:10px 12px; border:1px solid rgba(51,65,85,0.9); position: relative; }
     to { transform: rotate(360deg); }
 }
 
+/* Stats cliquables (lien vers gare) */
+.stat-clickable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: -2px -4px;
+}
+.stat-clickable:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateX(2px);
+}
+.stat-clickable i {
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+.stat-clickable:hover i {
+    opacity: 1;
+}
+
 /* Responsive pour mobile */
 @media (max-width: 480px) {
     .stats-panel-enhanced {

@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Eco-Escapade | Carte Interactive</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%8C%BF</text></svg>">
     
@@ -15,6 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="responsive.css">
 </head>
 <body>
 
@@ -32,8 +33,14 @@
     </div>
 
     <div class="dashboard-header">
+        <!-- ÉTAGE DESKTOP : Navigation classique (>768px) -->
         <div class="brand"><h1>Eco-Escapade</h1></div>
-        <div class="nav-links">
+        <button class="burger-menu" id="burgerMenu" style="display: none;">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <div class="nav-links" id="navLinks">
             <a href="index.html" id="nav-home">Accueil</a>
             <a href="carnet.html" id="nav-fav">Mes favoris</a>
             <a href="apropos.html" id="nav-apropos">À propos</a>
@@ -63,6 +70,53 @@
             </button>
 
             <button class="lang-switch" onclick="switchLangMap()">FR / EN</button>
+        </div>
+    </div>
+
+    <!-- HEADER MOBILE : 2 ÉTAGES (visible uniquement <768px) -->
+    <div class="mobile-header" id="mobileHeader">
+        <!-- ÉTAGE 1 : Logo + Recherche -->
+        <div class="mobile-header-top">
+            <div class="mobile-logo">
+                <h1>Eco-Escapade</h1>
+            </div>
+            <div class="mobile-search">
+                <i class="fa-solid fa-search search-icon"></i>
+                <input type="text" id="mobile-search-input" list="mobile-gares-list" placeholder="Rechercher..." autocomplete="off">
+                <datalist id="mobile-gares-list"></datalist>
+            </div>
+        </div>
+        
+        <!-- ÉTAGE 2 : Barre d'outils avec scroll horizontal -->
+        <div class="mobile-header-bottom">
+            <button class="mobile-tool-btn" onclick="openDiscoverModal()" title="Découvrir">
+                <i class="fa-solid fa-compass"></i>
+                <span>Découvrir</span>
+            </button>
+            <button class="mobile-tool-btn" onclick="document.getElementById('btnStats').click()" title="Stats">
+                <i class="fa-solid fa-chart-column"></i>
+                <span>Stats</span>
+            </button>
+            <button class="mobile-tool-btn" onclick="map.locate({setView: true, maxZoom: 12})" title="Ma position">
+                <i class="fa-solid fa-location-arrow"></i>
+                <span>Position</span>
+            </button>
+            <button class="mobile-tool-btn" onclick="randomGare()" title="Aléatoire">
+                <i class="fa-solid fa-dice"></i>
+                <span>Random</span>
+            </button>
+            <button class="mobile-tool-btn" onclick="toggleIgnLayer()" title="Carte IGN">
+                <i class="fa-solid fa-mountain"></i>
+                <span>IGN</span>
+            </button>
+            <button class="mobile-tool-btn" onclick="openThemeSelector()" title="Thème">
+                <i class="fa-solid fa-palette"></i>
+                <span>Thème</span>
+            </button>
+            <button class="mobile-tool-btn" onclick="switchLangMap()" title="Langue">
+                <i class="fa-solid fa-language"></i>
+                <span id="mobile-lang-text">FR</span>
+            </button>
         </div>
     </div>
 
@@ -289,6 +343,9 @@
             if (window.updateAppLanguage) window.updateAppLanguage(isFrMap);
         }
     </script>
+    
+    <!-- Script Mobile Adaptive UI -->
+    <script src="mobile-logic.js"></script>
 </body>
 </html>
 

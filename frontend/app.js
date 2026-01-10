@@ -1503,6 +1503,32 @@ window.goToGare = (id) => {
     });
 };
 
+// Naviguer vers une gare par ses coordonnées (utilisé par les stats météo et top vélo)
+window.goToGareByCoords = (lat, lon, gareName) => {
+    // Fermer le panneau stats
+    const statsPanel = document.getElementById('statsPanel');
+    if (statsPanel) statsPanel.classList.remove('active');
+    
+    // Chercher la gare correspondante dans les données
+    const gare = DATA.gares.find(g => {
+        // Correspondance par nom (partiel) ou par coordonnées proches
+        const nameMatch = g.nom && gareName && g.nom.toLowerCase().includes(gareName.toLowerCase().substring(0, 10));
+        const coordMatch = Math.abs(g.lat - lat) < 0.01 && Math.abs(g.lon - lon) < 0.01;
+        return nameMatch || coordMatch;
+    });
+    
+    if (gare && gare.marker) {
+        // Gare trouvée, utiliser goToGare
+        goToGare(gare.id);
+    } else {
+        // Gare non trouvée dans les données chargées, naviguer vers les coordonnées
+        hideWalkZone();
+        map.closePopup();
+        map.flyTo([lat, lon], 14, { duration: 1 });
+        showToast(`📍 ${gareName}`, false);
+    }
+};
+
 // Nouvelle fonction pour la recherche proche
 window.findNearbyStation = (lat, lon) => {
     if (!DATA.gares.length) return;
@@ -2028,6 +2054,8 @@ function computeGlobalStats() {
     let garesSansVelo = 0;
     let topVeloGare = null;
     let topVeloCount = 0;
+    let topVeloLat = null;
+    let topVeloLon = null;
     
     DATA.gares.forEach(g => {
         if (!g.computedScore || !g.computedDetails) return;
@@ -2045,6 +2073,8 @@ function computeGlobalStats() {
             if (g.computedDetails.velos > topVeloCount) {
                 topVeloCount = g.computedDetails.velos;
                 topVeloGare = g.nom;
+                topVeloLat = g.lat;
+                topVeloLon = g.lon;
             }
         } else {
             garesSansVelo++;
@@ -2066,6 +2096,8 @@ function computeGlobalStats() {
         garesSansVelo: garesSansVelo,
         topVeloGare: topVeloGare,
         topVeloCount: topVeloCount,
+        topVeloLat: topVeloLat,
+        topVeloLon: topVeloLon,
         totalGares: n
     };
 }
@@ -2125,28 +2157,45 @@ function refreshStatsPanel() {
     if (totalIrveEl) totalIrveEl.innerText = GLOBAL_STATS.totalIrve || DATA.bornes.length || 0;
     if (garesVeloEl) garesVeloEl.innerText = `${GLOBAL_STATS.garesAvecVelo || 0}/${GLOBAL_STATS.totalGares || 0}`;
     
-    // Classement vélos
+    // Classement vélos - avec bouton pour naviguer
     if (topVeloEl) {
-        if (GLOBAL_STATS.topVeloGare) {
-            // Tronquer le nom si trop long
-            const nom = GLOBAL_STATS.topVeloGare.length > 15 
-                ? GLOBAL_STATS.topVeloGare.substring(0, 15) + '...'
+        if (GLOBAL_STATS.topVeloGare && GLOBAL_STATS.topVeloLat && GLOBAL_STATS.topVeloLon) {
+            const nom = GLOBAL_STATS.topVeloGare.length > 12 
+                ? GLOBAL_STATS.topVeloGare.substring(0, 12) + '...'
                 : GLOBAL_STATS.topVeloGare;
-            topVeloEl.innerText = `${nom} (${GLOBAL_STATS.topVeloCount})`;
+            topVeloEl.innerHTML = `<span class="stat-clickable" onclick="goToGareByCoords(${GLOBAL_STATS.topVeloLat}, ${GLOBAL_STATS.topVeloLon}, '${GLOBAL_STATS.topVeloGare.replace(/'/g, "\\'")}')">
+                ${nom} (${GLOBAL_STATS.topVeloCount}) <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.7rem;margin-left:4px;"></i>
+            </span>`;
+        } else if (GLOBAL_STATS.topVeloGare) {
+            topVeloEl.innerText = `${GLOBAL_STATS.topVeloGare} (${GLOBAL_STATS.topVeloCount})`;
         } else {
             topVeloEl.innerText = '-';
         }
     }
     if (noVeloEl) noVeloEl.innerText = GLOBAL_STATS.garesSansVelo || 0;
     
-    // Météo - depuis les stats enrichies
+    // Météo - depuis les stats enrichies - avec boutons pour naviguer
     if (enrichedStatsCache && enrichedStatsCache.weather) {
         const weather = enrichedStatsCache.weather;
         if (hottestEl && weather.hottest) {
-            hottestEl.innerText = `${weather.hottest.name} (${weather.hottest.temp}°C)`;
+            const nomHot = weather.hottest.name.length > 12 ? weather.hottest.name.substring(0, 12) + '...' : weather.hottest.name;
+            if (weather.hottest.lat && weather.hottest.lon) {
+                hottestEl.innerHTML = `<span class="stat-clickable" onclick="goToGareByCoords(${weather.hottest.lat}, ${weather.hottest.lon}, '${weather.hottest.name.replace(/'/g, "\\'")}')">
+                    ${nomHot} (${weather.hottest.temp}°C) <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.7rem;margin-left:4px;"></i>
+                </span>`;
+            } else {
+                hottestEl.innerText = `${nomHot} (${weather.hottest.temp}°C)`;
+            }
         }
         if (coldestEl && weather.coldest) {
-            coldestEl.innerText = `${weather.coldest.name} (${weather.coldest.temp}°C)`;
+            const nomCold = weather.coldest.name.length > 12 ? weather.coldest.name.substring(0, 12) + '...' : weather.coldest.name;
+            if (weather.coldest.lat && weather.coldest.lon) {
+                coldestEl.innerHTML = `<span class="stat-clickable" onclick="goToGareByCoords(${weather.coldest.lat}, ${weather.coldest.lon}, '${weather.coldest.name.replace(/'/g, "\\'")}')">
+                    ${nomCold} (${weather.coldest.temp}°C) <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.7rem;margin-left:4px;"></i>
+                </span>`;
+            } else {
+                coldestEl.innerText = `${nomCold} (${weather.coldest.temp}°C)`;
+            }
         }
     } else {
         // Charger les données météo si pas encore fait
