@@ -23,14 +23,14 @@ Tableau de Bord</title>
     <div class="container">
         <div class="top-section">
             <div class="titles"><h2 id="main-title" style="font-size: 
-2.5rem; margin: 0;">Tableau de Bord</h2><p id="main-subtitle" style="color:#94a3b8; margin-top: 5px;">Gérez vos futures aventures bas carbone.</p></div>
+2.5rem; margin: 0;">Tableau de Bord</h2><p id="main-subtitle" style="color:#94a3b8; margin-top: 5px;">G�rez vos futures aventures bas carbone.</p></div>
             <div class="heatmap-container"><div id="miniMap"></div></div>
         </div>
         <div id="grid" class="card-grid"></div>
         <div id="empty" style="text-align: center;
-color: #64748b; margin-top: 100px; display: none;"><i class="fa-solid fa-ghost" style="font-size: 3rem; margin-bottom: 20px;"></i><p id="empty-text">Aucune donnée.</p><a href="map.html" id="btn-scan" class="btn-main" style="width:200px;
+color: #64748b; margin-top: 100px; display: none;"><i class="fa-solid fa-ghost" style="font-size: 3rem; margin-bottom: 20px;"></i><p id="empty-text">Aucune donn�e.</p><a href="map.html" id="btn-scan" class="btn-main" style="width:200px;
 margin: 20px auto;">Scanner la carte</a></div>
-        <div class="danger-zone"><button id="btn-nuke" class="btn-nuke" onclick="openNukeModal()">⚠️ SÉQUENCE D’AUTODESTRUCTION</button></div>
+        <div class="danger-zone"><button id="btn-nuke" class="btn-nuke" onclick="openNukeModal()">?? S�QUENCE D�AUTODESTRUCTION</button></div>
     </div>
     <button id="vs-btn" onclick="openVsModal()"><i class="fa-solid fa-gavel"></i> <span id="btn-compare">COMPARER</span></button>
     <div id="toast" class="toast"><i class="fa-solid fa-circle-info" style="color:var(--primary)"></i><span id="toast-msg">Message</span></div>
@@ -40,7 +40,7 @@ margin: 20px auto;">Scanner la carte</a></div>
             <h3 id="onb-title" style="color:var(--primary);
 font-size:1.8rem; margin-bottom:20px;">Bienvenue !</h3>
             <p id="onb-text" style="text-align:left; line-height:1.6;
-color:#cbd5e1;">Voici votre carnet de voyage intelligent. Comparez deux gares, trouvez des images de la ville, générez un QR Code pour partager. Carte de situation en haut à droite.</p>
+color:#cbd5e1;">Voici votre carnet de voyage intelligent. Comparez deux gares, trouvez des images de la ville, g�n�rez un QR Code pour partager. Carte de situation en haut � droite.</p>
             <button id="onb-btn" class="btn-main" onclick="closeAll()" style="margin-top:20px;">C'est parti !</button>
         </div>
     </div>
@@ -72,7 +72,7 @@ box-shadow: 0 0 50px rgba(239,68,68,0.3);">
 color: #ef4444; margin-bottom: 20px;"></i>
             <h3 id="nuke-title" style="color: #ef4444;
 font-size: 1.5rem;">ATTENTION</h3>
-            <p id="nuke-text">Voulez-vous vraiment détruire tout le carnet ?</p>
+            <p id="nuke-text">Voulez-vous vraiment d�truire tout le carnet ?</p>
             <div style="display: flex;
 gap: 10px; justify-content: center; margin-top: 20px;">
                 <button id="nuke-no" onclick="closeAll()" style="padding: 10px 20px;
@@ -86,7 +86,7 @@ background: #ef4444; border:none; color:white; border-radius:8px; font-weight:bo
         <div class="modal-box">
             <h3 id="del-title" style="margin-bottom:15px;">Supprimer ce favori ?</h3>
             <p id="del-text" style="color:#94a3b8;
-margin-bottom:20px;">Cette action est irréversible.</p>
+margin-bottom:20px;">Cette action est irr�versible.</p>
             <div style="display: flex; gap: 10px;
 justify-content: center;">
                 <button id="del-no" onclick="closeAll()" style="padding: 10px 20px;
@@ -109,8 +109,11 @@ font-style:italic; font-size:2rem; margin-bottom:10px;">COMPARATEUR</h2>
     <script>
         const escapeHTML = (str) => str ? str.replace(/[&<>'"]/g, tag => ({ '&': '&', '<': '<', '>': '>', "'": "'", '"': '"' }[tag])) : '';
 
-        // MODIFIÉ‰ : Variable langue dÉ©placÉ©e en haut pour Éªtre accessible dans render()
+        // MODIFI� : Variable langue d�plac�e en haut pour �tre accessible dans render()
         let isFrCarnet = true;
+        
+        // Placeholder for DASHBOARD_TEXTS - will be imported by module script
+        let DASHBOARD_TEXTS = {};
 
         let favoris = JSON.parse(localStorage.getItem('eco_favoris')) || [];
         favoris = favoris.map(f => {
@@ -154,7 +157,7 @@ grid.innerHTML = '';
                         <div class="circle-wrap" style="background: ${gradient}"><div class="circle-inner">${score}</div></div>
                         <div class="stats-list">
                             <div class="stat-item"><i class="fa-solid fa-bicycle" style="color:#06b6d4;
-width:20px;"></i> ${details.velos} ${isFrCarnet ? 'Vélos' : 'Bikes'}</div>
+width:20px;"></i> ${details.velos} ${isFrCarnet ? 'V�los' : 'Bikes'}</div>
                             <div class="stat-item"><i class="fa-solid fa-plug" style="color:#f59e0b;
 width:20px;"></i> ${details.bornes} ${isFrCarnet ? 'Bornes' : 'Terminals'}</div>
                             <div class="stat-item"><i class="fa-solid fa-car" style="color:#a855f7;
@@ -204,8 +207,8 @@ document.getElementById('toast-msg').innerText = msg;
 document.getElementById('googleQuery').innerText = `${isFrCarnet ? 'Recherche pour :' : 'Search for:'} "${cleanCity}"`;
             openModal('googlePhotosModal');
             const grid = document.getElementById('googleGrid');
-            // MODIFIÉ‰ : Utilisation de translationsCarnet
-            grid.innerHTML = `<div style="color:#94a3b8; padding:20px;">${isFrCarnet ? translationsCarnet.imgLoad.fr : translationsCarnet.imgLoad.en}</div>`;
+            // MODIFIɉ : Utilisation de DASHBOARD_TEXTS
+            grid.innerHTML = `<div style="color:#94a3b8; padding:20px;">${isFrCarnet ? DASHBOARD_TEXTS.imgLoad.fr : DASHBOARD_TEXTS.imgLoad.en}</div>`;
 try {
                 const url = `https://fr.wikipedia.org/w/api.php?action=query&titles=${cleanCity}&prop=pageimages&format=json&pithumbsize=600&origin=*`;
 const r = await fetch(url);
@@ -216,10 +219,10 @@ if (pid !== "-1" && pages[pid].thumbnail) {
                     const imgSrc = pages[pid].thumbnail.source;
 grid.innerHTML = `<img src="${imgSrc}" class="google-pic">`;
                 } else {
-                    grid.innerHTML = `<div style="color:#ef4444; padding:20px;">${isFrCarnet ? translationsCarnet.imgError.fr : translationsCarnet.imgError.en}</div>`;
+                    grid.innerHTML = `<div style="color:#ef4444; padding:20px;">${isFrCarnet ? DASHBOARD_TEXTS.imgError.fr : DASHBOARD_TEXTS.imgError.en}</div>`;
 }
             } catch(e) {
-                grid.innerHTML = `<div style="color:#ef4444; padding:20px;">${isFrCarnet ? translationsCarnet.conError.fr : translationsCarnet.conError.en}</div>`;
+                grid.innerHTML = `<div style="color:#ef4444; padding:20px;">${isFrCarnet ? DASHBOARD_TEXTS.conError.fr : DASHBOARD_TEXTS.conError.en}</div>`;
 }
         }
 
@@ -238,15 +241,15 @@ document.getElementById('confirmDeleteBtn').onclick = () => {
             if(itemToDeleteIndex !== null) {
                 favoris.splice(itemToDeleteIndex, 1);
 localStorage.setItem('eco_favoris', JSON.stringify(favoris));
-                // MODIFIÉ‰ : Toast traduit
-                render(); closeAll(); showToast(isFrCarnet ? translationsCarnet.toastDel.fr : translationsCarnet.toastDel.en);
+                // MODIFIɉ : Toast traduit
+                render(); closeAll(); showToast(isFrCarnet ? DASHBOARD_TEXTS.toastDel.fr : DASHBOARD_TEXTS.toastDel.en);
             }
         };
 window.toggleVs = (index, checkbox) => {
             if (checkbox.checked) {
                 if (selectedVs.length >= 2) { checkbox.checked = false;
-// MODIFIÉ‰ : Toast traduit
-showToast(isFrCarnet ? translationsCarnet.toastMax.fr : translationsCarnet.toastMax.en); return; }
+// MODIFIɉ : Toast traduit
+showToast(isFrCarnet ? DASHBOARD_TEXTS.toastMax.fr : DASHBOARD_TEXTS.toastMax.en); return; }
                 selectedVs.push(index);
 } else {
                 selectedVs = selectedVs.filter(i => i !== index);
@@ -262,9 +265,9 @@ const f2 = favoris[selectedVs[1]];
             const winner = (v1, v2) => v1 > v2 ?
 'val-win' : (v1 < v2 ? 'val-lose' : '');
             
-            // MODIFIÉ‰ : Labels dynamiques pour la modale VS
+            // MODIFIɉ : Labels dynamiques pour la modale VS
             const lblScore = isFrCarnet ? "SCORE GLOBAL" : "GLOBAL SCORE";
-            const lblVelos = isFrCarnet ? "VÉLOS" : "BIKES";
+            const lblVelos = isFrCarnet ? "V�LOS" : "BIKES";
             const lblBornes = isFrCarnet ? "BORNES" : "TERMINALS";
             const lblCovoit = isFrCarnet ? "COVOIT'" : "CARPOOL";
 
@@ -296,52 +299,24 @@ font-size:0.8rem;">${lblCovoit}</td><td class="${winner(f2.details.covoit, f1.de
             const timer = setInterval(() => {
                 
 count--; screen.innerHTML = count;
-                // MODIFIÉ‰ : Traduction PURGE COMPLETE
-                if(count <= 0) { clearInterval(timer); screen.innerHTML = isFrCarnet ? "PURGE TERMINÉE" : "PURGE COMPLETE"; localStorage.removeItem('eco_favoris'); setTimeout(() => location.reload(), 2000); } // FIX: Changed French text for better localization.
+                // MODIFIɉ : Traduction PURGE COMPLETE
+                if(count <= 0) { clearInterval(timer); screen.innerHTML = isFrCarnet ? "PURGE TERMIN�E" : "PURGE COMPLETE"; localStorage.removeItem('eco_favoris'); setTimeout(() => location.reload(), 2000); } // FIX: Changed French text for better localization.
             }, 1000);
         };
 window.openOnboarding = () => document.getElementById('onboardingModal').classList.add('active');
         if(!localStorage.getItem('visited_carnet_final')) { setTimeout(openOnboarding, 1000); localStorage.setItem('visited_carnet_final', 'true');
 }
+    </script>
+    
+    <script type="module">
+        import { DASHBOARD_TEXTS as DT } from './js/textes.js';
         
-const translationsCarnet = {
-            navCarte: { fr: "Carte", en: "Map" }, 
-            navAide: { fr: "Aide", en: "Help" }, 
-            mainTitle: { fr: "Tableau de Bord", en: "Dashboard" }, 
-            mainSub: { fr: "Gérez vos futures aventures bas carbone.", en: "Manage your future low-carbon adventures." }, 
-            emptyText: { fr: "Aucune donnée.", en: "No data." }, 
-            btnScan: { fr: "Scanner la carte", en: "Scan map" }, 
-            btnNuke: { fr: "⚠️ SÉQUENCE D'AUTODESTRUCTION", en: "⚠️ SELF-DESTRUCT SEQUENCE" }, 
-            btnCompare: { fr: "COMPARER", en: "COMPARE" }, 
-            onbTitle: { fr: "Bienvenue !", en: "Welcome!" },
-            onbText: { fr: "Voici votre carnet de voyage intelligent. Comparez deux gares, trouvez des images de la ville, générez un QR Code pour partager. Carte de situation en haut à droite.", en: "Here is your smart travel notebook. Compare two stations, find city images, generate a QR Code to share. Location map at the top right." },
-            onbBtn: { fr: "C'est parti !", en: "Let's go!" },
-            googleTitle: { fr: "Images de la ville", en: "City Images" },
-            qrTitle: { fr: "Partager", en: "Share" },
-            qrText: { fr: "Scannez pour ouvrir Google Maps", en: "Scan to open Google Maps" },
-            nukeTitle: { fr: "ATTENTION", en: "WARNING" },
-            nukeText: { fr: "Voulez-vous vraiment détruire tout le carnet ?", en: "Do you really want to destroy the entire notebook?" },
-            nukeNo: { fr: "Non", en: "No" },
-            nukeYes: { fr: "OUI, DETRUIRE", en: "YES, DESTROY" },
-            delTitle: { fr: "Supprimer ce favori ?", en: "Delete this favorite?" },
-            delText: { fr: "Cette action est irréversible.", en: "This action is irreversible." },
-            delNo: { fr: "Annuler", en: "Cancel" },
-            delYes: { fr: "Supprimer", en: "Delete" },
-            vsTitle: { fr: "COMPARATEUR", en: "COMPARATOR" },
-            imgLoad: { fr: "Chargement des images...", en: "Loading images..." },
-            imgError: { fr: "Aucune image trouvée.", en: "No image found." },
-            conError: { fr: "Erreur de connexion.", en: "Connection error." },
-            toastDel: { fr: "Favori supprimé.", en: "Favorite deleted." },
-            toastMax: { fr: "Maximum 2 sélections.", en: "Maximum 2 selections." },
-            txtGo: { fr: "Y aller", en: "Go there" },
-            lblVelos: { fr: "Vélos", en: "Bikes" },
-            lblBornes: { fr: "Bornes", en: "Terminals" },
-            lblCovoit: { fr: "Covoit", en: "Carpool" }
-        };
+        // Make DASHBOARD_TEXTS available globally for the non-module script
+        window.DASHBOARD_TEXTS = DT;
 
         function switchLangCarnet() {
             isFrCarnet = !isFrCarnet;
-            const t = translationsCarnet;
+            const t = window.DASHBOARD_TEXTS;
             document.getElementById('nav-carte').innerText = isFrCarnet ? t.navCarte.fr : t.navCarte.en;
             document.getElementById('nav-aide').innerText = isFrCarnet ? t.navAide.fr : t.navAide.en;
             document.getElementById('main-title').innerText = isFrCarnet ? t.mainTitle.fr : t.mainTitle.en;
@@ -368,6 +343,9 @@ const translationsCarnet = {
             // Re-render cards with new language
             render();
         }
+        
+        window.switchLangCarnet = switchLangCarnet;
+    </script>
 
 
 

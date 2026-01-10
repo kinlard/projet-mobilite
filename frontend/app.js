@@ -1,5 +1,15 @@
-﻿// ============================================================
-// 0. STYLE & CONFIGURATION
+// ============================================================
+// 0. IMPORTS ES MODULES
+// ============================================================
+import { 
+    AVIS_BAD, AVIS_MID, AVIS_GOOD,
+    MAJOR_CITIES, FALLBACK_IMAGES,
+    LOADING_PHRASES,
+    APP_TEXTS
+} from './js/textes.js';
+
+// ============================================================
+// 1. STYLE & CONFIGURATION
 // ============================================================
 
 // URL de l'API (Localhost ou Prod)
@@ -8,9 +18,9 @@ const API_BASE_URL = (window.location.hostname === 'localhost' || window.locatio
     : '';
 
 // ============================================================
-// 1. INITIALISATION CARTE
+// 2. INITIALISATION CARTE
 // ============================================================
-console.log("🚀 Initialisation Eco-Escapade - FIX ZONE piétonne");
+console.log("?? Initialisation Eco-Escapade - FIX ZONE pi�tonne");
 
 const map = L.map('map', {
     zoomControl: false,
@@ -29,16 +39,16 @@ const googleSat = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z
 });
 map.addLayer(googleSat);
 
-// FIX: Initialisation globale des données et des couches manquantes
-// SAFETY: définitions minimales pour éviter les ReferenceError au démarrage
+// FIX: Initialisation globale des donn�es et des couches manquantes
+// SAFETY: d�finitions minimales pour �viter les ReferenceError au d�marrage
 const DATA = {
     gares: [],
     garesById: new Map(), // PERF: Index O(1) par ID
     velos: [],
     bornes: [],
     covoit: [],
-    proprete: {},       // Données propreté indexées par nom de gare
-    defibrillateurs: [] // Données défibrillateurs avec coordonnées
+    proprete: {},       // Donn�es propret� index�es par nom de gare
+    defibrillateurs: [] // Donn�es d�fibrillateurs avec coordonn�es
 };
 
 const createCluster = (cls) => L.markerClusterGroup({
@@ -68,15 +78,15 @@ const railsLayer = L.geoJSON(null, {
         weight: 2,
         opacity: 0.6
     },
-    // PERF: Simplification géométrie pour low-end
+    // PERF: Simplification g�om�trie pour low-end
     simplifyFactor: 1.5,
     bubblingMouseEvents: false
 });
 
-// FIX: Initialiser variables globales pour la gestion de la zone piétonne
+// FIX: Initialiser variables globales pour la gestion de la zone pi�tonne
 let walkCircle = null;
 
-// FIX: Déclaration globale de GLOBAL_STATS pour éviter ReferenceError
+// FIX: D�claration globale de GLOBAL_STATS pour �viter ReferenceError
 let GLOBAL_STATS = null;
 
 const counterDiv = L.DomUtil.create('div', 'visible-counter');
@@ -89,7 +99,7 @@ toastDiv.className = 'map-toast';
 toastDiv.innerHTML = `<i class="fa-solid fa-person-walking" style="font-size:1.2rem;"></i> <span id="toast-text">Message</span>`;
 document.body.appendChild(toastDiv);
 
-// Notification persistante pour la zone piétonne (vélos)
+// Notification persistante pour la zone pi�tonne (v�los)
 const veloNotifDiv = document.createElement('div');
 veloNotifDiv.id = 'velo-zone-notif';
 veloNotifDiv.className = 'velo-zone-notif';
@@ -99,8 +109,8 @@ veloNotifDiv.innerHTML = `
             <i class="fa-solid fa-bicycle"></i>
         </div>
         <div class="velo-notif-text">
-            <span class="velo-notif-title" id="velo-zone-title">Zone piétonne active</span>
-            <span class="velo-notif-count"><span id="velo-zone-count">0</span> <span id="velo-zone-label">parkings vélos à 10 min</span></span>
+            <span class="velo-notif-title" id="velo-zone-title">Zone pi�tonne active</span>
+            <span class="velo-notif-count"><span id="velo-zone-count">0</span> <span id="velo-zone-label">parkings v�los � 10 min</span></span>
         </div>
         <div class="notif-arrows" id="velo-nav-arrows" style="display:none;margin-left:12px;gap:6px;align-items:center;">
             <svg class="arrow-left" id="velo-arrow-left" viewBox="0 0 24 24" width="28" height="28" style="cursor:pointer;background:#0A74D6;border-radius:50%;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:all 0.2s ease;">
@@ -117,18 +127,18 @@ veloNotifDiv.innerHTML = `
 `;
 document.body.appendChild(veloNotifDiv);
 
-// === NAVIGATION VÉLOS DANS ZONE 10 MIN ===
+// === NAVIGATION V�LOS DANS ZONE 10 MIN ===
 let velosInZone = [];
 let velosZoneIndex = 0;
 
-// Fonction pour afficher la popup d'un vélo et centrer la vue
+// Fonction pour afficher la popup d'un v�lo et centrer la vue
 function showVeloPopup() {
     if (velosInZone.length === 0) return;
     const velo = velosInZone[velosZoneIndex];
     const lat = velo.lat;
     const lon = velo.lon;
     
-    // Créer le contenu de la popup
+    // Cr�er le contenu de la popup
     const popupContent = `
         <div style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;padding:8px;min-width:180px;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
@@ -136,14 +146,14 @@ function showVeloPopup() {
                     <i class="fa-solid fa-bicycle" style="color:white;font-size:0.9rem;"></i>
                 </div>
                 <div>
-                    <div style="font-weight:700;color:#0A74D6;font-size:0.85rem;">Parking Vélo</div>
+                    <div style="font-weight:700;color:#0A74D6;font-size:0.85rem;">Parking V�lo</div>
                     <div style="font-size:0.7rem;color:#64748b;">${velosZoneIndex + 1} / ${velosInZone.length}</div>
                 </div>
             </div>
             <div style="font-size:0.8rem;color:#334155;">
-                ${velo.nom || velo.name || 'Station vélo'}
+                ${velo.nom || velo.name || 'Station v�lo'}
             </div>
-            ${velo.capacite ? `<div style="font-size:0.75rem;color:#64748b;margin-top:4px;"><i class="fa-solid fa-parking" style="margin-right:4px;"></i>Capacité: ${velo.capacite} places</div>` : ''}
+            ${velo.capacite ? `<div style="font-size:0.75rem;color:#64748b;margin-top:4px;"><i class="fa-solid fa-parking" style="margin-right:4px;"></i>Capacit�: ${velo.capacite} places</div>` : ''}
         </div>
     `;
     
@@ -156,11 +166,11 @@ function showVeloPopup() {
         .setContent(popupContent)
         .openOn(map);
     
-    // Centrer la carte sur le vélo
+    // Centrer la carte sur le v�lo
     map.setView([lat, lon], 17, { animate: true, duration: 0.5 });
 }
 
-// Configuration des event listeners pour les flèches
+// Configuration des event listeners pour les fl�ches
 document.addEventListener('DOMContentLoaded', function() {
     const arrowLeft = document.getElementById('velo-arrow-left');
     const arrowRight = document.getElementById('velo-arrow-right');
@@ -220,11 +230,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (velosInZone.length > 1) {
                 if (swipeDistance > minSwipeDistance) {
-                    // Swipe droite → vélo précédent
+                    // Swipe droite ? v�lo pr�c�dent
                     velosZoneIndex = (velosZoneIndex - 1 + velosInZone.length) % velosInZone.length;
                     showVeloPopup();
                 } else if (swipeDistance < -minSwipeDistance) {
-                    // Swipe gauche → vélo suivant
+                    // Swipe gauche ? v�lo suivant
                     velosZoneIndex = (velosZoneIndex + 1) % velosInZone.length;
                     showVeloPopup();
                 }
@@ -233,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Fonction pour mettre à jour les flèches de navigation
+// Fonction pour mettre � jour les fl�ches de navigation
 function updateVeloNavArrows(count) {
     const arrows = document.getElementById('velo-nav-arrows');
     if (arrows) {
@@ -282,7 +292,7 @@ function getDist(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-// Fonction pour mettre à jour le compteur de gares visibles
+// Fonction pour mettre � jour le compteur de gares visibles
 function updateCount() {
     const countEl = document.getElementById('count-val');
     if (countEl) {
@@ -294,7 +304,7 @@ function updateCount() {
 // Gestion des favoris avec localStorage
 function getFavoris() {
     try {
-        // FIX: Utilisation de 'eco_favoris' pour cohérence avec carnet.html
+        // FIX: Utilisation de 'eco_favoris' pour coh�rence avec carnet.html
         return JSON.parse(localStorage.getItem('eco_favoris') || '[]');
     } catch (e) {
         return [];
@@ -316,316 +326,34 @@ function toggleFavori(id, nom, type) {
             icon.classList.remove('fav-active');
             icon.classList.add('fav-inactive');
         }
-        showToast(`${nom} ${JS_TEXTS.favoris.removed[currentLang]}`);
+        showToast(`${nom} ${APP_TEXTS.favoris.removed[currentLang]}`);
     } else {
         favoris.push({ id, nom, type, date: new Date().toISOString() });
         if (icon) {
             icon.classList.remove('fav-inactive');
             icon.classList.add('fav-active');
         }
-        showToast(`${nom} ${JS_TEXTS.favoris.added[currentLang]}`);
+        showToast(`${nom} ${APP_TEXTS.favoris.added[currentLang]}`);
     }
     
-    // FIX: Utilisation de 'eco_favoris' pour cohérence avec carnet.html
+    // FIX: Utilisation de 'eco_favoris' pour coh�rence avec carnet.html
     localStorage.setItem('eco_favoris', JSON.stringify(favoris));
 }
 
 let osmb = null;
 
-// AVIS INTELLIGENTS
-const AVIS_BAD = ["Peu d'équipements.", "Gare isolée.", "Manque de connexions.", "À fuir."];
-const AVIS_MID = ["Gare correcte.", "Quelques équipements.", "Bon pour un départ.", "Pratique mais basique."];
-const AVIS_GOOD = ["Excellente gare !", "Top pour le vélo.", "Super connectée.", "Voyage vert idéal.", "Bien desservie."];
-
-const MAJOR_CITIES = [
-    "Paris", "Marseille", "Lyon", "Toulouse", "Nice", "Nantes", "Montpellier",
-    "Strasbourg", "Bordeaux", "Lille", "Rennes", "Reims", "Saint-Étienne",
-    "Toulon", "Le Havre", "Grenoble", "Dijon", "Angers", "Nîmes", "Villeurbanne",
-    "Saint-Denis", "Aix-en-Provence", "Clermont-Ferrand", "Le Mans", "Brest",
-    "Tours", "Amiens", "Limoges", "Annecy", "Perpignan", "Metz", "Besançon"
-];
-
-const FALLBACK_IMAGES = [
-    "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=500&q=80",
-    "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=500&q=80",
-    "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=500&q=80",
-    "https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=500&q=80",
-    "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&q=80"
-];
-
-// CORRIGÉ BUG URGENT 2 : Liste complète des messages de chargement
-const LOADING_PHRASES = [
-    "Gonflage des pneus...",
-    "Alignement des rails...",
-    "Calcul du bilan carbone...",
-    "Démarrage machine...",
-    "Plantation d'arbres...",
-    "Recherche de bornes...",
-    "Connexion satellite...",
-    "Vérification météo...",
-    "Chargement des cartes...",
-    "Compostage des octets...",
-    "Réchauffement du serveur (mais pas de la planète)...",
-    "Arrosage automatique des données...",
-    "Dressage des ours polaires virtuels...",
-    "Polissage des panneaux solaires...",
-    "Tri sélectif des paquets réseau...",
-    "Recyclage des anciennes versions du site...",
-    "Capture de CO₂ numérique en cours...",
-    "Comptage des abeilles pixelisées...",
-    "Nettoyage de l'océan de données...",
-    "Calibration des éoliennes virtuelles...",
-    "Vérification de l'empreinte carbone de ce clic...",
-    "Réintroduction des pandas dans la base de données...",
-    "Optimisation de la photosynthèse du design...",
-    "Ramassage des déchets dans le cache...",
-    "Extinction des lumières inutiles du serveur...",
-    "Conversion des cookies en cookies bio...",
-    "Plantation de bits dans la forêt de données...",
-    "Réglage de la température de la banquise GPU...",
-    "Réparation de la couche d'ozone CSS...",
-    "Dressage des serveurs pour qu'ils consomment moins...",
-    "Réutilisation des blagues déjà recyclées...",
-    "Neutralisation carbone de cette barre de chargement...",
-    "Réveil des développeurs éco-responsables...",
-    "Inspection technique des vélos de livraison de paquets...",
-    "Sauvetage des tortues dans le flux réseau...",
-    "Chasse au plastique dans les fichiers temporaires...",
-    "Vérification du tri des variables globales...",
-    "Stockage du surplus d'énergie dans un fichier .green...",
-    "Récupération d'eau de pluie pour refroidir le CPU...",
-    "Formation des pixels au zéro déchet...",
-    "Désactivation des centrales à charbon Java...",
-    "Installation de panneaux solaires sur le header...",
-    "Compostage des lignes de code inutiles...",
-    "Traçage d'un corridor écologique entre deux pages...",
-    "Calcul de l'angle optimal du soleil sur le logo...",
-    "Protection des espèces rares de bugs...",
-    "Rénovation énergétique du HTML existant...",
-    "Transport des données en covoiturage...",
-    "Filtrage des particules fines dans la base SQL...",
-    "Plantation de 14 arbres pour cette requête...",
-    "Remplissage des gourdes de la RAM...",
-    "Sensibilisation des cookies au RGPD et à la planète...",
-    "Réparation des barrières coralliennes du front-end...",
-    "Installation de nichoirs à oiseaux dans le footer...",
-    "Remplissage des bornes de recharge à données vertes...",
-    "Éteindre les volcans de logs trop bavards...",
-    "Audit énergétique des animations inutiles...",
-    "Préparation d'un monde un peu plus vert..."
-];
-
-// CORRIGÉ BUG URGENT 4 : Traductions complètes et ajout des textes manquants
-const JS_TEXTS = {
-    // === TUTORIEL COMPLET (4 TAPES) ===
-    tuto1: {
-        title: { fr: "🔔 TUTORIEL - étape 1/4", en: "🔔 TUTORIAL - Step 1/4" },
-        text: { fr: "Bienvenue sur Eco-Escapade ! Cette carte interactive vous aide à voyager en train de manière écologique. Utilisez la barre de recherche en haut pour trouver une gare, ou cliquez directement sur un marqueur bleu sur la carte pour voir ses informations.", en: "Welcome to Eco-Escapade! This interactive map helps you travel by train in an eco-friendly way. Use the search bar at the top to find a station, or click directly on a blue marker on the map to see its information." }
-    },
-    tuto2: {
-        title: { fr: "📊 ANALYSE - étape 2/4", en: "📊 ANALYSIS - Step 2/4" },
-        text: { fr: "Cliquez sur le bouton 'Analyser' dans la popup d'une gare. L'application va calculer automatiquement un score écologique basé sur plusieurs critères : les parkings vélos à proximité (10 minutes à pied), les bornes de recharge électrique IRVE, les options de covoiturage disponibles et l'accessibilité piétonne globale.", en: "Click the 'Analyze' button in a station's popup. The app will automatically calculate an eco-score based on several criteria: nearby bike parkings (10 minutes walking), IRVE electric charging stations, available carpooling options, and overall pedestrian accessibility." }
-    },
-    tuto3: {
-        title: { fr: "🎯 RÉSULTAT - étape 3/4", en: "🎯 RESULT - Step 3/4" },
-        text: { fr: "Le score écologique s'affiche sur 10. Un score élevé (8-10) signifie que la gare est excellente pour les déplacements doux et écologiques. Un score moyen (5-7) indique des possibilités correctes. Vous pouvez activer la zone piétonne de 10 minutes pour visualiser tous les services accessibles à pied depuis la gare.", en: "The eco-score is displayed out of 10. A high score (8-10) means the station is excellent for soft mobility and eco-friendly travel. An average score (5-7) indicates decent possibilities. You can activate the 10-minute walking zone to visualize all services accessible on foot from the station." }
-    },
-    tuto4: {
-        title: { fr: "🙌 À VOUS ! - étape 4/4", en: "🙌 YOUR TURN! - Step 4/4" },
-        text: { fr: "Vous savez tout maintenant ! Explorez les gares de France, comparez leurs scores écologiques, ajoutez vos gares préférées avec le bouton 💕 favori, et planifiez vos voyages en train de manière écoresponsable. Utilisez le mode statistiques pour voir les meilleures gares du pays. Bon voyage !", en: "You know everything now! Explore French railway stations, compare their eco-scores, add your favorite stations with the 💕 favorite button, and plan your train trips in an eco-responsible way. Use the statistics mode to see the best stations in the country. Have a great journey!" }
-    },
-
-    // === BOUTONS TUTORIEL ===
-    tutorialButtons: {
-        next: { fr: "Suivant ➡️", en: "Next ➡️" },
-        prev: { fr: "⬅️ Précédent", en: "⬅️ Previous" },
-        finish: { fr: "Terminer ✅", en: "Finish ✅" },
-        skip: { fr: "Passer le tutoriel", en: "Skip tutorial" },
-        close: { fr: "Fermer", en: "Close" }
-    },
-
-    // === POPUPS ET TOASTS ===
-    popup: {
-        score: { fr: "Score écolo", en: "Eco Score" },
-        analyse: { fr: "Analyser", en: "Analyze" },
-        zone: { fr: "Zone 10 min à pied", en: "10 min Walk Zone" },
-        champ: { fr: "La meilleure gare du secteur", en: "Best local station" },
-        alter: { fr: "Alternative :", en: "Alternative:" },
-        analyzing: { fr: "Analyse en cours...", en: "Analyzing..." },
-        noEquipment: { fr: "Peu d'équipements.", en: "Few facilities." },
-        noConnections: { fr: "Manque de connexions.", en: "Lack of connections." }
-    },
-
-    toast: {
-        zoneActivated: { fr: "Zone 10 min activée", en: "10 min zone activated" },
-        zoneDeactivated: { fr: "Zone 10 min désactivée", en: "10 min zone deactivated" },
-        bikesFound: { fr: "Parkings vélos trouvés !", en: "Bike parkings found!" },
-        themeApplied: { fr: "Thème appliqué !", en: "Theme applied!" },
-        cardCopied: { fr: "Carte copiée !", en: "Card copied!" },
-        googleMapsActive: { fr: "Carte Google Maps Standard activée", en: "Google Maps Standard activated" },
-        satelliteActive: { fr: "Vue satellite rétablie", en: "Satellite view restored" },
-        heatmapOn: { fr: "Carte de chaleur (bientôt disponible)", en: "Heatmap (coming soon)" },
-        heatmapOff: { fr: "Carte de chaleur désactivée", en: "Heatmap deactivated" }
-    },
-
-    weather: {
-        loading: { fr: "Météo...", en: "Weather..." },
-        error: { fr: "Météo indisponible", en: "Weather unavailable" }
-    },
-
-    // === ANALYSE DÉTAILLÉE ===
-    analysis: {
-        score: { fr: "Score écolo", en: "Eco Score" },
-        bikes: { fr: "Vélos à 10min", en: "Bikes within 10min" },
-        irve: { fr: "Recharge électrique", en: "EV Charging" },
-        covoit: { fr: "Covoiturage", en: "Carpooling" },
-        best: { fr: "La meilleure gare du secteur", en: "Best station in the area" },
-        alt: { fr: "Alternative :", en: "Alternative:" },
-        go: { fr: "Y aller ➡️", en: "Go there ➡️" },
-        zone: { fr: "🚶 Zone 10 min à pied", en: "🚶 10 min Walk Zone" },
-        details: { fr: "Détails éco-score", en: "Eco-score details" }
-    },
-
-    // NEW: Added missing translations for resetDiscover function
-    discover: {
-        title: { fr: "Envie de partir quelque part ?", en: "Want to go somewhere?" },
-        subtitle: { fr: "Choisissez un environnement, le site trouve pour vous les gares les plus écologiques.", en: "Choose an environment, the site finds the most eco-friendly stations for you." }
-    },
-
-    results: {
-        loading: { fr: "Chargement en cours...", en: "Loading..." },
-        top9: { fr: "Top 9 des gares sélectionnées.", en: "Top 9 selected stations." },
-        bikes: { fr: "vélos", en: "bikes" },
-        bornes: { fr: "bornes", en: "terminals" },
-        go: { fr: "Y aller ➡️", en: "Go there ➡️" }
-    },
-
-    categories: {
-        mer: { fr: " Plages", en: " Beaches" },
-        ocean: { fr: " Océan & Vagues", en: " Ocean & Waves" },
-        montagne: { fr: " Montagne & Neige", en: " Mountain & Snow" },
-        ville: { fr: " Grandes Métropoles", en: " Major Cities" },
-        paris: { fr: " Capitale", en: " Capital" },
-        sud: { fr: " ☀️ Le Sud", en: " ☀️ The South" },
-        nord: { fr: " Nord", en: " North" }
-    },
-
-    location: {
-        title: { fr: "Ma position", en: " My location" },
-        text: { fr: "Vous êtes localisé ici avec une précision de", en: "You are located here with an accuracy of" },
-        meters: { fr: "Mètres", en: "meters" },
-        findStation: { fr: "Trouver une gare proche", en: "Find nearby station" }
-    },
-
-    // === BOUTONS UI ===
-    buttons: {
-        random: { fr: "Gare aléatoire", en: "Random station" },
-        locate: { fr: "Me localiser", en: "Locate me" },
-        stats: { fr: "Statistiques globales", en: "Global statistics" },
-        heatmap: { fr: "Carte de chaleur affluence", en: "Crowd heatmap" },
-        ignMap: { fr: "Carte Google Maps Standard", en: "Google Maps Standard" },
-        themes: { fr: "Changer le Thème", en: "Change theme" },
-        ecoInfo: { fr: "Infos écologiques avancées", en: "Advanced ecological info" },
-        discover: { fr: "DÉCOUVRIR", en: "DISCOVER" },
-        addFavorite: { fr: "Ajouter aux favoris", en: "Add to favorites" },
-        removeFavorite: { fr: "Retirer des favoris", en: "Remove from favorites" }
-    },
-
-    themes: {
-        ecoVert: { fr: "Vert", en: "Green" },
-        ocean: { fr: "Océan", en: "Ocean" }
-    },
-
-    favs: {
-        title: { fr: "💕 Mes Favoris", en: "💕 My Favorites" },
-        noFav: { fr: "Aucun favori pour le moment.", en: "No favorites yet." },
-        addedOn: { fr: "Ajouté le", en: "Added on" },
-        remove: { fr: "Retirer", en: "Remove" },
-        goTo: { fr: "Y aller", en: "Go there" }
-    },
-
-    ecoPanel: {
-        title: { fr: "Informations écologiques avancées", en: "Advanced Ecological Information" },
-        defaultText: { fr: "Sélectionnez une gare sur la carte pour voir ses données écologiques détaillées (qualité de l'air, biodiversité, arbres urbains).", en: "Select a station on the map to see its detailed ecological data (air quality, biodiversity, urban trees)." },
-        loading: { fr: "Chargement des données écologiques...", en: "Loading ecological data..." },
-        error: { fr: "Impossible de charger les données écologiques pour cette zone.", en: "Could not load ecological data for this area." } // UX: Added error message
-    },
-
-    search: {
-        placeholder: { fr: "Rechercher une gare...", en: "Search for a station..." }
-    },
-
-    counter: {
-        stations: { fr: "gares", en: "stations" }
-    },
-
-    // Notifications zone piétonne vélos
-    veloZone: {
-        title: { fr: "Zone piétonne active", en: "Walking zone active" },
-        count: { fr: "parkings vélos à 10 min", en: "bike parkings within 10 min" }
-    },
-
-    // Toasts favoris
-    favoris: {
-        added: { fr: "ajouté aux favoris ❤️", en: "added to favorites ❤️" },
-        removed: { fr: "retiré des favoris", en: "removed from favorites" }
-    },
-
-    // Popups IRVE/Covoit/Vélos
-    irvePopup: {
-        title: { fr: "Borne électrique", en: "Electric Charging" },
-        prises: { fr: "prises", en: "plugs" },
-        unknown: { fr: "Prises inconnues", en: "Unknown plugs" },
-        access: { fr: "Accès public", en: "Public access" },
-        maps: { fr: "Voir sur Google Maps", en: "View on Google Maps" }
-    },
-
-    covoitPopup: {
-        title: { fr: "Covoiturage", en: "Carpooling" },
-        places: { fr: "places", en: "spots" },
-        unknown: { fr: "Places inconnues", en: "Unknown spots" },
-        type: { fr: "Aire publique", en: "Public area" }
-    },
-
-    veloPopup: {
-        title: { fr: "Parking vélo", en: "Bike Parking" },
-        capacity: { fr: "places", en: "spots" },
-        unknown: { fr: "Capacité inconnue", en: "Unknown capacity" },
-        covered: { fr: "Couvert", en: "Covered" },
-        uncovered: { fr: "Non couvert", en: "Not covered" },
-        type: { fr: "Type", en: "Type" },
-        commune: { fr: "Commune", en: "City" },
-        maps: { fr: "Voir sur Google Maps", en: "View on Google Maps" }
-    },
-
-    // Biodiversité
-    biodiversity: {
-        title: { fr: "Biodiversité Locale", en: "Local Biodiversity" },
-        species: { fr: "espèces observées dans un rayon de 5 km", en: "species observed within 5 km" },
-        hotspot: { fr: "Hotspot Biodiversité !", en: "Biodiversity Hotspot!" }
-    },
-
-    // Erreurs et chargement
-    errors: {
-        localization: { fr: "Impossible de vous localiser.", en: "Unable to locate you." },
-        loading: { fr: "Chargement en cours...", en: "Loading..." },
-        unavailable: { fr: "Gare indisponible", en: "Station unavailable" },
-        ecoLoading: { fr: "Chargement des données écologiques...", en: "Loading ecological data..." }
-    }
-};
-
 let currentLang = 'fr';
 
-// Variable pour tracker l'étape affichée du tutoriel (1, 2, 3 ou 4)
+// Variable pour tracker l'�tape affich�e du tutoriel (1, 2, 3 ou 4)
 let currentTutoDisplayStep = 1;
 
 window.updateAppLanguage = (isFr) => {
     currentLang = isFr ? 'fr' : 'en';
     
-    console.log('🌐 updateAppLanguage appelé avec isFr=', isFr, '→ currentLang=', currentLang);
+    console.log('?? updateAppLanguage appel� avec isFr=', isFr, '? currentLang=', currentLang);
     console.log('   currentTutoDisplayStep =', currentTutoDisplayStep);
     
-    // === MISE À JOUR DU TUTORIEL ===
+    // === MISE � JOUR DU TUTORIEL ===
     const tutoBox = document.getElementById('tutoBox');
     const tutoTitle = document.getElementById('tutoTitle');
     const tutoText = document.getElementById('tutoText');
@@ -635,63 +363,63 @@ window.updateAppLanguage = (isFr) => {
     console.log('   tutoTitle element:', tutoTitle ? 'FOUND' : 'NULL');
     console.log('   tutoText element:', tutoText ? 'FOUND' : 'NULL');
     
-    // Toujours mettre à jour le tutoriel si les éléments existent
+    // Toujours mettre � jour le tutoriel si les �l�ments existent
     if (tutoTitle && tutoText) {
-        // Utiliser currentTutoDisplayStep pour savoir quelle étape afficher
+        // Utiliser currentTutoDisplayStep pour savoir quelle �tape afficher
         const tutoData = {
-            1: JS_TEXTS.tuto1,
-            2: JS_TEXTS.tuto2,
-            3: JS_TEXTS.tuto3,
-            4: JS_TEXTS.tuto4
+            1: APP_TEXTS.tuto1,
+            2: APP_TEXTS.tuto2,
+            3: APP_TEXTS.tuto3,
+            4: APP_TEXTS.tuto4
         };
         
         const step = tutoData[currentTutoDisplayStep] || tutoData[1];
-        console.log('   Mise à jour tutoriel avec:', step.title[currentLang]);
+        console.log('   Mise � jour tutoriel avec:', step.title[currentLang]);
         tutoTitle.innerText = step.title[currentLang];
         tutoText.innerText = step.text[currentLang];
     } else {
-        console.log('   ⚠️ Éléments tutoriel non trouvés!');
+        console.log('   ?? �l�ments tutoriel non trouv�s!');
     }
     
-    // Mettre à jour le bouton SUIVANT/NEXT ou TERMINER/FINISH
+    // Mettre � jour le bouton SUIVANT/NEXT ou TERMINER/FINISH
     if (tutoBtn) {
         if (currentTutoDisplayStep === 4) {
-            tutoBtn.innerText = JS_TEXTS.tutorialButtons.finish[currentLang];
+            tutoBtn.innerText = APP_TEXTS.tutorialButtons.finish[currentLang];
         } else {
-            tutoBtn.innerText = JS_TEXTS.tutorialButtons.next[currentLang];
+            tutoBtn.innerText = APP_TEXTS.tutorialButtons.next[currentLang];
         }
     }
     
-    // Mettre à jour le bouton "Passer le tuto"
+    // Mettre � jour le bouton "Passer le tuto"
     if (skipBtn) {
-        skipBtn.innerText = JS_TEXTS.tutorialButtons.skip[currentLang];
+        skipBtn.innerText = APP_TEXTS.tutorialButtons.skip[currentLang];
     }
     
-    // === MISE À JOUR DE LA NOTIFICATION VÉLO ===
+    // === MISE � JOUR DE LA NOTIFICATION V�LO ===
     const veloTitleEl = document.getElementById('velo-zone-title');
     const veloLabelEl = document.getElementById('velo-zone-label');
-    if (veloTitleEl) veloTitleEl.textContent = JS_TEXTS.veloZone.title[currentLang];
-    if (veloLabelEl) veloLabelEl.textContent = JS_TEXTS.veloZone.count[currentLang];
+    if (veloTitleEl) veloTitleEl.textContent = APP_TEXTS.veloZone.title[currentLang];
+    if (veloLabelEl) veloLabelEl.textContent = APP_TEXTS.veloZone.count[currentLang];
     
-    // === MISE À JOUR DES POPUPS DE GARE SI OUVERTES ===
+    // === MISE � JOUR DES POPUPS DE GARE SI OUVERTES ===
     const openPopup = document.querySelector('.leaflet-popup-content');
     if (openPopup) {
         const analyseBtn = openPopup.querySelector('.btn-analyse');
         const walkBtn = openPopup.querySelector('.btn-walk');
         if (analyseBtn) {
-            analyseBtn.innerHTML = JS_TEXTS.popup.analyse[currentLang];
+            analyseBtn.innerHTML = APP_TEXTS.popup.analyse[currentLang];
         }
         if (walkBtn) {
-            walkBtn.innerHTML = `<i class="fa-solid fa-person-walking"></i> ${JS_TEXTS.popup.zone[currentLang]}`;
+            walkBtn.innerHTML = `<i class="fa-solid fa-person-walking"></i> ${APP_TEXTS.popup.zone[currentLang]}`;
         }
     }
     
-    // === MISE À JOUR DU COMPTEUR DE GARES ===
+    // === MISE � JOUR DU COMPTEUR DE GARES ===
     const counterDiv = document.querySelector('.visible-counter');
     if (counterDiv) {
         const countVal = document.getElementById('count-val');
         const count = countVal ? countVal.textContent : '0';
-        counterDiv.innerHTML = `<i class="fa-solid fa-eye"></i> <span id="count-val">${count}</span> ${JS_TEXTS.counter.stations[currentLang]}`;
+        counterDiv.innerHTML = `<i class="fa-solid fa-eye"></i> <span id="count-val">${count}</span> ${APP_TEXTS.counter.stations[currentLang]}`;
     }
 };
 
@@ -714,25 +442,25 @@ const escapeHTML = (str) => {
 // ============================================================
 
 /**
- * Charge toutes les données initiales de l'application (Gares, Rails, IRVE, etc.).
- * Gère les promesses parallèles et l'initialisation de la carte.
- * Affiche un loader pendant le chargement et gère les erreurs API via des toasts.
+ * Charge toutes les donn�es initiales de l'application (Gares, Rails, IRVE, etc.).
+ * G�re les promesses parall�les et l'initialisation de la carte.
+ * Affiche un loader pendant le chargement et g�re les erreurs API via des toasts.
  * @async
  * @returns {Promise<void>}
  */
 async function loadEverything() {
-    console.log("Début du chargement...");
+    console.log("D�but du chargement...");
     const loaderText = document.getElementById('loader-msg');
     const startTime = Date.now();
     const MIN_LOADING_TIME = 5000; // Temps de chargement minimum : 5 secondes
 
-    // Phase 1 : Afficher "Démarrage du serveur..." pendant 1 seconde
+    // Phase 1 : Afficher "D�marrage du serveur..." pendant 1 seconde
     if (loaderText) {
-        loaderText.innerText = "Démarrage du serveur...";
+        loaderText.innerText = "D�marrage du serveur...";
     }
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Phase 2 : Rotation automatique des phrases aléatoires toutes les 1 seconde
+    // Phase 2 : Rotation automatique des phrases al�atoires toutes les 1 seconde
     const msgInterval = setInterval(() => {
         if (loaderText) {
             const randomPhrase = LOADING_PHRASES[Math.floor(Math.random() * LOADING_PHRASES.length)];
@@ -741,36 +469,36 @@ async function loadEverything() {
     }, 1000);
 
     try {
-        // === DÉBUT DU CHARGEMENT DES DONNÉES ===
+        // === D�BUT DU CHARGEMENT DES DONN�ES ===
         // Gestion d'erreurs robuste
         const promises = [
             fetch(`${API_BASE_URL}/api/wfs-rails`).then(r => r.json()).catch(e => {
-                console.error("🚀 Rails:", e);
+                console.error("?? Rails:", e);
                 return null;
             }),
             fetch(`${API_BASE_URL}/api/gares`).then(r => r.json()).catch(e => {
-                console.error("🚀 Gares:", e);
+                console.error("?? Gares:", e);
                 showToast("Erreur chargement Gares", true);
                 return [];
             }),
             fetch(`${API_BASE_URL}/api/irve`).then(r => r.json()).catch(e => {
-                console.error("🚀 IRVE:", e);
+                console.error("?? IRVE:", e);
                 return { features: [] };
             }),
             fetch(`${API_BASE_URL}/api/covoiturage`).then(r => r.json()).catch(e => {
-                console.error("🚀 Covoit:", e);
+                console.error("?? Covoit:", e);
                 return { features: [] };
             }),
             fetch(`${API_BASE_URL}/api/parking-velo?minLat=41&maxLat=52&minLon=-5&maxLon=10`).then(r => r.json()).catch(e => {
-                console.error("🚀 Vélos:", e);
+                console.error("?? V�los:", e);
                 return { features: [] };
             }),
             fetch(`${API_BASE_URL}/api/proprete-gares`).then(r => r.json()).catch(e => {
-                console.error("🚀 Propreté:", e);
+                console.error("?? Propret�:", e);
                 return [];
             }),
             fetch(`${API_BASE_URL}/api/defibrillateurs-gares`).then(r => r.json()).catch(e => {
-                console.error("🚀 Défibrillateurs:", e);
+                console.error("?? D�fibrillateurs:", e);
                 return [];
             })
         ];
@@ -796,7 +524,7 @@ async function loadEverything() {
             lon: f.geometry.coordinates[0]
         }));
         
-        // Indexer les données de propreté par nom de gare (lowercase pour matching)
+        // Indexer les donn�es de propret� par nom de gare (lowercase pour matching)
         DATA.proprete = (proprete || []).reduce((acc, p) => {
             if (p.nom_gare) {
                 // Indexation multiple : nom court + variantes pour meilleur matching
@@ -808,11 +536,11 @@ async function loadEverything() {
             }
             return acc;
         }, {});
-        console.log(`🧹 Propreté chargée : ${Object.keys(DATA.proprete).length} gares indexées`);
+        console.log(`?? Propret� charg�e : ${Object.keys(DATA.proprete).length} gares index�es`);
         
-        // Stocker les défibrillateurs (matching par coordonnées géographiques)
+        // Stocker les d�fibrillateurs (matching par coordonn�es g�ographiques)
         DATA.defibrillateurs = defibrillateurs || [];
-        console.log(`❤️ Défibrillateurs chargés : ${DATA.defibrillateurs.length} gares équipées`);
+        console.log(`?? D�fibrillateurs charg�s : ${DATA.defibrillateurs.length} gares �quip�es`);
 
         map.addLayer(markersLayer);
         map.addLayer(railsLayer);
@@ -838,7 +566,7 @@ async function loadEverything() {
             await new Promise(resolve => setTimeout(resolve, remainingTime));
         }
 
-        // Arrêt de la rotation des phrases aléatoires
+        // Arr�t de la rotation des phrases al�atoires
         clearInterval(msgInterval);
         
         // Phase 3 : Afficher "Chargement de la page..." avant de terminer
@@ -850,13 +578,13 @@ async function loadEverything() {
     } catch (error) {
         console.error("Erreur critique chargement:", error);
         showToast("Erreur critique de chargement", true);
-        // Arrêt rotation en cas d'erreur
+        // Arr�t rotation en cas d'erreur
         clearInterval(msgInterval);
         if (loaderText) {
             loaderText.innerText = 'Erreur de chargement...';
         }
     } finally {
-        console.log("Chargement terminé.");
+        console.log("Chargement termin�.");
         // === MASQUAGE DU LOADER ===
         setTimeout(() => {
             const loader = document.getElementById('map-loader');
@@ -884,9 +612,9 @@ async function loadFranceMask() {
         const r = await fetch('https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/metropole.geojson');
         const d = await r.json();
         
-        // FIX: Gestion correcte du MultiPolygon pour éviter le bug du contour
-        // Le GeoJSON de la France métropolitaine est un MultiPolygon avec plusieurs polygones
-        // (Corse, îles, etc.). Chaque polygone doit être ajouté comme un trou séparé.
+        // FIX: Gestion correcte du MultiPolygon pour �viter le bug du contour
+        // Le GeoJSON de la France m�tropolitaine est un MultiPolygon avec plusieurs polygones
+        // (Corse, �les, etc.). Chaque polygone doit �tre ajout� comme un trou s�par�.
         
         // Rectangle mondial en sens horaire (masque externe)
         const worldRect = [
@@ -897,14 +625,14 @@ async function loadFranceMask() {
             [-180, -90]
         ];
         
-        // Fonction pour inverser les coordonnées si nécessaire (sens anti-horaire pour les trous)
+        // Fonction pour inverser les coordonn�es si n�cessaire (sens anti-horaire pour les trous)
         function ensureCounterClockwise(ring) {
-            // Calcul de l'aire signée pour déterminer le sens
+            // Calcul de l'aire sign�e pour d�terminer le sens
             let area = 0;
             for (let i = 0; i < ring.length - 1; i++) {
                 area += (ring[i + 1][0] - ring[i][0]) * (ring[i + 1][1] + ring[i][1]);
             }
-            // Si l'aire est positive, les coordonnées sont dans le sens horaire, on inverse
+            // Si l'aire est positive, les coordonn�es sont dans le sens horaire, on inverse
             if (area > 0) {
                 return ring.slice().reverse();
             }
@@ -916,19 +644,19 @@ async function loadFranceMask() {
         if (d.geometry.type === 'MultiPolygon') {
             // MultiPolygon: coordinates est un tableau de polygones
             d.geometry.coordinates.forEach(polygon => {
-                // polygon[0] est l'anneau extérieur de chaque polygone
+                // polygon[0] est l'anneau ext�rieur de chaque polygone
                 if (polygon[0] && polygon[0].length > 0) {
                     holes.push(ensureCounterClockwise(polygon[0]));
                 }
             });
         } else if (d.geometry.type === 'Polygon') {
-            // Polygon simple: coordinates[0] est l'anneau extérieur
+            // Polygon simple: coordinates[0] est l'anneau ext�rieur
             if (d.geometry.coordinates[0] && d.geometry.coordinates[0].length > 0) {
                 holes.push(ensureCounterClockwise(d.geometry.coordinates[0]));
             }
         }
         
-        // Création du masque: rectangle mondial + trous pour la France
+        // Cr�ation du masque: rectangle mondial + trous pour la France
         const maskCoordinates = [worldRect, ...holes];
         
         L.geoJSON({
@@ -969,7 +697,7 @@ function initMapMarkers() {
             const pulseColor = score >= 8 ? '#10b981' : score >= 5 ? '#f59e0b' : '#ef4444';
             const pulseSpeed = score >= 8 ? '1.5s' : score >= 7 ? '2s' : '2.5s';
 
-            // Icône originale avec pulsation dynamique
+            // Ic�ne originale avec pulsation dynamique
             let icon = L.divIcon({
                 className: 'marker-with-pulse',
                 html: `
@@ -996,14 +724,14 @@ function initMapMarkers() {
                 // FIX: Clear any existing walk zone when opening a new popup
                 hideWalkZone();
 
-                // Reset panneau avant chargement nouvelles données
+                // Reset panneau avant chargement nouvelles donn�es
                 resetEcoPanel();
 
                 loadPhoto(g.nom, g.id);
                 loadWeather(g.lat, g.lon, g.id);
-                // Chargement qualité air
+                // Chargement qualit� air
                 loadAirQuality(g.lat, g.lon, g.id);
-                // Chargement biodiversité
+                // Chargement biodiversit�
                 loadBiodiversity(g.lat, g.lon, g.id);
             });
             g.marker = m;
@@ -1014,10 +742,10 @@ function initMapMarkers() {
 }
 
 /**
- * Récupère les données de propreté pour une gare avec matching intelligent.
+ * R�cup�re les donn�es de propret� pour une gare avec matching intelligent.
  * Essaie plusieurs variantes du nom pour trouver une correspondance.
- * @param {string} nomGare - Le nom de la gare à rechercher.
- * @returns {Object|null} Les données de propreté ou null si non trouvées.
+ * @param {string} nomGare - Le nom de la gare � rechercher.
+ * @returns {Object|null} Les donn�es de propret� ou null si non trouv�es.
  */
 function getPropreteData(nomGare) {
     if (!DATA.proprete || !nomGare) return null;
@@ -1041,7 +769,7 @@ function getPropreteData(nomGare) {
         }
     }
     
-    // 4. Fuzzy matching basique : recherche si le nom contient une clé ou vice-versa
+    // 4. Fuzzy matching basique : recherche si le nom contient une cl� ou vice-versa
     for (const key of Object.keys(DATA.proprete)) {
         if (nom.includes(key) || key.includes(nom)) {
             return DATA.proprete[key];
@@ -1052,16 +780,16 @@ function getPropreteData(nomGare) {
 }
 
 /**
- * Récupère les données de défibrillateurs pour une gare par matching géographique.
- * Cherche un défibrillateur dans un rayon de 500m de la gare.
+ * R�cup�re les donn�es de d�fibrillateurs pour une gare par matching g�ographique.
+ * Cherche un d�fibrillateur dans un rayon de 500m de la gare.
  * @param {number} lat - Latitude de la gare.
  * @param {number} lon - Longitude de la gare.
- * @returns {Object|null} Les données de défibrillateur ou null si non trouvées.
+ * @returns {Object|null} Les donn�es de d�fibrillateur ou null si non trouv�es.
  */
 function getDefibData(lat, lon) {
     if (!DATA.defibrillateurs || DATA.defibrillateurs.length === 0 || !lat || !lon) return null;
     
-    // Chercher un défibrillateur dans un rayon de 500m (0.005 degrés ≈ 500m)
+    // Chercher un d�fibrillateur dans un rayon de 500m (0.005 degr�s � 500m)
     const tolerance = 0.005;
     
     for (const defib of DATA.defibrillateurs) {
@@ -1078,10 +806,10 @@ function getDefibData(lat, lon) {
 }
 
 /**
- * Génère le contenu HTML du popup pour une gare donnée.
+ * G�n�re le contenu HTML du popup pour une gare donn�e.
  * Inclut le score, l'avis, et les boutons d'action.
  * @param {Object} g - L'objet gare contenant nom, id, type, lat, lon.
- * @returns {string} Chaîne HTML du popup.
+ * @returns {string} Cha�ne HTML du popup.
  */
 function generatePopupContent(g) {
     const analysis = analyser(g);
@@ -1090,11 +818,11 @@ function generatePopupContent(g) {
     let avis = avisList[Math.floor(Math.random() * avisList.length)];
     let colorScore = score < 4 ? '#ef4444' : score < 7 ? '#f59e0b' : '#10b981';
     let isTGV = g.type === 'TGV';
-    const t = JS_TEXTS.popup;
+    const t = APP_TEXTS.popup;
     const lang = currentLang;
     const safeNom = escapeHTML(g.nom);
 
-    // === PROPRETÉ & DÉFIBRILLATEURS (affichage compact sur une ligne) ===
+    // === PROPRET� & D�FIBRILLATEURS (affichage compact sur une ligne) ===
     const propreteData = getPropreteData(g.nom);
     const defibData = getDefibData(g.lat, g.lon);
     
@@ -1102,7 +830,7 @@ function generatePopupContent(g) {
     const hasPropreteData = propreteData !== null;
     const hasDefibData = defibData && defibData.nb_appareils > 0;
     
-    // Icône SVG défibrillateur (cœur + éclair)
+    // Ic�ne SVG d�fibrillateur (c�ur + �clair)
     const defibSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;">
         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="${hasDefibData ? '#ef4444' : '#cbd5e1'}"/>
         <path d="M13 7h-2l-1 4h2l-1 5 4-6h-3l1-3z" fill="#ffffff"/>
@@ -1116,12 +844,12 @@ function generatePopupContent(g) {
             <div style="display:flex;gap:12px;margin:10px 0;padding:8px 10px;background:#f8fafc;border-radius:8px;align-items:center;font-size:0.8rem;">
                 ${hasPropreteData ? `
                 <div style="display:flex;align-items:center;gap:4px;">
-                    <span>🧹</span>
-                    <span style="color:#475569;">Propreté:</span>
+                    <span>??</span>
+                    <span style="color:#475569;">Propret�:</span>
                     <span style="font-weight:700;color:${propreteColor};">${propreteData.note_proprete}/5</span>
                 </div>` : ''}
                 <div style="display:flex;align-items:center;gap:4px;">
-                    <span style="color:#475569;">Défib.${defibSvg}:</span>
+                    <span style="color:#475569;">D�fib.${defibSvg}:</span>
                     <span style="font-weight:700;color:${hasDefibData ? '#10b981' : '#94a3b8'};">${hasDefibData ? 'Oui' : 'Non'}</span>
                 </div>
             </div>`;
@@ -1131,7 +859,7 @@ function generatePopupContent(g) {
         <div style="font-family:'Inter',sans-serif;">
             <div class="photo-container"><img id="photo-${g.id}" class="city-photo" src="" alt="${safeNom}"></div>
             <div id="weather-${g.id}" class="weather-box">
-                <span><i class="fa-solid fa-spinner fa-spin"></i> ${JS_TEXTS.weather.loading[lang]}</span>
+                <span><i class="fa-solid fa-spinner fa-spin"></i> ${APP_TEXTS.weather.loading[lang]}</span>
             </div>
             <div style="padding:15px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -1186,13 +914,13 @@ async function loadPhoto(nom, id) {
             
             if (data.query && data.query.search && data.query.search.length > 0) {
                 console.log(`Found ${data.query.search.length} results for "${searchTerm}"`);
-                // Chercher une image valide parmi les résultats
+                // Chercher une image valide parmi les r�sultats
                 for (const result of data.query.search) {
                     const title = result.title;
                     console.log(`Checking: ${title}`);
-                    // Vérifier que c'est bien une image (jpg, jpeg, png, gif, webp)
+                    // V�rifier que c'est bien une image (jpg, jpeg, png, gif, webp)
                     if (/\.(jpg|jpeg|png|gif|webp)$/i.test(title)) {
-                        // Extraire le nom du fichier sans le préfixe "File:"
+                        // Extraire le nom du fichier sans le pr�fixe "File:"
                         const fileName = title.replace(/^File:/i, '');
                         // Construire l'URL de l'image via le service de thumbnails Wikimedia
                         const imageUrl = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}?width=500`;
@@ -1217,7 +945,7 @@ async function loadPhoto(nom, id) {
             };
             img.onerror = () => {
                 console.log(`Image load failed, using fallback`);
-                // Si l'image Wikimedia échoue, utiliser fallback
+                // Si l'image Wikimedia �choue, utiliser fallback
                 const fallbackIndex = id % FALLBACK_IMAGES.length;
                 img.src = FALLBACK_IMAGES[fallbackIndex];
                 img.classList.add('loaded');
@@ -1228,7 +956,7 @@ async function loadPhoto(nom, id) {
         }
     }
     
-    // Si aucune image trouvée, utiliser une image de fallback nature/paysage
+    // Si aucune image trouv�e, utiliser une image de fallback nature/paysage
     console.log(`No image found for ${nom}, using fallback`);
     const fallbackIndex = id % FALLBACK_IMAGES.length;
     img.onload = () => img.classList.add('loaded');
@@ -1239,20 +967,20 @@ async function loadWeather(lat, lon, id) {
     const el = document.getElementById(`weather-${id}`);
     if (!el) return;
     try {
-        // Charger la météo
+        // Charger la m�t�o
         const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
         const weatherData = await weatherRes.json();
         const w = weatherData.current_weather || weatherData.current;
 
         if (w) {
-            // Afficher d'abord la météo
+            // Afficher d'abord la m�t�o
             el.innerHTML = `
-                <div class="weather-item"><i class="fa-solid fa-temperature-half weather-icon"></i> ${w.temperature}°C</div>
+                <div class="weather-item"><i class="fa-solid fa-temperature-half weather-icon"></i> ${w.temperature}�C</div>
                 <div class="weather-item"><i class="fa-solid fa-wind weather-icon"></i> ${w.windspeed} km/h</div>
                 <div class="weather-item air-quality-loading"><i class="fa-solid fa-lungs weather-icon"></i> <span style="color:#64748b">...</span></div>
             `;
             
-            // Puis charger la qualité de l'air en arrière-plan
+            // Puis charger la qualit� de l'air en arri�re-plan
             try {
                 const airRes = await fetch(`${API_BASE_URL}/api/air-quality?lat=${lat}&lon=${lon}`);
                 const airData = await airRes.json();
@@ -1276,20 +1004,20 @@ async function loadWeather(lat, lon, id) {
             throw new Error('No Data');
         }
     } catch (e) {
-        el.innerHTML = `<span style="font-size:0.8rem; color:#64748b;">${JS_TEXTS.weather.error[currentLang]}</span>`;
-        console.error(`Météo err ${id}:`, e.message);
+        el.innerHTML = `<span style="font-size:0.8rem; color:#64748b;">${APP_TEXTS.weather.error[currentLang]}</span>`;
+        console.error(`M�t�o err ${id}:`, e.message);
     }
 }
 
-// Refonte complète des popups IRVE & Covoiturage
+// Refonte compl�te des popups IRVE & Covoiturage
 function initSecondaryMarkers(irve, covoit, velos) {
     const iBuf = [],
         cBuf = [],
         vBuf = [];
     
     const lang = currentLang;
-    const tIrve = JS_TEXTS.irvePopup;
-    const tCovoit = JS_TEXTS.covoitPopup;
+    const tIrve = APP_TEXTS.irvePopup;
+    const tCovoit = APP_TEXTS.covoitPopup;
 
     // Bornes IRVE
     (irve.features || []).forEach(f => {
@@ -1305,7 +1033,7 @@ function initSecondaryMarkers(irve, covoit, velos) {
                 <div class="simple-popup-header header-irve"><i class="fa-solid fa-charging-station"></i> ${tIrve.title[lang]}</div>
                 <div class="simple-popup-body">
                     <div style="font-weight:bold; color:#0f172a; margin-bottom:10px;">${nom}</div>
-                    <div><i class="fa-solid fa-plug" style="color:#f59e0b"></i> ${prise} ${puissance ? ' • ' + puissance : ''}</div>
+                    <div><i class="fa-solid fa-plug" style="color:#f59e0b"></i> ${prise} ${puissance ? ' � ' + puissance : ''}</div>
                     <div><i class="fa-solid fa-unlock" style="color:#64748b"></i> ${acces}</div>
                     <a href="https://www.google.com/maps?q=${f.geometry.coordinates[1]},${f.geometry.coordinates[0]}" target="_blank" class="btn-maps"><i class="fa-solid fa-map-location-dot"></i> ${tIrve.maps[lang]}</a>
                 </div>
@@ -1348,12 +1076,12 @@ function initSecondaryMarkers(irve, covoit, velos) {
         }
     });
 
-    // Vélos
-    const tVelo = JS_TEXTS.veloPopup;
+    // V�los
+    const tVelo = APP_TEXTS.veloPopup;
     (velos.features || []).forEach(f => {
         if (f.geometry.coordinates) {
             const props = f.properties || {};
-            const commune = escapeHTML(props.meta_name_com || props.nom || "Parking vélo");
+            const commune = escapeHTML(props.meta_name_com || props.nom || "Parking v�lo");
             const capacite = props.capacite ? `${props.capacite} ${tVelo.capacity[lang]}` : tVelo.unknown[lang];
             const mobilier = props.mobilier ? props.mobilier.charAt(0) + props.mobilier.slice(1).toLowerCase() : "";
             const couverture = props.couverture === "true" ? tVelo.covered[lang] : tVelo.uncovered[lang];
@@ -1407,7 +1135,7 @@ map.on('locationfound', (e) => {
         iconSize: [20, 20]
     });
 
-    const t = JS_TEXTS.location;
+    const t = APP_TEXTS.location;
     const lang = currentLang;
 
     const popupContent = `
@@ -1434,29 +1162,29 @@ map.on('locationfound', (e) => {
         weight: 1
     }).addTo(map);
 });
-map.on('locationerror', () => alert(JS_TEXTS.errors.localization[currentLang]));
+map.on('locationerror', () => alert(APP_TEXTS.errors.localization[currentLang]));
 
-// Choisit une gare aléatoire uniquement lorsque les marqueurs sont Prêts
-// PERF: Cache du pool de gares valides pour éviter filter() à chaque clic
+// Choisit une gare al�atoire uniquement lorsque les marqueurs sont Pr�ts
+// PERF: Cache du pool de gares valides pour �viter filter() � chaque clic
 let cachedValidGares = null;
 let cachedValidGaresTime = 0;
 
 window.randomGare = () => {
-    // PERF: Désactivation bouton avec feedback visuel immédiat (améliore INP)
+    // PERF: D�sactivation bouton avec feedback visuel imm�diat (am�liore INP)
     const diceBtn = document.getElementById('btnRandomGare');
     if (diceBtn) {
         diceBtn.style.pointerEvents = 'none';
         diceBtn.style.opacity = '0.6';
     }
     
-    // PERF: setTimeout(0) libère le thread principal immédiatement pour le paint
+    // PERF: setTimeout(0) lib�re le thread principal imm�diatement pour le paint
     setTimeout(() => {
         if (!DATA.gares || !DATA.gares.length) {
             if (diceBtn) { diceBtn.style.pointerEvents = 'auto'; diceBtn.style.opacity = '1'; }
             return;
         }
         
-        // PERF: Cache du pool valide pendant 60s pour éviter filter() répétés
+        // PERF: Cache du pool valide pendant 60s pour �viter filter() r�p�t�s
         const now = Date.now();
         if (!cachedValidGares || now - cachedValidGaresTime > 60000) {
             cachedValidGares = DATA.gares.filter(g => g && g.marker);
@@ -1464,30 +1192,30 @@ window.randomGare = () => {
         }
         
         if (!cachedValidGares.length) {
-            showToast(JS_TEXTS.errors.loading[currentLang], false);
+            showToast(APP_TEXTS.errors.loading[currentLang], false);
             if (diceBtn) { diceBtn.style.pointerEvents = 'auto'; diceBtn.style.opacity = '1'; }
             return;
         }
         
-        // Nettoyage léger
+        // Nettoyage l�ger
         hideWalkZone();
         
         const pick = cachedValidGares[Math.floor(Math.random() * cachedValidGares.length)];
         goToGare(pick.id);
         
-        // Réactiver le bouton
+        // R�activer le bouton
         setTimeout(() => {
             if (diceBtn) { diceBtn.style.pointerEvents = 'auto'; diceBtn.style.opacity = '1'; }
         }, 400);
     }, 0);
 };
 
-// Centre la carte sur la gare et ouvre de façon robuste la popup
+// Centre la carte sur la gare et ouvre de fa�on robuste la popup
 window.goToGare = (id) => {
-    // PERF: Accès O(1) via Map au lieu de find() O(n)
+    // PERF: Acc�s O(1) via Map au lieu de find() O(n)
     const g = DATA.garesById.get(id) || DATA.gares.find(x => x.id === id);
     if (!g || !g.marker) {
-        showToast(JS_TEXTS.errors.unavailable[currentLang], true);
+        showToast(APP_TEXTS.errors.unavailable[currentLang], true);
         return;
     }
 
@@ -1496,36 +1224,36 @@ window.goToGare = (id) => {
     map.closePopup();
     if (!map.hasLayer(markersLayer)) map.addLayer(markersLayer);
 
-    // PERF: Animation simplifiée
+    // PERF: Animation simplifi�e
     markersLayer.zoomToShowLayer(g.marker, () => {
         map.setView(target, Math.max(map.getZoom(), 14), { animate: true, duration: 0.4 });
         setTimeout(() => { try { g.marker.openPopup(); } catch (e) {} }, 100);
     });
 };
 
-// Naviguer vers une gare par ses coordonnées (utilisé par les stats météo et top vélo)
+// Naviguer vers une gare par ses coordonn�es (utilis� par les stats m�t�o et top v�lo)
 window.goToGareByCoords = (lat, lon, gareName) => {
     // Fermer le panneau stats
     const statsPanel = document.getElementById('statsPanel');
     if (statsPanel) statsPanel.classList.remove('active');
     
-    // Chercher la gare correspondante dans les données
+    // Chercher la gare correspondante dans les donn�es
     const gare = DATA.gares.find(g => {
-        // Correspondance par nom (partiel) ou par coordonnées proches
+        // Correspondance par nom (partiel) ou par coordonn�es proches
         const nameMatch = g.nom && gareName && g.nom.toLowerCase().includes(gareName.toLowerCase().substring(0, 10));
         const coordMatch = Math.abs(g.lat - lat) < 0.01 && Math.abs(g.lon - lon) < 0.01;
         return nameMatch || coordMatch;
     });
     
     if (gare && gare.marker) {
-        // Gare trouvée, utiliser goToGare
+        // Gare trouv�e, utiliser goToGare
         goToGare(gare.id);
     } else {
-        // Gare non trouvée dans les données chargées, naviguer vers les coordonnées
+        // Gare non trouv�e dans les donn�es charg�es, naviguer vers les coordonn�es
         hideWalkZone();
         map.closePopup();
         map.flyTo([lat, lon], 14, { duration: 1 });
-        showToast(`📍 ${gareName}`, false);
+        showToast(`?? ${gareName}`, false);
     }
 };
 
@@ -1556,33 +1284,33 @@ window.findNearbyStation = (lat, lon) => {
     }
 };
 
-// Fonction pour cacher la zone piétonne
+// Fonction pour cacher la zone pi�tonne
 function hideWalkZone() {
-    if (!walkCircle) return; // PERF: Early exit si rien à faire
+    if (!walkCircle) return; // PERF: Early exit si rien � faire
     try { map.removeLayer(walkCircle); } catch (e) {}
     walkCircle = null;
-    // Reset des variables de navigation vélos
+    // Reset des variables de navigation v�los
     velosInZone = [];
     velosZoneIndex = 0;
-    // Cacher la notification persistante des vélos
+    // Cacher la notification persistante des v�los
     const veloNotif = document.getElementById('velo-zone-notif');
     if (veloNotif) veloNotif.classList.remove('active');
-    // Cacher les flèches de navigation
+    // Cacher les fl�ches de navigation
     updateVeloNavArrows(0);
 }
 
-// Variable pour empêcher les clics multiples rapides
+// Variable pour emp�cher les clics multiples rapides
 let isCreatingWalkZone = false;
 
 /**
- * Active l'affichage de la zone piétonne (10 min) autour d'une gare.
- * Calcule un cercle de 800m et compte les parkings vélos à l'intérieur.
+ * Active l'affichage de la zone pi�tonne (10 min) autour d'une gare.
+ * Calcule un cercle de 800m et compte les parkings v�los � l'int�rieur.
  */
 window.showWalkZone = function(lat, lon) {
-    // FIX: Empêcher les clics multiples rapides
+    // FIX: Emp�cher les clics multiples rapides
     if (isCreatingWalkZone) return;
     isCreatingWalkZone = true;
-    // désactiver (invisiblement) le bouton « 10 min » dans la popup courante
+    // d�sactiver (invisiblement) le bouton � 10 min � dans la popup courante
     try {
         const walkBtn = document.querySelector('.leaflet-popup .btn-walk');
         if (walkBtn) {
@@ -1595,17 +1323,17 @@ window.showWalkZone = function(lat, lon) {
     // SAFETY: Ensure any previous circle is removed before drawing a new one.
     hideWalkZone();
 
-    // FIX: Fermer la popup avant de zoomer pour éviter les conflits visuels
+    // FIX: Fermer la popup avant de zoomer pour �viter les conflits visuels
     map.closePopup();
 
-    // FIX: D'abord zoomer sur la gare, PUIS ajouter le cercle une fois le zoom terminé
+    // FIX: D'abord zoomer sur la gare, PUIS ajouter le cercle une fois le zoom termin�
     map.flyTo([lat, lon], 15, {
         duration: 1.2
     });
 
     // Attendre la fin de l'animation de zoom avant d'ajouter le cercle
     map.once('moveend', function() {
-        // CRÉATION du cercle de 800m (10-15 min de marche).
+        // CR�ATION du cercle de 800m (10-15 min de marche).
         walkCircle = L.circle([lat, lon], {
             radius: 800,
             color: '#10b981',
@@ -1622,7 +1350,7 @@ window.showWalkZone = function(lat, lon) {
             }
         }, 50);
 
-        // Comptage et collecte des parkings vélos dans la zone pour la navigation
+        // Comptage et collecte des parkings v�los dans la zone pour la navigation
         let count = 0;
         velosInZone = []; // Reset du tableau global
         velosZoneIndex = 0; // Reset de l'index
@@ -1633,40 +1361,40 @@ window.showWalkZone = function(lat, lon) {
                     lng: v.lon
                 })) {
                 count++;
-                velosInZone.push(v); // Stocker le vélo pour navigation
+                velosInZone.push(v); // Stocker le v�lo pour navigation
             }
         });
 
         checkTutoAdvancement('walk');
 
-        // Afficher la notification persistante des vélos avec traductions
+        // Afficher la notification persistante des v�los avec traductions
         const veloNotif = document.getElementById('velo-zone-notif');
         const veloCountEl = document.getElementById('velo-zone-count');
         const veloTitleEl = document.getElementById('velo-zone-title');
         const veloLabelEl = document.getElementById('velo-zone-label');
         if (veloNotif && veloCountEl) {
             veloCountEl.textContent = count;
-            if (veloTitleEl) veloTitleEl.textContent = JS_TEXTS.veloZone.title[currentLang];
-            if (veloLabelEl) veloLabelEl.textContent = JS_TEXTS.veloZone.count[currentLang];
+            if (veloTitleEl) veloTitleEl.textContent = APP_TEXTS.veloZone.title[currentLang];
+            if (veloLabelEl) veloLabelEl.textContent = APP_TEXTS.veloZone.count[currentLang];
             veloNotif.classList.add('active');
-            // Mettre à jour les flèches de navigation
+            // Mettre � jour les fl�ches de navigation
             updateVeloNavArrows(count);
         }
 
-        // FIX: Réactiver les clics après un court délai
+        // FIX: R�activer les clics apr�s un court d�lai
         setTimeout(() => {
             isCreatingWalkZone = false;
         }, 300);
     });
 };
 
-// === MODIFIÉ : OPTIMISATION CRITIQUE DES PERFORMANCES ===
+// === MODIFI� : OPTIMISATION CRITIQUE DES PERFORMANCES ===
 
 /**
- * Analyse une gare pour calculer son score écologique.
- * Comptabilise les vélos (800m), bornes IRVE (3km) et covoiturage (3km).
- * @param {Object} g - L'objet gare à analyser.
- * @returns {Object} Un objet contenant la note (/10), les détails des compteurs et le total.
+ * Analyse une gare pour calculer son score �cologique.
+ * Comptabilise les v�los (800m), bornes IRVE (3km) et covoiturage (3km).
+ * @param {Object} g - L'objet gare � analyser.
+ * @returns {Object} Un objet contenant la note (/10), les d�tails des compteurs et le total.
  */
 function analyser(g) {
     let d = {
@@ -1674,7 +1402,7 @@ function analyser(g) {
         covoit: 0,
         velos: 0
     };
-    // Optimisation : Bounding Box (environ +/- 0.05 degrés, soit ~5km)
+    // Optimisation : Bounding Box (environ +/- 0.05 degr�s, soit ~5km)
     const latMin = g.lat - 0.05,
         latMax = g.lat + 0.05;
     const lonMin = g.lon - 0.05,
@@ -1706,14 +1434,14 @@ function preComputeScoresSync() {
         if (g.lat < 45.7) g.tags.push('sud');
         if (g.lat > 49.0) g.tags.push('nord'); // Ajout Nord
 
-        // Paris spécifique
+        // Paris sp�cifique
         if (getDist(g.lat, g.lon, 48.8566, 2.3522) < 20) g.tags.push('paris');
 
         const isAlpes = (g.lon > 5.5 && g.lat < 46.2 && g.lat > 44.0);
         const isPyrenees = (g.lat < 43.2 && g.lon < 3.0);
         if (isAlpes || isPyrenees) g.tags.push('montagne');
 
-        // Séparation Mer / Océan
+        // S�paration Mer / Oc�an
         const isMed = (g.lat < 43.7 && g.lon > 3.0);
         const isAtlantique = (g.lon < -1.0 && g.lat < 48.0);
         const isManche = (g.lat > 48.5 && g.lon < -1.5);
@@ -1727,32 +1455,32 @@ function preComputeScoresSync() {
 }
 
 /**
- * Lance une analyse comparative complète pour une gare.
+ * Lance une analyse comparative compl�te pour une gare.
  * Compare avec les gares environnantes pour trouver une meilleure alternative.
- * Met à jour l'interface utilisateur avec les scores détaillés et les barres de progression.
- * @param {number} id - L'identifiant de la gare à analyser.
+ * Met � jour l'interface utilisateur avec les scores d�taill�s et les barres de progression.
+ * @param {number} id - L'identifiant de la gare � analyser.
  */
 window.lancerAnalyseComplete = function(id) {
-    // PERF: Feedback visuel immédiat pour améliorer l'INP perçu
+    // PERF: Feedback visuel imm�diat pour am�liorer l'INP per�u
     const container = document.getElementById(`action-container-${id}`);
     if (container) {
         container.innerHTML = `<div style="text-align:center;padding:20px;color:#64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Analyse...</div>`;
     }
     
-    // PERF: setTimeout(0) libère complètement le thread pour le paint (meilleur INP que rAF)
+    // PERF: setTimeout(0) lib�re compl�tement le thread pour le paint (meilleur INP que rAF)
     setTimeout(() => {
-        // PERF: Accès O(1) via Map
+        // PERF: Acc�s O(1) via Map
         const g = DATA.garesById.get(id) || DATA.gares.find(x => x.id === id);
         if (!g) return;
         
-        // PERF: Utiliser le score pré-calculé si disponible
+        // PERF: Utiliser le score pr�-calcul� si disponible
         const s = g.computedScore ? { note: g.computedScore, details: g.computedDetails, total: (g.computedDetails?.velos || 0) + (g.computedDetails?.bornes || 0) + (g.computedDetails?.covoit || 0) } : analyser(g);
         
         let best = null;
         let bestS = s.note;
         let bestTotal = s.total;
         
-        // PERF: Bounding box pré-filtrée + utilisation des scores pré-calculés
+        // PERF: Bounding box pr�-filtr�e + utilisation des scores pr�-calcul�s
         const latMin = g.lat - 0.15, latMax = g.lat + 0.15;
         const lonMin = g.lon - 0.15, lonMax = g.lon + 0.15;
         
@@ -1763,7 +1491,7 @@ window.lancerAnalyseComplete = function(id) {
             const dist = getDist(g.lat, g.lon, v.lat, v.lon);
             if (dist > 10) continue;
             
-            // PERF: Utiliser score pré-calculé si dispo
+            // PERF: Utiliser score pr�-calcul� si dispo
             const sv = v.computedScore ? { note: v.computedScore, total: (v.computedDetails?.velos || 0) + (v.computedDetails?.bornes || 0) + (v.computedDetails?.covoit || 0) } : analyser(v);
             
             if (sv.note > bestS || (sv.note === bestS && sv.total > bestTotal)) {
@@ -1773,8 +1501,8 @@ window.lancerAnalyseComplete = function(id) {
             }
         }
 
-        // Utilisation complète de JS_TEXTS.analysis pour la traduction dynamique
-        const t = JS_TEXTS.analysis;
+        // Utilisation compl�te de APP_TEXTS.analysis pour la traduction dynamique
+        const t = APP_TEXTS.analysis;
         const lang = currentLang;
 
         const pctV = Math.min((s.details.velos / 5) * 100, 100);
@@ -1809,7 +1537,7 @@ window.lancerAnalyseComplete = function(id) {
         
         if (container) container.innerHTML = html;
 
-        // déclenchement confettis si score excellent (déporté pour ne pas bloquer)
+        // d�clenchement confettis si score excellent (d�port� pour ne pas bloquer)
         if (s.note >= 9) {
             setTimeout(() => {
                 confetti({
@@ -1833,11 +1561,11 @@ window.lancerAnalyseComplete = function(id) {
 };
 
 const overlays = {
-    "🚉 Gares": markersLayer,
-    "🛤️ Rails": railsLayer,
-    "⚡ Bornes": irveLayer,
-    "🚗 Covoit": covoitLayer,
-    "🚲 Vélos": veloParkingLayer
+    "?? Gares": markersLayer,
+    "??? Rails": railsLayer,
+    "? Bornes": irveLayer,
+    "?? Covoit": covoitLayer,
+    "?? V�los": veloParkingLayer
 };
 L.control.layers(null, overlays, {
     position: 'bottomright'
@@ -1853,19 +1581,19 @@ try {
     }).addTo(map);
 } catch (e) {}
 
-// PERF: Cache du dernier niveau de zoom pour éviter les recalculs inutiles
+// PERF: Cache du dernier niveau de zoom pour �viter les recalculs inutiles
 let lastZoomLevel = -1;
 let zoomRafId = null;
 
-// PERF: Handler zoomend combiné et optimisé avec RAF throttling +30% CPU
+// PERF: Handler zoomend combin� et optimis� avec RAF throttling +30% CPU
 const handleZoomEnd = () => {
     const zoom = map.getZoom();
     
-    // PERF: Skip si le niveau de zoom n'a pas changé significativement
+    // PERF: Skip si le niveau de zoom n'a pas chang� significativement
     const zoomBand = zoom < 8 ? 0 : zoom < 12 ? 1 : zoom < 14 ? 2 : 3;
     const lastBand = lastZoomLevel < 8 ? 0 : lastZoomLevel < 12 ? 1 : lastZoomLevel < 14 ? 2 : 3;
     
-    // OSMBuildings (toujours vérifié)
+    // OSMBuildings (toujours v�rifi�)
     if (zoom >= 15 && !osmb && typeof OSMBuildings !== 'undefined') {
         try {
             osmb = new OSMBuildings(map).load('https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
@@ -1879,7 +1607,7 @@ const handleZoomEnd = () => {
     lastZoomLevel = zoom;
 
     if (zoom < 8) {
-        // Vue France : Seulement TGV + rails simplifiés
+        // Vue France : Seulement TGV + rails simplifi�s
         railsLayer.setStyle({
             weight: 1.5,
             opacity: 0.5
@@ -1889,7 +1617,7 @@ const handleZoomEnd = () => {
         veloParkingLayer.remove();
 
     } else if (zoom >= 8 && zoom < 12) {
-        // Vue Régionale : TGV + TER + rails normaux
+        // Vue R�gionale : TGV + TER + rails normaux
         if (!map.hasLayer(railsLayer)) map.addLayer(railsLayer);
         railsLayer.setStyle({
             weight: 2,
@@ -1918,7 +1646,7 @@ const handleZoomEnd = () => {
     }
 };
 
-// PERF: Debounce + RAF pour zoomend (évite les appels excessifs pendant zoom continu)
+// PERF: Debounce + RAF pour zoomend (�vite les appels excessifs pendant zoom continu)
 map.on('zoomend', () => {
     if (zoomRafId) cancelAnimationFrame(zoomRafId);
     zoomRafId = requestAnimationFrame(handleZoomEnd);
@@ -1952,9 +1680,9 @@ window.showCategory = (category, titleArg) => {
     document.getElementById('resultsContainer').style.display = 'grid';
     document.getElementById('btnBackCat').style.display = 'inline-block';
 
-    // MODIFIÉ : Ignore le titre passé en paramètre et utilise la traduction via l'ID category
-    const tCats = JS_TEXTS.categories;
-    const tRes = JS_TEXTS.results;
+    // MODIFI� : Ignore le titre pass� en param�tre et utilise la traduction via l'ID category
+    const tCats = APP_TEXTS.categories;
+    const tRes = APP_TEXTS.results;
     const lang = currentLang;
 
     document.getElementById('discoverTitle').innerText = tCats[category] ? tCats[category][lang] : titleArg;
@@ -1992,7 +1720,7 @@ window.showCategory = (category, titleArg) => {
 margin-bottom:10px;">${g.computedScore}/10</div>
                         <div style="font-size:0.85rem;
 color:#94a3b8; margin-bottom:15px;">
-                            <i class="fa-solid fa-bicycle"></i> ${g.computedDetails.velos} ${tRes.bikes[lang]} • 
+                            <i class="fa-solid fa-bicycle"></i> ${g.computedDetails.velos} ${tRes.bikes[lang]} � 
                             <i class="fa-solid fa-plug"></i> ${g.computedDetails.bornes} ${tRes.bornes[lang]}
                         </div>
          
@@ -2009,8 +1737,8 @@ window.resetDiscover = () => {
     document.getElementById('catGrid').style.display = 'grid';
     document.getElementById('resultsContainer').style.display = 'none';
     document.getElementById('btnBackCat').style.display = 'none';
-    // FIX: Use translated texts from JS_TEXTS instead of hardcoded French strings.
-    const t = JS_TEXTS.discover;
+    // FIX: Use translated texts from APP_TEXTS instead of hardcoded French strings.
+    const t = APP_TEXTS.discover;
     const lang = currentLang;
     document.getElementById('discoverTitle').innerText = t.title[lang];
     document.getElementById('discoverSubtitle').innerText = t.subtitle[lang];
@@ -2066,10 +1794,10 @@ function computeGlobalStats() {
         sumBornes += g.computedDetails.bornes;
         sumCovoit += g.computedDetails.covoit;
         
-        // Compter les gares avec/sans vélo dans zone 10min (800m)
+        // Compter les gares avec/sans v�lo dans zone 10min (800m)
         if (g.computedDetails.velos > 0) {
             garesAvecVelo++;
-            // Trouver la gare avec le plus de vélos
+            // Trouver la gare avec le plus de v�los
             if (g.computedDetails.velos > topVeloCount) {
                 topVeloCount = g.computedDetails.velos;
                 topVeloGare = g.nom;
@@ -2106,12 +1834,12 @@ const statsPanel = document.getElementById('statsPanel');
 const btnStats = document.getElementById('btnStats');
 const btnStatsClose = document.getElementById('closeStats');
 
-// Cache pour les données météo enrichies
+// Cache pour les donn�es m�t�o enrichies
 let enrichedStatsCache = null;
 let enrichedStatsLastFetch = 0;
 let statsRefreshInterval = null;
 
-// Fonction pour récupérer les stats météo enrichies depuis le backend
+// Fonction pour r�cup�rer les stats m�t�o enrichies depuis le backend
 async function fetchEnrichedStats() {
     try {
         const center = map.getCenter();
@@ -2120,16 +1848,16 @@ async function fetchEnrichedStats() {
         if (response.ok) {
             enrichedStatsCache = await response.json();
             enrichedStatsLastFetch = Date.now();
-            console.log('📊 Enriched stats loaded:', enrichedStatsCache);
+            console.log('?? Enriched stats loaded:', enrichedStatsCache);
         }
     } catch (e) {
-        console.warn('⚠️ Impossible de charger les stats enrichies:', e.message);
+        console.warn('?? Impossible de charger les stats enrichies:', e.message);
     }
 }
 
 function refreshStatsPanel() {
     if (!GLOBAL_STATS) {
-        // Recalculer si nécessaire
+        // Recalculer si n�cessaire
         GLOBAL_STATS = computeGlobalStats();
     }
     if (!GLOBAL_STATS) return;
@@ -2157,7 +1885,7 @@ function refreshStatsPanel() {
     if (totalIrveEl) totalIrveEl.innerText = GLOBAL_STATS.totalIrve || DATA.bornes.length || 0;
     if (garesVeloEl) garesVeloEl.innerText = `${GLOBAL_STATS.garesAvecVelo || 0}/${GLOBAL_STATS.totalGares || 0}`;
     
-    // Classement vélos - avec bouton pour naviguer
+    // Classement v�los - avec bouton pour naviguer
     if (topVeloEl) {
         if (GLOBAL_STATS.topVeloGare && GLOBAL_STATS.topVeloLat && GLOBAL_STATS.topVeloLon) {
             const nom = GLOBAL_STATS.topVeloGare.length > 12 
@@ -2174,31 +1902,31 @@ function refreshStatsPanel() {
     }
     if (noVeloEl) noVeloEl.innerText = GLOBAL_STATS.garesSansVelo || 0;
     
-    // Météo - depuis les stats enrichies - avec boutons pour naviguer
+    // M�t�o - depuis les stats enrichies - avec boutons pour naviguer
     if (enrichedStatsCache && enrichedStatsCache.weather) {
         const weather = enrichedStatsCache.weather;
         if (hottestEl && weather.hottest) {
             const nomHot = weather.hottest.name.length > 12 ? weather.hottest.name.substring(0, 12) + '...' : weather.hottest.name;
             if (weather.hottest.lat && weather.hottest.lon) {
                 hottestEl.innerHTML = `<span class="stat-clickable" onclick="goToGareByCoords(${weather.hottest.lat}, ${weather.hottest.lon}, '${weather.hottest.name.replace(/'/g, "\\'")}')">
-                    ${nomHot} (${weather.hottest.temp}°C) <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.7rem;margin-left:4px;"></i>
+                    ${nomHot} (${weather.hottest.temp}�C) <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.7rem;margin-left:4px;"></i>
                 </span>`;
             } else {
-                hottestEl.innerText = `${nomHot} (${weather.hottest.temp}°C)`;
+                hottestEl.innerText = `${nomHot} (${weather.hottest.temp}�C)`;
             }
         }
         if (coldestEl && weather.coldest) {
             const nomCold = weather.coldest.name.length > 12 ? weather.coldest.name.substring(0, 12) + '...' : weather.coldest.name;
             if (weather.coldest.lat && weather.coldest.lon) {
                 coldestEl.innerHTML = `<span class="stat-clickable" onclick="goToGareByCoords(${weather.coldest.lat}, ${weather.coldest.lon}, '${weather.coldest.name.replace(/'/g, "\\'")}')">
-                    ${nomCold} (${weather.coldest.temp}°C) <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.7rem;margin-left:4px;"></i>
+                    ${nomCold} (${weather.coldest.temp}�C) <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.7rem;margin-left:4px;"></i>
                 </span>`;
             } else {
-                coldestEl.innerText = `${nomCold} (${weather.coldest.temp}°C)`;
+                coldestEl.innerText = `${nomCold} (${weather.coldest.temp}�C)`;
             }
         }
     } else {
-        // Charger les données météo si pas encore fait
+        // Charger les donn�es m�t�o si pas encore fait
         if (Date.now() - enrichedStatsLastFetch > 30000) {
             fetchEnrichedStats();
         }
@@ -2207,7 +1935,7 @@ function refreshStatsPanel() {
     }
 }
 
-// Fonction pour forcer le rafraîchissement des stats
+// Fonction pour forcer le rafra�chissement des stats
 window.forceRefreshStats = async function() {
     const btn = document.getElementById('btnRefreshStats');
     if (btn) {
@@ -2217,20 +1945,20 @@ window.forceRefreshStats = async function() {
     // Recalculer les stats globales
     GLOBAL_STATS = computeGlobalStats();
     
-    // Recharger les données météo
+    // Recharger les donn�es m�t�o
     await fetchEnrichedStats();
     
-    // Rafraîchir l'affichage
+    // Rafra�chir l'affichage
     refreshStatsPanel();
     
     if (btn) {
         setTimeout(() => btn.classList.remove('spinning'), 500);
     }
     
-    showToast(currentLang === 'fr' ? 'Stats actualisées !' : 'Stats refreshed!');
+    showToast(currentLang === 'fr' ? 'Stats actualis�es !' : 'Stats refreshed!');
 };
 
-// Démarrer le rafraîchissement automatique toutes les 30s quand le panneau est ouvert
+// D�marrer le rafra�chissement automatique toutes les 30s quand le panneau est ouvert
 function startStatsAutoRefresh() {
     if (statsRefreshInterval) clearInterval(statsRefreshInterval);
     statsRefreshInterval = setInterval(() => {
@@ -2259,7 +1987,7 @@ if (btnStatsClose && statsPanel) {
 // Fermer le statsPanel en cliquant en dehors
 document.addEventListener('click', (e) => {
     if (statsPanel && statsPanel.classList.contains('active')) {
-        // Vérifier si le clic est en dehors du panel et du bouton stats
+        // V�rifier si le clic est en dehors du panel et du bouton stats
         if (!statsPanel.contains(e.target) && !btnStats.contains(e.target)) {
             statsPanel.classList.remove('active');
         }
@@ -2293,7 +2021,7 @@ window.skipTuto = function() {
     });
     if (railsLayer.getLayers().length > 0 && !map.hasLayer(railsLayer)) map.addLayer(railsLayer);
 };
-// CORRIGÉ BUG URGENT 4 : Utilisation des traductions tutoriel
+// CORRIG� BUG URGENT 4 : Utilisation des traductions tutoriel
 function updateTutoBox(title, text, showNext = false) {
     const box = document.getElementById('tutoBox');
     document.getElementById('tutoTitle').innerText = title;
@@ -2302,7 +2030,7 @@ function updateTutoBox(title, text, showNext = false) {
     const btn = document.getElementById('tutoBtn');
     if (showNext) {
         btn.style.display = 'inline-block';
-        btn.innerText = JS_TEXTS.tutorialButtons.next[currentLang];
+        btn.innerText = APP_TEXTS.tutorialButtons.next[currentLang];
         btn.onclick = nextTutoStep;
     } else {
         btn.style.display = 'none';
@@ -2314,9 +2042,9 @@ window.nextTutoStep = function() {
         markersLayer.zoomToShowLayer(currentTutoTarget.marker, () => {
             currentTutoTarget.marker.openPopup();
             setTimeout(() => {
-                // Mettre à jour l'étape affichée (étape 2)
+                // Mettre � jour l'�tape affich�e (�tape 2)
                 currentTutoDisplayStep = 2;
-                updateTutoBox(JS_TEXTS.tuto2.title[currentLang], JS_TEXTS.tuto2.text[currentLang]);
+                updateTutoBox(APP_TEXTS.tuto2.title[currentLang], APP_TEXTS.tuto2.text[currentLang]);
                 const btn = document.querySelector(`button[onclick*="lancerAnalyseComplete(${currentTutoTarget.id})"]`);
                 if (btn) btn.classList.add('highlight-target');
             }, 1000);
@@ -2328,14 +2056,14 @@ window.nextTutoStep = function() {
 };
 
 function startTutorialScenario() {
-    console.log("SCÉNARIO TUTORIEL");
+    console.log("SC�NARIO TUTORIEL");
     const target = DATA.gares.find(g => g.nom.includes("Avignon Centre")) || DATA.gares[0];
     if (!target) return;
     currentTutoTarget = target;
     map.setView([46.6, 2.2], 6);
-    // Mettre à jour l'étape affichée et utiliser currentLang
+    // Mettre � jour l'�tape affich�e et utiliser currentLang
     currentTutoDisplayStep = 1;
-    updateTutoBox(JS_TEXTS.tuto1.title[currentLang], JS_TEXTS.tuto1.text[currentLang], true);
+    updateTutoBox(APP_TEXTS.tuto1.title[currentLang], APP_TEXTS.tuto1.text[currentLang], true);
     tutoStep = 1;
 }
 
@@ -2346,9 +2074,9 @@ function checkTutoAdvancement(action) {
     if (action === 'analyse' && tutoStep === 1) {
         tutoStep = 2;
         setTimeout(() => {
-            // Mettre à jour l'étape affichée (étape 3)
+            // Mettre � jour l'�tape affich�e (�tape 3)
             currentTutoDisplayStep = 3;
-            updateTutoBox(JS_TEXTS.tuto3.title[currentLang], JS_TEXTS.tuto3.text[currentLang]);
+            updateTutoBox(APP_TEXTS.tuto3.title[currentLang], APP_TEXTS.tuto3.text[currentLang]);
             const btn = document.querySelector(`button[onclick*="toggleWalkZone(${currentTutoTarget.id})"]`);
             if (btn) btn.classList.add('highlight-target');
         }, 800);
@@ -2360,23 +2088,23 @@ function checkTutoAdvancement(action) {
             const searchBox = document.getElementById('searchBox');
             if (searchBox) searchBox.classList.add('highlight-target');
             const btn = document.getElementById('tutoBtn');
-            // Mettre à jour l'étape affichée (étape 4)
+            // Mettre � jour l'�tape affich�e (�tape 4)
             currentTutoDisplayStep = 4;
-            btn.innerText = JS_TEXTS.tutorialButtons.finish[currentLang];
+            btn.innerText = APP_TEXTS.tutorialButtons.finish[currentLang];
             btn.style.display = "inline-block";
             btn.onclick = skipTuto;
-            updateTutoBox(JS_TEXTS.tuto4.title[currentLang], JS_TEXTS.tuto4.text[currentLang]);
+            updateTutoBox(APP_TEXTS.tuto4.title[currentLang], APP_TEXTS.tuto4.text[currentLang]);
         }, 1500);
     }
 }
 
 // ============================================================
-// NOUVELLES FONCTIONS API - données écologiques
-// AJOUTÉ : 02/01/2026
+// NOUVELLES FONCTIONS API - donn�es �cologiques
+// AJOUT� : 02/01/2026
 // ============================================================
 
 /**
- * Charge et affiche la qualité de l'air pour une gare
+ * Charge et affiche la qualit� de l'air pour une gare
  * @param {number} lat - Latitude
  * @param {number} lon - Longitude
  * @param {number} gareId - ID de la gare
@@ -2397,11 +2125,11 @@ async function loadAirQuality(lat, lon, gareId) {
                 container.dataset.hasData = 'true';
             }
 
-            // Utilise innerHTML += seulement après avoir vidé au premier chargement
+            // Utilise innerHTML += seulement apr�s avoir vid� au premier chargement
             container.innerHTML += `
                 <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-top:15px; border-left:4px solid ${airData.color};">
                     <h3 style="color:${airData.color}; margin-top:0;">
-                        <i class="fa-solid fa-wind"></i> Qualité de l'Air
+                        <i class="fa-solid fa-wind"></i> Qualit� de l'Air
                     </h3>
                     <p style="font-size:1.2rem; font-weight:bold; color:white;">
                         ${airData.quality} - ${airData.value} ${airData.unit}
@@ -2411,17 +2139,17 @@ async function loadAirQuality(lat, lon, gareId) {
             `;
         }
     } catch (error) {
-        console.error('Erreur chargement qualité air:', error);
+        console.error('Erreur chargement qualit� air:', error);
         // UX: Display an error message in the panel if the API call fails.
         const airContainer = document.getElementById(`air-quality-${gareId}`);
         if (airContainer) {
-            airContainer.innerHTML = `<p style="color:#ef4444">${JS_TEXTS.ecoPanel.error[currentLang]}</p>`;
+            airContainer.innerHTML = `<p style="color:#ef4444">${APP_TEXTS.ecoPanel.error[currentLang]}</p>`;
         }
     }
 }
 
 /**
- * Charge et affiche la biodiversité locale pour une gare
+ * Charge et affiche la biodiversit� locale pour une gare
  * @param {number} lat - Latitude
  * @param {number} lon - Longitude
  * @param {number} gareId - ID de la gare
@@ -2436,13 +2164,13 @@ async function loadBiodiversity(lat, lon, gareId) {
 
             const container = document.getElementById('ecoDataContainer');
 
-            // Initialise le container vide si pas déjà fait
+            // Initialise le container vide si pas d�j� fait
             if (!container.dataset.hasData) {
                 container.innerHTML = '';
                 container.dataset.hasData = 'true';
             }
 
-            // Utilisation de innerHTML += pour empiler avec la qualité de l'air
+            // Utilisation de innerHTML += pour empiler avec la qualit� de l'air
             let speciesHtml = '';
             bioData.species.forEach(s => {
                 if (s.photo) {
@@ -2459,7 +2187,7 @@ async function loadBiodiversity(lat, lon, gareId) {
                 }
             });
 
-            const tBio = JS_TEXTS.biodiversity;
+            const tBio = APP_TEXTS.biodiversity;
             const lang = currentLang;
 
             container.innerHTML += `
@@ -2474,7 +2202,7 @@ async function loadBiodiversity(lat, lon, gareId) {
                 </div>
             `;
 
-            // Badge hotspot si >30 espèces
+            // Badge hotspot si >30 esp�ces
             if (bioData.count > 30) {
                 container.innerHTML += `
                     <div style="background:#10b981; color:white; padding:10px; border-radius:8px; text-align:center; font-weight:bold; margin-top:10px;">
@@ -2484,20 +2212,20 @@ async function loadBiodiversity(lat, lon, gareId) {
             }
         }
     } catch (error) {
-        console.error('Erreur chargement biodiversité:', error);
+        console.error('Erreur chargement biodiversit�:', error);
         // UX: Display an error message in the panel if the API call fails.
         const bioContainer = document.getElementById(`biodiversity-${gareId}`);
         if (bioContainer) {
-            bioContainer.innerHTML = `<p style="color:#ef4444">${JS_TEXTS.ecoPanel.error[currentLang]}</p>`;
+            bioContainer.innerHTML = `<p style="color:#ef4444">${APP_TEXTS.ecoPanel.error[currentLang]}</p>`;
         }
     }
 }
 
-// Fonction pour reset panneau éco quand on clique sur nouvelle gare
+// Fonction pour reset panneau �co quand on clique sur nouvelle gare
 function resetEcoPanel() {
     const container = document.getElementById('ecoDataContainer');
     if (container) {
-        container.innerHTML = `<p style="color:#94a3b8;">${JS_TEXTS.errors.ecoLoading[currentLang]}</p>`;
+        container.innerHTML = `<p style="color:#94a3b8;">${APP_TEXTS.errors.ecoLoading[currentLang]}</p>`;
         container.dataset.initialized = 'false';
         container.dataset.hasData = 'false';
     }
@@ -2505,7 +2233,7 @@ function resetEcoPanel() {
 
 // ============================================================
 // NOUVELLES FONCTIONS UI - BOUTONS FEATURES
-// AJOUTÉ : 02/01/2026 pour contrôles des nouvelles fonctionnalités
+// AJOUT� : 02/01/2026 pour contr�les des nouvelles fonctionnalit�s
 // ============================================================
 
 /**
@@ -2522,7 +2250,7 @@ window.toggleIgnLayer = function() {
         // Carte Google Maps Standard (pas satellite)
         ignReliefLayer = L.tileLayer(
             'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-                attribution: '© Google Maps',
+                attribution: '� Google Maps',
                 maxZoom: 20
             }
         );
@@ -2533,32 +2261,32 @@ window.toggleIgnLayer = function() {
         map.addLayer(ignReliefLayer);
         btn.classList.add('active');
         ignLayerActive = true;
-        // FIX: Use translation from JS_TEXTS for toast message.
-        showToast(JS_TEXTS.toast.googleMapsActive[currentLang]);
+        // FIX: Use translation from APP_TEXTS for toast message.
+        showToast(APP_TEXTS.toast.googleMapsActive[currentLang]);
     } else {
         map.removeLayer(ignReliefLayer);
         map.addLayer(googleSat);
         btn.classList.remove('active');
         ignLayerActive = false;
-        // FIX: Use translation from JS_TEXTS for toast message.
-        showToast(JS_TEXTS.toast.satelliteActive[currentLang]);
+        // FIX: Use translation from APP_TEXTS for toast message.
+        showToast(APP_TEXTS.toast.satelliteActive[currentLang]);
     }
 };
 
 /**
  * Open Theme Selector Panel
- * Ouvre le panneau de sélection des Thèmes visuels
+ * Ouvre le panneau de s�lection des Th�mes visuels
  */
 window.openThemeSelector = function() {
     const panel = document.getElementById('themeSelectorPanel');
     panel.classList.toggle('active');
 };
 
-// Changement Thème VISIBLE sur tous les éléments
+// Changement Th�me VISIBLE sur tous les �l�ments
 window.applyTheme = function(themeName) {
     const root = document.documentElement;
 
-    // Suppression Thèmes forest, sunset et midnight
+    // Suppression Th�mes forest, sunset et midnight
     const themes = {
         'default': {
             primary: '#10b981',
@@ -2585,7 +2313,7 @@ window.applyTheme = function(themeName) {
     root.style.setProperty('--bg-light', theme.bgLight);
     root.style.setProperty('--text-color', theme.text);
 
-    // Changement DIRECT des éléments visuels principaux
+    // Changement DIRECT des �l�ments visuels principaux
     const header = document.querySelector('.dashboard-header');
     if (header) {
         header.style.background = `rgba(${hexToRgb(theme.bg)}, 0.95)`;
@@ -2611,11 +2339,11 @@ window.applyTheme = function(themeName) {
         toast.style.borderColor = theme.primary;
     }
 
-    // Thème Océan avec CartoDB Positron au lieu d'ArcGIS
+    // Th�me Oc�an avec CartoDB Positron au lieu d'ArcGIS
     const mapThemes = {
         'default': googleSat,
         'ocean': L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap contributors © CARTO',
+            attribution: '� OpenStreetMap contributors � CARTO',
             maxZoom: 20,
             subdomains: 'abcd'
         })
@@ -2632,8 +2360,8 @@ window.applyTheme = function(themeName) {
 
     localStorage.setItem('eco_theme', themeName);
     document.getElementById('themeSelectorPanel').classList.remove('active');
-    // FIX: Use translation from JS_TEXTS for the toast message.
-    showToast(`🎨 ${JS_TEXTS.toast.themeApplied[currentLang]}`);
+    // FIX: Use translation from APP_TEXTS for the toast message.
+    showToast(`?? ${APP_TEXTS.toast.themeApplied[currentLang]}`);
 };
 
 // Helper pour conversion hex to RGB
@@ -2646,7 +2374,7 @@ function hexToRgb(hex) {
 
 /**
  * Toggle Eco Panel
- * Affiche/masque le panneau d'informations écologiques avancées
+ * Affiche/masque le panneau d'informations �cologiques avanc�es
  */
 window.toggleEcoPanel = function() {
     const modal = document.getElementById('ecoPanelModal');
@@ -2655,24 +2383,24 @@ window.toggleEcoPanel = function() {
 
 /**
  * Toggle Heatmap
- * Active/désactive la carte de chaleur temporelle (placeholder pour implémentation future)
+ * Active/d�sactive la carte de chaleur temporelle (placeholder pour impl�mentation future)
  */
 let heatmapActive = false;
 window.toggleHeatmap = function() {
     const btn = document.getElementById('btnHeatmap');
 
-    // FIX: Suppression de la redéfinition inutile - les traductions existent déjà dans JS_TEXTS.toast (lignes 284-285)
+    // FIX: Suppression de la red�finition inutile - les traductions existent d�j� dans APP_TEXTS.toast (lignes 284-285)
 
     if (!heatmapActive) {
         btn.classList.add('active');
         heatmapActive = true;
-        // FIX: Use translation from JS_TEXTS for toast message.
-        showToast(JS_TEXTS.toast.heatmapOn[currentLang]);
+        // FIX: Use translation from APP_TEXTS for toast message.
+        showToast(APP_TEXTS.toast.heatmapOn[currentLang]);
     } else {
         btn.classList.remove('active');
         heatmapActive = false;
-        // FIX: Use translation from JS_TEXTS for toast message.
-        showToast(JS_TEXTS.toast.heatmapOff[currentLang]);
+        // FIX: Use translation from APP_TEXTS for toast message.
+        showToast(APP_TEXTS.toast.heatmapOff[currentLang]);
     }
 };
 
@@ -2684,6 +2412,24 @@ if (savedTheme) {
     // Premier chargement : applique Thème co-Vert par défaut
     applyTheme('default');
 }
+
+// ============================================================
+// EXPOSE FUNCTIONS TO WINDOW FOR ONCLICK HANDLERS
+// ============================================================
+window.lancerAnalyseComplete = lancerAnalyseComplete;
+window.randomGare = randomGare;
+window.updateAppLanguage = updateAppLanguage;
+window.nextTutoStep = nextTutoStep;
+window.skipTuto = skipTuto;
+window.openDiscoverModal = openDiscoverModal;
+window.closeDiscover = closeDiscover;
+window.resetDiscover = resetDiscover;
+window.showCategory = showCategory;
+window.toggleHeatmap = toggleHeatmap;
+window.toggleIgnLayer = toggleIgnLayer;
+window.openThemeSelector = openThemeSelector;
+window.toggleEcoPanel = toggleEcoPanel;
+window.switchLangMap = switchLangMap;
 
 // ============================================================
 // FIN DU FICHIER

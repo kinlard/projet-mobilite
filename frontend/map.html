@@ -219,60 +219,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-minimap/3.6.1/Control.MiniMap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-easyprint/2.1.9/bundle.js"></script>
     <script src="https://cdn.osmbuildings.org/4.1.1/OSMBuildings-Leaflet.js"></script>
-    <script src="app.js"></script> 
-    
- 
-    <script>
+    <script type="module">
+        import { NAV_TEXTS } from './js/textes.js';
+        import './app.js';
+        
         let isFrMap = true;
-        const translationsMap = {
-            navHome: { fr: "Accueil", en: "Home" },
-            navFav: { fr: "Mes favoris", en: "My Favorites" },
-            navApropos: { fr: "À propos", en: "About" },
-            search: { fr: "Rechercher...", en: "Search..." },
-            btnDiscover: { fr: "DÉCOUVRIR", en: "DISCOVER" },
-            discTitle: { fr: "Envie de partir quelque part ?", en: "Want to go somewhere?" },
-            discSub: { fr: "Choisissez un environnement, le site trouve pour vous les gares les plus écologiques.", en: "Choose an environment, the site finds the most eco-friendly stations for you." },
-            btnBack: { fr: "← Choisir un autre environnement", en: "← Choose another environment" },
-            catMer: { fr: "Mer Méditerranée", en: "Mediterranean Sea" },
-            catOcean: { fr: "Océan Atlantique", en: "Atlantic Ocean" },
-            catMontagne: { fr: "Montagne", en: "Mountain" },
-            catVille: { fr: "Grandes Métropoles", en: "Major Metropolises" },
-            catParis: { fr: "Paris", en: "Paris" },
-            catSud: { fr: "Le Sud", en: "The South" },
-            catNord: { fr: "Le Nord", en: "The North" },
-            catNature: { fr: "Nature", en: "Nature" },
-            tutoNext: { fr: "SUIVANT ➡️", en: "NEXT ➡️" },
-            tutoSkip: { fr: "Passer le tuto", en: "Skip tutorial" },
-            
-            // --- NEW STATS & LOADER TRANSLATIONS ---
-            loader: { fr: "Chargement de la carte...", en: "Loading map..." },
-            statsTitle: { fr: "📊 Tableau de bord national", en: "📊 National Dashboard" },
-            lblGares: { fr: "Gares analysées", en: "Analyzed stations" },
-            lblScore: { fr: "Score moyen écolo", en: "Avg Eco Score" },
-            lblTgv: { fr: "Part TGV", en: "TGV Share" },
-            lblVelos: { fr: "Moy. parkings vélos", en: "Avg Bike Parking" },
-            lblBornes: { fr: "Moy. bornes IRVE", en: "Avg Charging St." },
-            lblCovoit: { fr: "Moy. aires covoit", en: "Avg Carpool Areas" },
-            
-            // --- NOUVELLES STATS (8 nouvelles) ---
-            sectionAnalysis: { fr: "🔍 Analyse des gares", en: "🔍 Station Analysis" },
-            sectionTotals: { fr: "📈 Totaux nationaux", en: "📈 National Totals" },
-            sectionWeather: { fr: "🌡️ Météo en direct", en: "🌡️ Live Weather" },
-            sectionRanking: { fr: "🏆 Classement vélos", en: "🏆 Bike Ranking" },
-            lblTotalVelos: { fr: "Parkings vélo", en: "Bike Parkings" },
-            lblTotalCovoit: { fr: "Points covoiturage", en: "Carpool Points" },
-            lblTotalIrve: { fr: "Bornes IRVE", en: "EV Charging" },
-            lblGaresVelo: { fr: "Gares avec vélo (10min)", en: "Stations w/ bike (10min)" },
-            lblHottest: { fr: "Plus chaud", en: "Hottest" },
-            lblColdest: { fr: "Plus froid", en: "Coldest" },
-            lblTopVelo: { fr: "Gare top vélo (10min)", en: "Top bike station (10min)" },
-            lblNoVelo: { fr: "Gares sans vélo (10min)", en: "Stations w/o bike (10min)" },
-            statsRefresh: { fr: "🔄 Actualisation auto: 30s", en: "🔄 Auto-refresh: 30s" }
-        };
+        
         function switchLangMap() {
             isFrMap = !isFrMap;
             console.log('🔄 switchLangMap() appelé - isFrMap maintenant:', isFrMap);
-            const t = translationsMap;
+            const t = NAV_TEXTS;
             document.getElementById('nav-home').innerText = isFrMap ? t.navHome.fr : t.navHome.en;
             document.getElementById('nav-fav').innerText = isFrMap ? t.navFav.fr : t.navFav.en;
             document.getElementById('nav-apropos').innerText = isFrMap ? t.navApropos.fr : t.navApropos.en;
@@ -342,6 +298,8 @@
 
             if (window.updateAppLanguage) window.updateAppLanguage(isFrMap);
         }
+        
+        window.switchLangMap = switchLangMap;
     </script>
     
     <!-- Script Mobile Adaptive UI -->

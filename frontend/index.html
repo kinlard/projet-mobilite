@@ -88,17 +88,22 @@
         function triggerEasterEgg() { clicks++; if(clicks === 5) { document.getElementById('train').classList.add('choo-choo'); setTimeout(() => { document.getElementById('train').classList.remove('choo-choo'); clicks = 0; }, 4000); } }
 
         function startAdventure(e) { e.preventDefault(); document.getElementById('transitionLayer').classList.add('active'); setTimeout(() => { window.location.href = 'map.html?tuto=true'; }, 800); }
+    </script>
+    
+    <script type="module">
+        import { HOME_TEXTS } from './js/textes.js';
         
         let isFr = true;
-        const translations = { title: { fr: "Voyagez Mieux.", en: "Travel Better." }, subtitle: { fr: "L'outil idéal pour choisir la gare la plus optimisée écologiquement.", en: "The ideal tool to choose the most ecologically optimized station." }, cta: { fr: 'COMMENCER <i class="fa-solid fa-arrow-right"></i>', en: 'START <i class="fa-solid fa-arrow-right"></i>' } };
         
         function switchLang() {
             isFr = !isFr;
-            document.querySelector('.hero-title').innerText = isFr ? translations.title.fr : translations.title.en;
-            document.querySelector('.hero-subtitle').innerText = isFr ? translations.subtitle.fr : translations.subtitle.en;
-            document.querySelector('.cta-btn').innerHTML = isFr ? translations.cta.fr : translations.cta.en;
+            document.querySelector('.hero-title').innerText = isFr ? HOME_TEXTS.title.fr : HOME_TEXTS.title.en;
+            document.querySelector('.hero-subtitle').innerText = isFr ? HOME_TEXTS.subtitle.fr : HOME_TEXTS.subtitle.en;
+            document.querySelector('.cta-btn').innerHTML = isFr ? HOME_TEXTS.cta.fr : HOME_TEXTS.cta.en;
             clearTimeout(typeTimer); currentPhrases = isFr ? phrasesFr : phrasesEn; phraseIndex = 0; charIndex = 0; isDeleting = false; textElement.innerText = ''; type();
         }
+        
+        window.switchLang = switchLang;
     </script>
 </body>
 </html>
