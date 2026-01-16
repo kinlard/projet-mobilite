@@ -23,14 +23,14 @@ Tableau de Bord</title>
     <div class="container">
         <div class="top-section">
             <div class="titles"><h2 id="main-title" style="font-size: 
-2.5rem; margin: 0;">Tableau de Bord</h2><p id="main-subtitle" style="color:#94a3b8; margin-top: 5px;">G�rez vos futures aventures bas carbone.</p></div>
+2.5rem; margin: 0;">Tableau de Bord</h2><p id="main-subtitle" style="color:#94a3b8; margin-top: 5px;">Gérez vos futures aventures bas carbone.</p></div>
             <div class="heatmap-container"><div id="miniMap"></div></div>
         </div>
         <div id="grid" class="card-grid"></div>
         <div id="empty" style="text-align: center;
-color: #64748b; margin-top: 100px; display: none;"><i class="fa-solid fa-ghost" style="font-size: 3rem; margin-bottom: 20px;"></i><p id="empty-text">Aucune donn�e.</p><a href="map.html" id="btn-scan" class="btn-main" style="width:200px;
+color: #64748b; margin-top: 100px; display: none;"><i class="fa-solid fa-ghost" style="font-size: 3rem; margin-bottom: 20px;"></i><p id="empty-text">Aucune donnée.</p><a href="map.html" id="btn-scan" class="btn-main" style="width:200px;
 margin: 20px auto;">Scanner la carte</a></div>
-        <div class="danger-zone"><button id="btn-nuke" class="btn-nuke" onclick="openNukeModal()">?? S�QUENCE D�AUTODESTRUCTION</button></div>
+        <div class="danger-zone"><button id="btn-nuke" class="btn-nuke" onclick="openNukeModal()">💥 SÉQUENCE D'AUTODESTRUCTION</button></div>
     </div>
     <button id="vs-btn" onclick="openVsModal()"><i class="fa-solid fa-gavel"></i> <span id="btn-compare">COMPARER</span></button>
     <div id="toast" class="toast"><i class="fa-solid fa-circle-info" style="color:var(--primary)"></i><span id="toast-msg">Message</span></div>
@@ -40,7 +40,7 @@ margin: 20px auto;">Scanner la carte</a></div>
             <h3 id="onb-title" style="color:var(--primary);
 font-size:1.8rem; margin-bottom:20px;">Bienvenue !</h3>
             <p id="onb-text" style="text-align:left; line-height:1.6;
-color:#cbd5e1;">Voici votre carnet de voyage intelligent. Comparez deux gares, trouvez des images de la ville, g�n�rez un QR Code pour partager. Carte de situation en haut � droite.</p>
+color:#cbd5e1;">Voici votre carnet de voyage intelligent. Comparez deux gares, trouvez des images de la ville, générez un QR Code pour partager. Carte de situation en haut à droite.</p>
             <button id="onb-btn" class="btn-main" onclick="closeAll()" style="margin-top:20px;">C'est parti !</button>
         </div>
     </div>
@@ -72,7 +72,7 @@ box-shadow: 0 0 50px rgba(239,68,68,0.3);">
 color: #ef4444; margin-bottom: 20px;"></i>
             <h3 id="nuke-title" style="color: #ef4444;
 font-size: 1.5rem;">ATTENTION</h3>
-            <p id="nuke-text">Voulez-vous vraiment d�truire tout le carnet ?</p>
+            <p id="nuke-text">Voulez-vous vraiment détruire tout le carnet ?</p>
             <div style="display: flex;
 gap: 10px; justify-content: center; margin-top: 20px;">
                 <button id="nuke-no" onclick="closeAll()" style="padding: 10px 20px;
@@ -109,7 +109,7 @@ font-style:italic; font-size:2rem; margin-bottom:10px;">COMPARATEUR</h2>
     <script>
         const escapeHTML = (str) => str ? str.replace(/[&<>'"]/g, tag => ({ '&': '&', '<': '<', '>': '>', "'": "'", '"': '"' }[tag])) : '';
 
-        // MODIFI� : Variable langue d�plac�e en haut pour �tre accessible dans render()
+        // MODIFIÉ : Variable langue déplacée en haut pour être accessible dans render()
         let isFrCarnet = true;
         
         // Placeholder for DASHBOARD_TEXTS - will be imported by module script
@@ -157,7 +157,7 @@ grid.innerHTML = '';
                         <div class="circle-wrap" style="background: ${gradient}"><div class="circle-inner">${score}</div></div>
                         <div class="stats-list">
                             <div class="stat-item"><i class="fa-solid fa-bicycle" style="color:#06b6d4;
-width:20px;"></i> ${details.velos} ${isFrCarnet ? 'V�los' : 'Bikes'}</div>
+width:20px;"></i> ${details.velos} ${isFrCarnet ? 'Vélos' : 'Bikes'}</div>
                             <div class="stat-item"><i class="fa-solid fa-plug" style="color:#f59e0b;
 width:20px;"></i> ${details.bornes} ${isFrCarnet ? 'Bornes' : 'Terminals'}</div>
                             <div class="stat-item"><i class="fa-solid fa-car" style="color:#a855f7;

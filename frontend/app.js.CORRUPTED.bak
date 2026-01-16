@@ -1,0 +1,2436 @@
+//à ============================================================
+//à 0.à IMPORTSà ESà MODUîles
+//à ============================================================
+importà {à 
+à àà à àà AVIS_BAD,à AVIS_MID,à AVIS_GOOD,
+à àà à àà MAJOR_CITIES,à FALLBACK_IMAGES,
+à àà à àà LOADING_PHRASES,
+à àà à àà APP_TEXTS
+}à fromà './js/textes.js';
+
+//à ============================================================
+//à 1.à STYLEà &à CONFIGURATION
+//à ============================================================
+
+//à URLà deà l'APIà (Localhostà ouà Prod)
+constà API_BASE_URLà =à (window.location.hostnameà ===à 'localhost'à ||à window.location.hostnameà ===à '127.0.0.1')
+à àà à àà ?à 'http://localhost:3000'
+à àà à àà :à '';
+
+//à ============================================================
+//à 2.à INITIALISATIONà CARTE
+//à ============================================================
+console.log("??à Initialisationà Eco-Escapadeà -à FIXà ZONEà pi�tonne");
+
+constà mapà =à L.map('map',à {
+à àà à àà zoomControl:à false,
+à àà à àà minZoom:à 4,
+à àà à àà maxZoom:à 19,
+à àà à àà //à PERF:à optimiséationsà zoomà fluideà low-end
+à àà à àà preferCanvas:à true,
+à àà à àà zoomSnap:à 0.5,
+à àà à àà zoomDelta:à 0.5,
+à àà à àà wheelPxPerZoomLevel:à 120
+}).setView([46.6,à 2.2],à 5);
+
+//à Layerà Satellite/Hybridà pourà leà lookà sombre
+constà googîlesatà =à L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',à {
+à àà à àà maxZoom:à 20
+});
+map.addLayer(googîlesat);
+
+//à FIX:à Initialisationà globaleà desà donn�esà età desà couchesà manquantes
+//à SAFETY:à définitionsà minimaîlesà pourà éééviterà îlesà ReferenceErrorà auà d�marrage
+constà DATAà =à {
+à àà à àà gares:à [],
+à àà à àà garesById:à newà Map(),à //à PERF:à Indexà O(1)à parà ID
+à àà à àà velos:à [],
+à àà à àà bornes:à [],
+à àà à àà covoit:à [],
+à àà à àà Propretée:à {},à àà à àà à àà à //à Donn�esà Propretééà index�esà parà nomà deà gare
+à àà à àà defibrillateurs:à []à //à Donn�esà d�fibrillateursà avecà coordonn�es
+};
+
+constà createClusterà =à (cls)à =>à L.markerClusterGroup({
+à àà à àà showCoverageOnHover:à false,
+à àà à àà //à PERF:à optimiséationsà clustersà low-end
+à àà à àà chunkedLoading:à true,
+à àà à àà chunkInterval:à 50,
+à àà à àà chunkDelay:à 25,
+à àà à àà removeOutsideVisibleBounds:à true,
+à àà à àà disableClusteringAtZoom:à 18,
+à àà à àà spiderfyOnMaxZoom:à false,
+à àà à àà iconCreateFunction:à (c)à =>à L.divIcon({
+à àà à àà à àà à àà html:à `<span>${c.getChildCount()}</span>`,
+à àà à àà à àà à àà className:à `custom-clusterà ${cls}`,
+à àà à àà à àà à àà iconSize:à [40,à 40]
+à àà à àà })
+});
+
+constà markersLayerà =à createCluster('cluster-gare');
+constà irveLayerà =à createCluster('cluster-irve');
+constà covoitLayerà =à createCluster('cluster-covoit');
+constà veloParkingLayerà =à createCluster('cluster-velo');
+
+constà railsLayerà =à L.geoJSON(null,à {
+à àà à àà style:à {
+à àà à àà à àà à àà color:à '#6b7280',
+à àà à àà à àà à àà weight:à 2,
+à àà à àà à àà à àà opacity:à 0.6
+à àà à àà },
+à àà à àà //à PERF:à Simplificationà g�om�trieà pourà low-end
+à àà à àà simplifyFactor:à 1.5,
+à àà à àà bubblingMouseEvents:à false
+});
+
+//à FIX:à Initialiserà variabîlesà globaîlesà pourà laà gestionà deà laà zoneà pi�tonne
+letà walkCircleà =à null;
+
+//à FIX:à Déclarationà globaleà deà GLOBAL_STATSà pourà éééviterà ReferenceError
+letà GLOBAL_STATSà =à null;
+
+constà counterDivà =à L.DomUtil.create('div',à 'visible-counter');
+counterDiv.innerHTMLà =à `<ià class="fa-solidà fa-eye"></i>à <spanà id="count-val">0</span>à gares`;
+document.body.appendChild(counterDiv);
+
+constà toastDivà =à document.createElement('div');
+toastDiv.idà =à 'map-toast';
+toastDiv.classNameà =à 'map-toast';
+toastDiv.innerHTMLà =à `<ià class="fa-solidà fa-person-walking"à style="font-size:1.2rem;"></i>à <spanà id="toast-text">Message</span>`;
+document.body.appendChild(toastDiv);
+
+//à Notificationà persistanteà pourà laà zoneà pi�tonneà (vélos)
+constà veloNotifDivà =à document.createElement('div');
+veloNotifDiv.idà =à 'velo-zone-notif';
+veloNotifDiv.classNameà =à 'velo-zone-notif';
+veloNotifDiv.innerHTMLà =à `
+à àà à àà <divà class="velo-notif-content">
+à àà à àà à àà à àà <divà class="velo-notif-icon">
+à àà à àà à àà à àà à àà à àà <ià class="fa-solidà fa-bicycle"></i>
+à àà à àà à àà à àà </div>
+à àà à àà à àà à àà <divà class="velo-notif-text">
+à àà à àà à àà à àà à àà à àà <spanà class="velo-notif-title"à id="velo-zone-title">Zoneà pi�tonneà active</span>
+à àà à àà à àà à àà à àà à àà <spanà class="velo-notif-count"><spanà id="velo-zone-count">0</span>à <spanà id="velo-zone-label">parkingsà vélosà �à 10à min</span></span>
+à àà à àà à àà à àà </div>
+à àà à àà à àà à àà <divà class="notif-arrows"à id="velo-nav-arrows"à style="display:none;margin-left:12px;gap:6px;align-items:center;">
+à àà à àà à àà à àà à àà à àà <svgà class="arrow-left"à id="velo-arrow-left"à viewBox="0à 0à 24à 24"à width="28"à height="28"à style="cursor:pointer;background:#0A74D6;border-radius:50%;padding:4px;box-shadow:0à 2pxà 8pxà rgba(0,0,0,0.3);transition:allà 0.2sà ease;">
+à àà à àà à àà à àà à àà à àà à àà à àà <pathà d="M15à 18l-6-6à 6-6"à fill="none"à stroke="#fff"à stroke-width="2.5"à stroke-linecap="round"à stroke-linejoin="round"/>
+à àà à àà à àà à àà à àà à àà </svg>
+à àà à àà à àà à àà à àà à àà <svgà class="arrow-right"à id="velo-arrow-right"à viewBox="0à 0à 24à 24"à width="28"à height="28"à style="cursor:pointer;background:#0A74D6;border-radius:50%;padding:4px;box-shadow:0à 2pxà 8pxà rgba(0,0,0,0.3);transition:allà 0.2sà ease;">
+à àà à àà à àà à àà à àà à àà à àà à àà <pathà d="M9à 18l6-6-6-6"à fill="none"à stroke="#fff"à stroke-width="2.5"à stroke-linecap="round"à stroke-linejoin="round"/>
+à àà à àà à àà à àà à àà à àà </svg>
+à àà à àà à àà à àà </div>
+à àà à àà à àà à àà <buttonà class="velo-notif-close"à onclick="hideWalkZone()"à title="Fermerà laà zone">
+à àà à àà à àà à àà à àà à àà <ià class="fa-solidà fa-xmark"></i>
+à àà à àà à àà à àà </button>
+à àà à àà </div>
+`;
+document.body.appendChild(veloNotifDiv);
+
+//à ===à NAVIGATIONà vélosà DANSà ZONEà 10à MINà ===
+letà velosInZoneà =à [];
+letà velosZoneIndexà =à 0;
+
+//à Fonctionà pourà affichéerà laà popupà d'unà v�loà età cenêtrerà laà vue
+functionà showVeloPopup()à {
+à àà à àà ifà (velosInZone.lengthà ===à 0)à return;
+à àà à àà constà veloà =à velosInZone[velosZoneIndex];
+à àà à àà constà latà =à velo.lat;
+à àà à àà constà lonà =à velo.lon;
+à àà à àà 
+à àà à àà //à Cr�erà leà contenuà deà laà popup
+à àà à àà constà popupContentà =à `
+à àà à àà à àà à àà <divà style="font-family:-apple-system,BlinkMacSystemFont,'SFà Proà Display',sans-serif;padding:8px;min-width:180px;">
+à àà à àà à àà à àà à àà à àà <divà style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+à àà à àà à àà à àà à àà à àà à àà à àà <divà style="width:32px;height:32px;background:linear-gradient(135deg,#0A74D6,#0891b2);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <ià class="fa-solidà fa-bicycle"à style="color:white;font-size:0.9rem;"></i>
+à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà à àà à àà <div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <divà style="font-weight:700;color:#0A74D6;font-size:0.85rem;">Parkingà V�lo</div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <divà style="font-size:0.7rem;color:#64748b;">${velosZoneIndexà +à 1}à /à ${velosInZone.length}</div>
+à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà <divà style="font-size:0.8rem;color:#334155;">
+à àà à àà à àà à àà à àà à àà à àà à àà ${velo.nomà ||à velo.nameà ||à 'Stationà v�lo'}
+à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà ${velo.capaciteà ?à `<divà style="font-size:0.75rem;color:#64748b;margin-top:4px;"><ià class="fa-solidà fa-parking"à style="margin-right:4px;"></i>Capacit�:à ${velo.capacite}à places</div>`à :à ''}
+à àà à àà à àà à àà </div>
+à àà à àà `;
+à àà à àà 
+à àà à àà //à Ouvrirà laà popupà surà laà carte
+à àà à àà L.popup({
+à àà à àà à àà à àà closeButton:à true,
+à àà à àà à àà à àà className:à 'velo-zone-popup'
+à àà à àà })
+à àà à àà à àà à àà .setLatLng([lat,à lon])
+à àà à àà à àà à àà .setContent(popupContent)
+à àà à àà à àà à àà .openOn(map);
+à àà à àà 
+à àà à àà //à Cenêtrerà laà carteà surà leà v�lo
+à àà à àà map.setView([lat,à lon],à 17,à {à animate:à true,à duration:à 0.5à });
+}
+
+//à Configurationà desà eventà listenersà pourà îlesà fl�ches
+document.addEventListener('DOMContentLoaded',à function()à {
+à àà à àà constà arrowLeftà =à document.getElementById('velo-arrow-left');
+à àà à àà constà arrowRightà =à document.getElementById('velo-arrow-right');
+à àà à àà constà veloNotifà =à document.getElementById('velo-zone-notif');
+à àà à àà 
+à àà à àà ifà (arrowLeft)à {
+à àà à àà à àà à àà arrowLeft.addEventListener('click',à function(e)à {
+à àà à àà à àà à àà à àà à àà e.stopPropagation();
+à àà à àà à àà à àà à àà à àà ifà (velosInZone.lengthà >à 1)à {
+à àà à àà à àà à àà à àà à àà à àà à àà velosZoneIndexà =à (velosZoneIndexà -à 1à +à velosInZone.length)à %à velosInZone.length;
+à àà à àà à àà à àà à àà à àà à àà à àà showVeloPopup();
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà });
+à àà à àà à àà à àà //à Hoverà effect
+à àà à àà à àà à àà arrowLeft.addEventListener('mouseenter',à function()à {
+à àà à àà à àà à àà à àà à àà this.style.backgroundà =à '#085bb5';
+à àà à àà à àà à àà à àà à àà this.style.transformà =à 'scale(1.1)';
+à àà à àà à àà à àà });
+à àà à àà à àà à àà arrowLeft.addEventListener('mouseleave',à function()à {
+à àà à àà à àà à àà à àà à àà this.style.backgroundà =à '#0A74D6';
+à àà à àà à àà à àà à àà à àà this.style.transformà =à 'scale(1)';
+à àà à àà à àà à àà });
+à àà à àà }
+à àà à àà 
+à àà à àà ifà (arrowRight)à {
+à àà à àà à àà à àà arrowRight.addEventListener('click',à function(e)à {
+à àà à àà à àà à àà à àà à àà e.stopPropagation();
+à àà à àà à àà à àà à àà à àà ifà (velosInZone.lengthà >à 1)à {
+à àà à àà à àà à àà à àà à àà à àà à àà velosZoneIndexà =à (velosZoneIndexà +à 1)à %à velosInZone.length;
+à àà à àà à àà à àà à àà à àà à àà à àà showVeloPopup();
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà });
+à àà à àà à àà à àà //à Hoverà effect
+à àà à àà à àà à àà arrowRight.addEventListener('mouseenter',à function()à {
+à àà à àà à àà à àà à àà à àà this.style.backgroundà =à '#085bb5';
+à àà à àà à àà à àà à àà à àà this.style.transformà =à 'scale(1.1)';
+à àà à àà à àà à àà });
+à àà à àà à àà à àà arrowRight.addEventListener('mouseleave',à function()à {
+à àà à àà à àà à àà à àà à àà this.style.backgroundà =à '#0A74D6';
+à àà à àà à àà à àà à àà à àà this.style.transformà =à 'scale(1)';
+à àà à àà à àà à àà });
+à àà à àà }
+à àà à àà 
+à àà à àà //à Supportà tactileà (swipe)à pourà mobileà surà laà notification
+à àà à àà ifà (veloNotif)à {
+à àà à àà à àà à àà letà touchStartXà =à 0;
+à àà à àà à àà à àà letà touchEndXà =à 0;
+à àà à àà à àà à àà constà minSwipeDistanceà =à 50;
+à àà à àà à àà à àà 
+à àà à àà à àà à àà veloNotif.addEventListener('touchstart',à function(e)à {
+à àà à àà à àà à àà à àà à àà touchStartXà =à e.changedTouches[0].screenX;
+à àà à àà à àà à àà },à {à passive:à trueà });
+à àà à àà à àà à àà 
+à àà à àà à àà à àà veloNotif.addEventListener('touchend',à function(e)à {
+à àà à àà à àà à àà à àà à àà touchEndXà =à e.changedTouches[0].screenX;
+à àà à àà à àà à àà à àà à àà constà swipeDistanceà =à touchEndXà -à touchStartX;
+à àà à àà à àà à àà à àà à àà 
+à àà à àà à àà à àà à àà à àà ifà (velosInZone.lengthà >à 1)à {
+à àà à àà à àà à àà à àà à àà à àà à àà ifà (swipeDistanceà >à minSwipeDistance)à {
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà //à Swipeà droiteà ?à v�loà pr�c�dent
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà velosZoneIndexà =à (velosZoneIndexà -à 1à +à velosInZone.length)à %à velosInZone.length;
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà showVeloPopup();
+à àà à àà à àà à àà à àà à àà à àà à àà }à elseà ifà (swipeDistanceà <à -minSwipeDistance)à {
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà //à Swipeà gaucheà ?à v�loà suivant
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà velosZoneIndexà =à (velosZoneIndexà +à 1)à %à velosInZone.length;
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà showVeloPopup();
+à àà à àà à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà },à {à passive:à trueà });
+à àà à àà }
+});
+
+//à Fonctionà pourà metêtreà �à jourà îlesà fl�chesà deà navigation
+functionà updateVeloNavArrows(count)à {
+à àà à àà constà arrowsà =à document.getElementById('velo-nav-arrows');
+à àà à àà ifà (arrows)à {
+à àà à àà à àà à àà ifà (countà >à 1)à {
+à àà à àà à àà à àà à àà à àà arrows.style.displayà =à 'flex';
+à àà à àà à àà à àà }à elseà {
+à àà à àà à àà à àà à àà à àà arrows.style.displayà =à 'none';
+à àà à àà à àà à àà }
+à àà à àà }
+}
+
+//à Fonctionà debounceà pourà performance
+functionà debounce(func,à wait)à {
+à àà à àà letà timeout;
+à àà à àà returnà functionà executedFunction(...args)à {
+à àà à àà à àà à àà constà laterà =à ()à =>à {
+à àà à àà à àà à àà à àà à àà clearTimeout(timeout);
+à àà à àà à àà à àà à àà à àà func(...args);
+à àà à àà à àà à àà };
+à àà à àà à àà à àà clearTimeout(timeout);
+à àà à àà à àà à àà timeoutà =à setTimeout(later,à wait);
+à àà à àà };
+}
+
+//à Helperà pourà affichéerà îlesà toastsà d'erreurà ouà d'info
+functionà showToast(msg,à isErrorà =à false)à {
+à àà à àà constà tà =à document.getElementById('map-toast');
+à àà à àà ifà (t)à {
+à àà à àà à àà à àà document.getElementById('toast-text').innerHTMLà =à msg;
+à àà à àà à àà à àà ifà (isError)à t.style.borderColorà =à '#ef4444';
+à àà à àà à àà à àà elseà t.style.borderColorà =à '#334155';
+à àà à àà à àà à àà t.classList.add('active');
+à àà à àà à àà à àà setTimeout(()à =>à t.classList.remove('active'),à 4000);
+à àà à àà }
+}
+
+//à Fonctionà deà calculà deà distanceà (formuleà Haversine)à -à retourneà laà distanceà enà km
+functionà getDist(lat1,à lon1,à lat2,à lon2)à {
+à àà à àà constà Rà =à 6371;à //à Rayonà deà laà Terreà enà km
+à àà à àà constà dLatà =à (lat2à -à lat1)à *à Math.PIà /à 180;
+à àà à àà constà dLonà =à (lon2à -à lon1)à *à Math.PIà /à 180;
+à àà à àà constà aà =à Math.sin(dLatà /à 2)à *à Math.sin(dLatà /à 2)à +
+à àà à àà à àà à àà à àà à àà à àà Math.cos(lat1à *à Math.PIà /à 180)à *à Math.cos(lat2à *à Math.PIà /à 180)à *
+à àà à àà à àà à àà à àà à àà à àà Math.sin(dLonà /à 2)à *à Math.sin(dLonà /à 2);
+à àà à àà constà cà =à 2à *à Math.atan2(Math.sqrt(a),à Math.sqrt(1à -à a));
+à àà à àà returnà Rà *à c;
+}
+
+//à Fonctionà pourà metêtreà �à jourà leà compteurà deà garesà visibîles
+functionà updateCount()à {
+à àà à àà constà countElà =à document.getElementById('count-val');
+à àà à àà ifà (countEl)à {
+à àà à àà à àà à àà constà visibleCountà =à markersLayer.getLayers().length;
+à àà à àà à àà à àà countEl.textContentà =à visibleCount;
+à àà à àà }
+}
+
+//à Gestionà desà favorisà avecà localStorage
+functionà getFavoris()à {
+à àà à àà tryà {
+à àà à àà à àà à àà //à FIX:à utiliséationà deà 'eco_favoris'à pourà coh�renceà avecà carnet.html
+à àà à àà à àà à àà returnà JSON.parse(localStorage.getItem('eco_favoris')à ||à '[]');
+à àà à àà }à catchà (e)à {
+à àà à àà à àà à àà returnà [];
+à àà à àà }
+}
+
+functionà isFavori(id)à {
+à àà à àà returnà getFavoris().some(fà =>à f.idà ===à id);
+}
+
+functionà toggleFavori(id,à nom,à type)à {
+à àà à àà letà favorisà =à getFavoris();
+à àà à àà constà indexà =à favoris.findIndex(fà =>à f.idà ===à id);
+à àà à àà constà iconà =à document.getElementById(`fav-${id}`);
+à àà à àà 
+à àà à àà ifà (indexà >=à 0)à {
+à àà à àà à àà à àà favoris.splice(index,à 1);
+à àà à àà à àà à àà ifà (icon)à {
+à àà à àà à àà à àà à àà à àà icon.classList.remove('fav-active');
+à àà à àà à àà à àà à àà à àà icon.classList.add('fav-inactive');
+à àà à àà à àà à àà }
+à àà à àà à àà à àà showToast(`${nom}à ${APP_TEXTS.favoris.removed[currentLang]}`);
+à àà à àà }à elseà {
+à àà à àà à àà à àà favoris.push({à id,à nom,à type,à date:à newà Date().toISOString()à });
+à àà à àà à àà à àà ifà (icon)à {
+à àà à àà à àà à àà à àà à àà icon.classList.remove('fav-inactive');
+à àà à àà à àà à àà à àà à àà icon.classList.add('fav-active');
+à àà à àà à àà à àà }
+à àà à àà à àà à àà showToast(`${nom}à ${APP_TEXTS.favoris.added[currentLang]}`);
+à àà à àà }
+à àà à àà 
+à àà à àà //à FIX:à utiliséationà deà 'eco_favoris'à pourà coh�renceà avecà carnet.html
+à àà à àà localStorage.setItem('eco_favoris',à JSON.stringify(favoris));
+}
+
+letà osmbà =à null;
+
+letà currentLangà =à 'fr';
+
+//à Variableà pourà trackerà l'�étapeà affich�eà duà tutorielà (1,à 2,à 3à ouà 4)
+letà currentTutoDisplayStepà =à 1;
+
+window.updateAppLanguageà =à (isFr)à =>à {
+à àà à àà currentLangà =à isFrà ?à 'fr'à :à 'en';
+à àà à àà 
+à àà à àà console.log('??à updateAppLanguageà appelé�à avecà isFr=',à isFr,à '?à currentLang=',à currentLang);
+à àà à àà console.log('à àà à currentTutoDisplayStepà =',à currentTutoDisplayStep);
+à àà à àà 
+à àà à àà //à ===à MISEà �à JOURà DUà TUTORIELà ===
+à àà à àà constà tutoBoxà =à document.getElementById('tutoBox');
+à àà à àà constà tutoTitleà =à document.getElementById('tutoTitle');
+à àà à àà constà tutoTextà =à document.getElementById('tutoText');
+à àà à àà constà tutoBtnà =à document.getElementById('tutoBtn');
+à àà à àà constà skipBtnà =à document.querySelector('.tuto-skip-btn');
+à àà à àà 
+à àà à àà console.log('à àà à tutoTitleà element:',à tutoTitleà ?à 'FOUND'à :à 'NULL');
+à àà à àà console.log('à àà à tutoTextà element:',à tutoTextà ?à 'FOUND'à :à 'NULL');
+à àà à àà 
+à àà à àà //à Toujoursà metêtreà �à jourà leà tutorielà sià îlesà �l�mentsà existent
+à àà à àà ifà (tutoTitleà &&à tutoText)à {
+à àà à àà à àà à àà //à utiliséerà currentTutoDisplayStepà pourà savoirà quelleà �étapeà affichéer
+à àà à àà à àà à àà constà tutoDataà =à {
+à àà à àà à àà à àà à àà à àà 1:à APP_TEXTS.tuto1,
+à àà à àà à àà à àà à àà à àà 2:à APP_TEXTS.tuto2,
+à àà à àà à àà à àà à àà à àà 3:à APP_TEXTS.tuto3,
+à àà à àà à àà à àà à àà à àà 4:à APP_TEXTS.tuto4
+à àà à àà à àà à àà };
+à àà à àà à àà à àà 
+à àà à àà à àà à àà constà stepà =à tutoData[currentTutoDisplayStep]à ||à tutoData[1];
+à àà à àà à àà à àà console.log('à àà à Miseà �à jourà tutorielà avec:',à step.title[currentLang]);
+à àà à àà à àà à àà tutoTitle.innerTextà =à step.title[currentLang];
+à àà à àà à àà à àà tutoText.innerTextà =à step.text[currentLang];
+à àà à àà }à elseà {
+à àà à àà à àà à àà console.log('à àà à ??à �l�mentsà tutorielà nonà trouv�s!');
+à àà à àà }
+à àà à àà 
+à àà à àà //à Metêtreà �à jourà leà boutonà SUIVANT/NEXTà ouà terminéÉER/FINISH
+à àà à àà ifà (tutoBtn)à {
+à àà à àà à àà à àà ifà (currentTutoDisplayStepà ===à 4)à {
+à àà à àà à àà à àà à àà à àà tutoBtn.innerTextà =à APP_TEXTS.tutorialButtons.finish[currentLang];
+à àà à àà à àà à àà }à elseà {
+à àà à àà à àà à àà à àà à àà tutoBtn.innerTextà =à APP_TEXTS.tutorialButtons.next[currentLang];
+à àà à àà à àà à àà }
+à àà à àà }
+à àà à àà 
+à àà à àà //à Metêtreà �à jourà leà boutonà "Passerà leà tuto"
+à àà à àà ifà (skipBtn)à {
+à àà à àà à àà à àà skipBtn.innerTextà =à APP_TEXTS.tutorialButtons.skip[currentLang];
+à àà à àà }
+à àà à àà 
+à àà à àà //à ===à MISEà �à JOURà DEà LAà NOTIFICATIONà V�LOà ===
+à àà à àà constà veloTitleElà =à document.getElementById('velo-zone-title');
+à àà à àà constà veloLabelElà =à document.getElementById('velo-zone-label');
+à àà à àà ifà (veloTitleEl)à veloTitleEl.textContentà =à APP_TEXTS.veloZone.title[currentLang];
+à àà à àà ifà (veloLabelEl)à veloLabelEl.textContentà =à APP_TEXTS.veloZone.count[currentLang];
+à àà à àà 
+à àà à àà //à ===à MISEà �à JOURà DESà POPUPSà DEà GAREà SIà OUVERTESà ===
+à àà à àà constà openPopupà =à document.querySelector('.leaflet-popup-content');
+à àà à àà ifà (openPopup)à {
+à àà à àà à àà à àà constà analyseBtnà =à openPopup.querySelector('.btn-analyse');
+à àà à àà à àà à àà constà walkBtnà =à openPopup.querySelector('.btn-walk');
+à àà à àà à àà à àà ifà (analyseBtn)à {
+à àà à àà à àà à àà à àà à àà analyseBtn.innerHTMLà =à APP_TEXTS.popup.analyse[currentLang];
+à àà à àà à àà à àà }
+à àà à àà à àà à àà ifà (walkBtn)à {
+à àà à àà à àà à àà à àà à àà walkBtn.innerHTMLà =à `<ià class="fa-solidà fa-person-walking"></i>à ${APP_TEXTS.popup.zone[currentLang]}`;
+à àà à àà à àà à àà }
+à àà à àà }
+à àà à àà 
+à àà à àà //à ===à MISEà �à JOURà DUà COMPTEURà DEà GARESà ===
+à àà à àà constà counterDivà =à document.querySelector('.visible-counter');
+à àà à àà ifà (counterDiv)à {
+à àà à àà à àà à àà constà countValà =à document.getElementById('count-val');
+à àà à àà à àà à àà constà countà =à countValà ?à countVal.textContentà :à '0';
+à àà à àà à àà à àà counterDiv.innerHTMLà =à `<ià class="fa-solidà fa-eye"></i>à <spanà id="count-val">${count}</span>à ${APP_TEXTS.counter.stations[currentLang]}`;
+à àà à àà }
+};
+
+//à FIX:à Properlyà escapeà HTMLà entitiesà toà preventà XSSà andà brokenà display
+//à SAFETY:à Ensureà inputà isà stringà andà handleà null/undefinedà gracefully
+constà escapeHTMLà =à (str)à =>à {
+à àà à àà ifà (strà ===à nullà ||à strà ===à undefined)à returnà '';
+à àà à àà returnà String(str).replace(/[&<>'"\/]/g,à tagà =>à ({
+à àà à àà à àà à àà '&':à '&',
+à àà à àà à àà à àà '<':à '<',
+à àà à àà à àà à àà '>':à '>',
+à àà à àà à àà à àà "'":à '\'',
+à àà à àà à àà à àà '"':à '"',
+à àà à àà à àà à àà '/':à '/'
+à àà à àà }[tag]));
+};
+
+//à ============================================================
+//à 3.à chargéeMENT
+//à ============================================================
+
+/**
+à *à chargéeà toutesà îlesà donn�esà initiaîlesà deà l'applicationà (Gares,à Rails,à IRVE,à etc.).
+à *à G�reà îlesà promessesà parall�îlesà età l'initialisationà deà laà carte.
+à *à affichéeà unà loaderà pendantà leà chargéementà età g�reà îlesà erreursà APIà viaà desà toasts.
+à *à @async
+à *à @returnsà {Promise<void>}
+à */
+asyncà functionà loadEverything()à {
+à àà à àà console.log("D�butà duà chargéement...");
+à àà à àà constà loaderTextà =à document.getElementById('loader-msg');
+à àà à àà constà startTimeà =à Date.now();
+à àà à àà constà MIN_LOADING_TIMEà =à 5000;à //à Tempsà deà chargéementà minimumà :à 5à secondes
+
+à àà à àà //à Phaseà 1à :à affichéerà "D�marrageà duà serveur..."à pendantà 1à seconde
+à àà à àà ifà (loaderText)à {
+à àà à àà à àà à àà loaderText.innerTextà =à "D�marrageà duà serveur...";
+à àà à àà }
+à àà à àà awaità newà Promise(resolveà =>à setTimeout(resolve,à 1000));
+
+à àà à àà //à Phaseà 2à :à Rotationà automatiqueà desà phrasesà al�atoiresà toutesà îlesà 1à seconde
+à àà à àà constà msgIntervalà =à setInterval(()à =>à {
+à àà à àà à àà à àà ifà (loaderText)à {
+à àà à àà à àà à àà à àà à àà constà randomPhraseà =à LOADING_PHRASES[Math.floor(Math.random()à *à LOADING_PHRASES.length)];
+à àà à àà à àà à àà à àà à àà loaderText.innerTextà =à randomPhrase;
+à àà à àà à àà à àà }
+à àà à àà },à 1000);
+
+à àà à àà tryà {
+à àà à àà à àà à àà //à ===à D�BUTà DUà chargéeMENTà DESà DONN�ESà ===
+à àà à àà à àà à àà //à Gestionà d'erreursà robuste
+à àà à àà à àà à àà constà promisesà =à [
+à àà à àà à àà à àà à àà à àà fetch(`${API_BASE_URL}/api/wfs-rails`).then(rà =>à r.json()).catch(eà =>à {
+à àà à àà à àà à àà à àà à àà à àà à àà console.error("??à Rails:",à e);
+à àà à àà à àà à àà à àà à àà à àà à àà returnà null;
+à àà à àà à àà à àà à àà à àà }),
+à àà à àà à àà à àà à àà à àà fetch(`${API_BASE_URL}/api/gares`).then(rà =>à r.json()).catch(eà =>à {
+à àà à àà à àà à àà à àà à àà à àà à àà console.error("??à Gares:",à e);
+à àà à àà à àà à àà à àà à àà à àà à àà showToast("Erreurà chargéementà Gares",à true);
+à àà à àà à àà à àà à àà à àà à àà à àà returnà [];
+à àà à àà à àà à àà à àà à àà }),
+à àà à àà à àà à àà à àà à àà fetch(`${API_BASE_URL}/api/irve`).then(rà =>à r.json()).catch(eà =>à {
+à àà à àà à àà à àà à àà à àà à àà à àà console.error("??à IRVE:",à e);
+à àà à àà à àà à àà à àà à àà à àà à àà returnà {à features:à []à };
+à àà à àà à àà à àà à àà à àà }),
+à àà à àà à àà à àà à àà à àà fetch(`${API_BASE_URL}/api/covoiturage`).then(rà =>à r.json()).catch(eà =>à {
+à àà à àà à àà à àà à àà à àà à àà à àà console.error("??à Covoit:",à e);
+à àà à àà à àà à àà à àà à àà à àà à àà returnà {à features:à []à };
+à àà à àà à àà à àà à àà à àà }),
+à àà à àà à àà à àà à àà à àà fetch(`${API_BASE_URL}/api/parking-velo?minLat=41&maxLat=52&minLon=-5&maxLon=10`).then(rà =>à r.json()).catch(eà =>à {
+à àà à àà à àà à àà à àà à àà à àà à àà console.error("??à vélos:",à e);
+à àà à àà à àà à àà à àà à àà à àà à àà returnà {à features:à []à };
+à àà à àà à àà à àà à àà à àà }),
+à àà à àà à àà à àà à àà à àà fetch(`${API_BASE_URL}/api/Propretée-gares`).then(rà =>à r.json()).catch(eà =>à {
+à àà à àà à àà à àà à àà à àà à àà à àà console.error("??à Propretéé:",à e);
+à àà à àà à àà à àà à àà à àà à àà à àà returnà [];
+à àà à àà à àà à àà à àà à àà }),
+à àà à àà à àà à àà à àà à àà fetch(`${API_BASE_URL}/api/defibrillateurs-gares`).then(rà =>à r.json()).catch(eà =>à {
+à àà à àà à àà à àà à àà à àà à àà à àà console.error("??à D�fibrillateurs:",à e);
+à àà à àà à àà à àà à àà à àà à àà à àà returnà [];
+à àà à àà à àà à àà à àà à àà })
+à àà à àà à àà à àà ];
+à àà à àà à àà à àà constà [rails,à gares,à irve,à covoit,à velos,à Propretée,à defibrillateurs]à =à awaità Promise.all(promises);
+
+à àà à àà à àà à àà ifà (rails)à railsLayer.addData(rails);
+
+à àà à àà à àà à àà DATA.garesà =à gares;
+à àà à àà à àà à àà //à PERF:à Construireà l'indexà O(1)à parà ID
+à àà à àà à àà à àà DATA.garesById.clear();
+à àà à àà à àà à àà gares.forEach(gà =>à {à ifà (gà &&à g.idà !==à undefined)à DATA.garesById.set(g.id,à g);à });
+à àà à àà à àà à àà 
+à àà à àà à àà à àà DATA.velosà =à (velos.featuresà ||à []).map(fà =>à ({
+à àà à àà à àà à àà à àà à àà lat:à f.geometry.coordinates[1],
+à àà à àà à àà à àà à àà à àà lon:à f.geometry.coordinates[0]
+à àà à àà à àà à àà }));
+à àà à àà à àà à àà DATA.bornesà =à (irve.featuresà ||à []).map(fà =>à ({
+à àà à àà à àà à àà à àà à àà lat:à f.geometry.coordinates[1],
+à àà à àà à àà à àà à àà à àà lon:à f.geometry.coordinates[0]
+à àà à àà à àà à àà }));
+à àà à àà à àà à àà DATA.covoità =à (covoit.featuresà ||à []).map(fà =>à ({
+à àà à àà à àà à àà à àà à àà lat:à f.geometry.coordinates[1],
+à àà à àà à àà à àà à àà à àà lon:à f.geometry.coordinates[0]
+à àà à àà à àà à àà }));
+à àà à àà à àà à àà 
+à àà à àà à àà à àà //à Indexerà îlesà donn�esà deà Propretééà parà nomà deà gareà (lowercaseà pourà matching)
+à àà à àà à àà à àà DATA.Propretéeà =à (Propretéeà ||à []).reduce((acc,à p)à =>à {
+à àà à àà à àà à àà à àà à àà ifà (p.nom_gare)à {
+à àà à àà à àà à àà à àà à àà à àà à àà //à Indexationà multipleà :à nomà courtà +à variantesà pourà meilleurà matching
+à àà à àà à àà à àà à àà à àà à àà à àà constà nomLowerà =à p.nom_gare.toLowerCase().trim();
+à àà à àà à àà à àà à àà à àà à àà à àà acc[nomLower]à =à p;
+à àà à àà à àà à àà à àà à àà à àà à àà //à Varianteà sansà accentsà pourà fallback
+à àà à àà à àà à àà à àà à àà à àà à àà constà nomSansAccentsà =à nomLower.normalize("NFD").replace(/[\u0300-\u036f]/g,à "");
+à àà à àà à àà à àà à àà à àà à àà à àà ifà (nomSansAccentsà !==à nomLower)à acc[nomSansAccents]à =à p;
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà à àà à àà returnà acc;
+à àà à àà à àà à àà },à {});
+à àà à àà à àà à àà console.log(`??à Propretééà charg�eà :à ${Object.keys(DATA.Propretée).length}à garesà index�es`);
+à àà à àà à àà à àà 
+à àà à àà à àà à àà //à Stockerà îlesà d�fibrillateursà (matchingà parà coordonn�esà g�ographiques)
+à àà à àà à àà à àà DATA.defibrillateursà =à defibrillateursà ||à [];
+à àà à àà à àà à àà console.log(`??à D�fibrillateursà charg�sà :à ${DATA.defibrillateurs.length}à garesà �quip�es`);
+
+à àà à àà à àà à àà map.addLayer(markersLayer);
+à àà à àà à àà à àà map.addLayer(railsLayer);
+
+à àà à àà à àà à àà initMapMarkers();
+à àà à àà à àà à àà initSecondaryMarkers(irve,à covoit,à velos);
+à àà à àà à àà à àà preComputeScoresSync();
+
+à àà à àà à àà à àà //à Calculà deà TOUTESà îlesà statsà auà chargéementà pourà leà panneauà Stats
+à àà à àà à àà à àà DATA.gares.forEach(gà =>à {
+à àà à àà à àà à àà à àà à àà constà anà =à analyser(g);
+à àà à àà à àà à àà à àà à àà g.computedScoreà =à an.note;
+à àà à àà à àà à àà à àà à àà g.computedDetailsà =à an.details;
+à àà à àà à àà à àà });
+
+à àà à àà à àà à àà GLOBAL_STATSà =à computeGlobalStats();
+à àà à àà à àà à àà awaità loadFranceMask();
+
+à àà à àà à àà à àà //à Attendreà leà tempsà minimumà deà chargéementà (5à secondesà auà total)
+à àà à àà à àà à àà constà elapsedTimeà =à Date.now()à -à startTime;
+à àà à àà à àà à àà constà remainingTimeà =à MIN_LOADING_TIMEà -à elapsedTime;
+à àà à àà à àà à àà ifà (remainingTimeà >à 0)à {
+à àà à àà à àà à àà à àà à àà awaità newà Promise(resolveà =>à setTimeout(resolve,à remainingTime));
+à àà à àà à àà à àà }
+
+à àà à àà à àà à àà //à Arr�tà deà laà rotationà desà phrasesà al�atoires
+à àà à àà à àà à àà clearInterval(msgInterval);
+à àà à àà à àà à àà 
+à àà à àà à àà à àà //à Phaseà 3à :à affichéerà "chargéementà deà laà page..."à avantà deà terminéÉEr
+à àà à àà à àà à àà ifà (loaderText)à {
+à àà à àà à àà à àà à àà à àà loaderText.innerTextà =à "chargéementà deà laà page...";
+à àà à àà à àà à àà }
+à àà à àà à àà à àà awaità newà Promise(resolveà =>à setTimeout(resolve,à 1000));
+
+à àà à àà }à catchà (error)à {
+à àà à àà à àà à àà console.error("Erreurà critiqueà chargéement:",à error);
+à àà à àà à àà à àà showToast("Erreurà critiqueà deà chargéement",à true);
+à àà à àà à àà à àà //à Arr�tà rotationà enà casà d'erreur
+à àà à àà à àà à àà clearInterval(msgInterval);
+à àà à àà à àà à àà ifà (loaderText)à {
+à àà à àà à àà à àà à àà à àà loaderText.innerTextà =à 'Erreurà deà chargéement...';
+à àà à àà à àà à àà }
+à àà à àà }à finallyà {
+à àà à àà à àà à àà console.log("chargéementà terminé�.");
+à àà à àà à àà à àà //à ===à MASQUAGEà DUà LOADERà ===
+à àà à àà à àà à àà setTimeout(()à =>à {
+à àà à àà à àà à àà à àà à àà constà loaderà =à document.getElementById('map-loader');
+à àà à àà à àà à àà à àà à àà ifà (loader)à {
+à àà à àà à àà à àà à àà à àà à àà à àà loader.style.opacityà =à '0';
+à àà à àà à àà à àà à àà à àà à àà à àà setTimeout(()à =>à loader.remove(),à 800);
+à àà à àà à àà à àà à àà à àà }
+
+à àà à àà à àà à àà à àà à àà ifà (!checkTutorialMode())à {
+à àà à àà à àà à àà à àà à àà à àà à àà ifà (!checkUrlActions())à {
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà map.flyTo([46.6,à 2.2],à 6,à {
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà animate:à true,
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà duration:à 2.5
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà });
+à àà à àà à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà à àà à àà setupSearchListeners();
+à àà à àà à àà à àà à àà à àà startBackgroundAnalysis();
+à àà à àà à àà à àà },à 500);
+à àà à àà }
+}
+
+asyncà functionà loadFranceMask()à {
+à àà à àà tryà {
+à àà à àà à àà à àà constà rà =à awaità fetch('https://raw.githubusercontent.com/gèregoiredavid/france-geojson/master/metropole.geojson');
+à àà à àà à àà à àà constà dà =à awaità r.json();
+à àà à àà à àà à àà 
+à àà à àà à àà à àà //à FIX:à Gestionà correcteà duà MultiPolygonà pourà éééviterà leà bugà duà contour
+à àà à àà à àà à àà //à Leà GeoJSONà deà laà Franceà m�tropolitaineà està unà MultiPolygonà avecà plusieursà polygones
+à àà à àà à àà à àà //à (Corse,à �îles,à etc.).à Chaqueà polygoneà doità �êtreà ajout�à commeà unà trouà s�par�.
+à àà à àà à àà à àà 
+à àà à àà à àà à àà //à Rectangleà mondialà enà sensà horaireà (masqueà externe)
+à àà à àà à àà à àà constà worldRectà =à [
+à àà à àà à àà à àà à àà à àà [-180,à -90],
+à àà à àà à àà à àà à àà à àà [-180,à 90],
+à àà à àà à àà à àà à àà à àà [180,à 90],
+à àà à àà à àà à àà à àà à àà [180,à -90],
+à àà à àà à àà à àà à àà à àà [-180,à -90]
+à àà à àà à àà à àà ];
+à àà à àà à àà à àà 
+à àà à àà à àà à àà //à Fonctionà pourà inverserà îlesà coordonn�esà sià n�cessaireà (sensà anti-horaireà pourà îlesà trous)
+à àà à àà à àà à àà functionà ensureCounterClockwise(ring)à {
+à àà à àà à àà à àà à àà à àà //à Calculà deà l'aireà sign�eà pourà d�terminéÉErà leà sens
+à àà à àà à àà à àà à àà à àà letà areaà =à 0;
+à àà à àà à àà à àà à àà à àà forà (letà ià =à 0;à ià <à ring.lengthà -à 1;à i++)à {
+à àà à àà à àà à àà à àà à àà à àà à àà areaà +=à (ring[ià +à 1][0]à -à ring[i][0])à *à (ring[ià +à 1][1]à +à ring[i][1]);
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà à àà à àà //à Sià l'aireà està positive,à îlesà coordonn�esà sontà dansà leà sensà horaire,à onà inverse
+à àà à àà à àà à àà à àà à àà ifà (areaà >à 0)à {
+à àà à àà à àà à àà à àà à àà à àà à àà returnà ring.slice().reverse();
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà à àà à àà returnà ring;
+à àà à àà à àà à àà }
+à àà à àà à àà à àà 
+à àà à àà à àà à àà //à Constructionà desà trousà pourà chaqueà polygoneà deà laà France
+à àà à àà à àà à àà constà hoîlesà =à [];
+à àà à àà à àà à àà ifà (d.geometry.typeà ===à 'MultiPolygon')à {
+à àà à àà à àà à àà à àà à àà //à MultiPolygon:à coordinatesà està unà tableauà deà polygones
+à àà à àà à àà à àà à àà à àà d.geometry.coordinates.forEach(polygonà =>à {
+à àà à àà à àà à àà à àà à àà à àà à àà //à polygon[0]à està l'anneauà ext�rieurà deà chaqueà polygone
+à àà à àà à àà à àà à àà à àà à àà à àà ifà (polygon[0]à &&à polygon[0].lengthà >à 0)à {
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà hoîles.push(ensureCounterClockwise(polygon[0]));
+à àà à àà à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà à àà à àà });
+à àà à àà à àà à àà }à elseà ifà (d.geometry.typeà ===à 'Polygon')à {
+à àà à àà à àà à àà à àà à àà //à Polygonà simple:à coordinates[0]à està l'anneauà ext�rieur
+à àà à àà à àà à àà à àà à àà ifà (d.geometry.coordinates[0]à &&à d.geometry.coordinates[0].lengthà >à 0)à {
+à àà à àà à àà à àà à àà à àà à àà à àà hoîles.push(ensureCounterClockwise(d.geometry.coordinates[0]));
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà }
+à àà à àà à àà à àà 
+à àà à àà à àà à àà //à Cr�ationà duà masque:à rectangleà mondialà +à trousà pourà laà France
+à àà à àà à àà à àà constà maskCoordinatesà =à [worldRect,à ...hoîles];
+à àà à àà à àà à àà 
+à àà à àà à àà à àà L.geoJSON({
+à àà à àà à àà à àà à àà à àà type:à "Feature",
+à àà à àà à àà à àà à àà à àà geometry:à {
+à àà à àà à àà à àà à àà à àà à àà à àà type:à "Polygon",
+à àà à àà à àà à àà à àà à àà à àà à àà coordinates:à maskCoordinates
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà },à {
+à àà à àà à àà à àà à àà à àà style:à {
+à àà à àà à àà à àà à àà à àà à àà à àà color:à '#0f172a',
+à àà à àà à àà à àà à àà à àà à àà à àà weight:à 1,
+à àà à àà à àà à àà à àà à àà à àà à àà fillColor:à '#020617',
+à àà à àà à àà à àà à àà à àà à àà à àà fillOpacity:à 0.75,
+à àà à àà à àà à àà à àà à àà à àà à àà interactive:à false
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà }).addTo(map);
+à àà à àà }à catchà (e)à {
+à àà à àà à àà à àà console.error('Erreurà chargéementà masqueà France:',à e);
+à àà à àà }
+}
+
+functionà initMapMarkers()à {
+à àà à àà constà dlà =à document.getElementById('gares-list');
+à àà à àà ifà (dl)à dl.innerHTMLà =à '';
+à àà à àà DATA.gares.forEach(gà =>à {
+à àà à àà à àà à àà ifà (g.lat)à {
+à àà à àà à àà à àà à àà à àà ifà (dl)à {
+à àà à àà à àà à àà à àà à àà à àà à àà letà oà =à document.createElement('option');
+à àà à àà à àà à àà à àà à àà à àà à àà o.valueà =à g.nom;
+à àà à àà à àà à àà à àà à àà à àà à àà dl.appendChild(o);
+à àà à àà à àà à àà à àà à àà }
+
+à àà à àà à àà à àà à àà à àà letà isTGVà =à g.typeà ===à 'TGV';
+à àà à àà à àà à àà à àà à àà //à Calculà scoreà pourà couleurà pulsationà (sansà affichéerà leà score)
+à àà à àà à àà à àà à àà à àà constà analysisà =à analyser(g);
+à àà à àà à àà à àà à àà à àà constà scoreà =à analysis.note;
+à àà à àà à àà à àà à àà à àà constà pulseColorà =à scoreà >=à 8à ?à '#10b981'à :à scoreà >=à 5à ?à '#f59e0b'à :à '#ef4444';
+à àà à àà à àà à àà à àà à àà constà pulseSpeedà =à scoreà >=à 8à ?à '1.5s'à :à scoreà >=à 7à ?à '2s'à :à '2.5s';
+
+à àà à àà à àà à àà à àà à àà //à Ic�neà originaleà avecà pulsationà dynamique
+à àà à àà à àà à àà à àà à àà letà iconà =à L.divIcon({
+à àà à àà à àà à àà à àà à àà à àà à àà className:à 'marker-with-pulse',
+à àà à àà à àà à àà à àà à àà à àà à àà html:à `
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <style>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà @keyframesà pulse-gare-${g.id}à {
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà 0%,à 100%à {à box-shadow:à 0à 0à 0à 0à ${pulseColor}80;à }
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà 50%à {à box-shadow:à 0à 0à 0à 15pxà ${pulseColor}00;à }
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà </style>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <divà class="marker-pinà ${isTGV?'tgv':'ter'}"à style="animation:à pulse-gare-${g.id}à ${pulseSpeed}à infinite;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <ià class="fa-solidà fa-train"></i>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà à àà à àà `,
+à àà à àà à àà à àà à àà à àà à àà à àà iconSize:à [30,à 30],
+à àà à àà à àà à àà à àà à àà à àà à àà iconAnchor:à [15,à 30]
+à àà à àà à àà à àà à àà à àà });
+
+à àà à àà à àà à àà à àà à àà letà mà =à L.marker([g.lat,à g.lon],à {
+à àà à àà à àà à àà à àà à àà à àà à àà icon:à icon
+à àà à àà à àà à àà à àà à àà });
+
+à àà à àà à àà à àà à àà à àà m.bindPopup(()à =>à generatePopupContent(g));
+à àà à àà à àà à àà à àà à àà m.on('popupopen',à ()à =>à {
+à àà à àà à àà à àà à àà à àà à àà à àà //à FIX:à Clearà anyà existingà walkà zoneà whenà openingà aà newà popup
+à àà à àà à àà à àà à àà à àà à àà à àà hideWalkZone();
+
+à àà à àà à àà à àà à àà à àà à àà à àà //à Resetà panneauà avantà chargéementà nouvelîlesà donn�es
+à àà à àà à àà à àà à àà à àà à àà à àà resetEcoPanel();
+
+à àà à àà à àà à àà à àà à àà à àà à àà loadPhoto(g.nom,à g.id);
+à àà à àà à àà à àà à àà à àà à àà à àà loadWeather(g.lat,à g.lon,à g.id);
+à àà à àà à àà à àà à àà à àà à àà à àà //à chargéementà qualité�à air
+à àà à àà à àà à àà à àà à àà à àà à àà loadAirqualitéy(g.lat,à g.lon,à g.id);
+à àà à àà à àà à àà à àà à àà à àà à àà //à chargéementà biodiversit�
+à àà à àà à àà à àà à àà à àà à àà à àà loadBiodiversity(g.lat,à g.lon,à g.id);
+à àà à àà à àà à àà à àà à àà });
+à àà à àà à àà à àà à àà à àà g.markerà =à m;
+à àà à àà à àà à àà à àà à àà markersLayer.addLayer(m);
+à àà à àà à àà à àà }
+à àà à àà });
+à àà à àà updateCount();
+}
+
+/**
+à *à R�cup�reà îlesà donn�esà deà Propretééà pourà uneà gareà avecà matchingà intelligent.
+à *à Essaieà plusieursà variantesà duà nomà pourà trouvéerà uneà correspondance.
+à *à @paramà {string}à nomGareà -à Leà nomà deà laà gareà �à rechercher.
+à *à @returnsà {Object|null}à îlesà donn�esà deà Propretééà ouà nullà sià nonà trouv�es.
+à */
+functionà getPropretéeData(nomGare)à {
+à àà à àà ifà (!DATA.Propretéeà ||à !nomGare)à returnà null;
+à àà à àà 
+à àà à àà constà nomà =à nomGare.toLowerCase().trim();
+à àà à àà 
+à àà à àà //à 1.à Matchà exact
+à àà à àà ifà (DATA.Propretée[nom])à returnà DATA.Propretée[nom];
+à àà à àà 
+à àà à àà //à 2.à Sansà accents
+à àà à àà constà nomSansAccentsà =à nom.normalize("NFD").replace(/[\u0300-\u036f]/g,à "");
+à àà à àà ifà (DATA.Propretée[nomSansAccents])à returnà DATA.Propretée[nomSansAccents];
+à àà à àà 
+à àà à àà //à 3.à Rechercheà partielleà :à nomà deà villeà extraità (premierà motà avantà tiret/espace)
+à àà à àà constà villePartà =à nom.split(/[-\s]/)[0];
+à àà à àà ifà (villePart.lengthà >=à 3)à {
+à àà à àà à àà à àà forà (constà keyà ofà Object.keys(DATA.Propretée))à {
+à àà à àà à àà à àà à àà à àà ifà (key.includes(villePart)à ||à villePart.includes(key))à {
+à àà à àà à àà à àà à àà à àà à àà à àà returnà DATA.Propretée[key];
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà }
+à àà à àà }
+à àà à àà 
+à àà à àà //à 4.à Fuzzyà matchingà basiqueà :à rechercheà sià leà nomà contientà uneà cl�à ouà vice-versa
+à àà à àà forà (constà keyà ofà Object.keys(DATA.Propretée))à {
+à àà à àà à àà à àà ifà (nom.includes(key)à ||à key.includes(nom))à {
+à àà à àà à àà à àà à àà à àà returnà DATA.Propretée[key];
+à àà à àà à àà à àà }
+à àà à àà }
+à àà à àà 
+à àà à àà returnà null;
+}
+
+/**
+à *à R�cup�reà îlesà donn�esà deà d�fibrillateursà pourà uneà gareà parà matchingà g�ographique.
+à *à Chercheà unà d�fibrillateurà dansà unà rayonà deà 500mà deà laà gare.
+à *à @paramà {number}à latà -à Latitudeà deà laà gare.
+à *à @paramà {number}à lonà -à Longitudeà deà laà gare.
+à *à @returnsà {Object|null}à îlesà donn�esà deà d�fibrillateurà ouà nullà sià nonà trouv�es.
+à */
+functionà getDefibData(lat,à lon)à {
+à àà à àà ifà (!DATA.defibrillateursà ||à DATA.defibrillateurs.lengthà ===à 0à ||à !latà ||à !lon)à returnà null;
+à àà à àà 
+à àà à àà //à Chercherà unà d�fibrillateurà dansà unà rayonà deà 500mà (0.005à degr�sà �à 500m)
+à àà à àà constà toleranceà =à 0.005;
+à àà à àà 
+à àà à àà forà (constà defibà ofà DATA.defibrillateurs)à {
+à àà à àà à àà à àà ifà (defib.latà &&à defib.lon)à {
+à àà à àà à àà à àà à àà à àà constà dLatà =à Math.abs(defib.latà -à lat);
+à àà à àà à àà à àà à àà à àà constà dLonà =à Math.abs(defib.lonà -à lon);
+à àà à àà à àà à àà à àà à àà ifà (dLatà <=à toleranceà &&à dLonà <=à tolerance)à {
+à àà à àà à àà à àà à àà à àà à àà à àà returnà defib;
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà }
+à àà à àà }
+à àà à àà 
+à àà à àà returnà null;
+}
+
+/**
+à *à G�n�reà leà contenuà HTMLà duà popupà pourà uneà gareà donn�e.
+à *à Inclutà leà score,à l'avis,à età îlesà boutonsà d'action.
+à *à @paramà {Object}à gà -à L'objetà gareà contenantà nom,à id,à type,à lat,à lon.
+à *à @returnsà {string}à Cha�neà HTMLà duà popup.
+à */
+functionà generatePopupContent(g)à {
+à àà à àà constà analysisà =à analyser(g);
+à àà à àà constà scoreà =à analysis.note;
+à àà à àà letà avisListà =à scoreà <à 4à ?à AVIS_BADà :à scoreà <à 7à ?à AVIS_MIDà :à AVIS_GOOD;
+à àà à àà letà avisà =à avisList[Math.floor(Math.random()à *à avisList.length)];
+à àà à àà letà colorScoreà =à scoreà <à 4à ?à '#ef4444'à :à scoreà <à 7à ?à '#f59e0b'à :à '#10b981';
+à àà à àà letà isTGVà =à g.typeà ===à 'TGV';
+à àà à àà constà tà =à APP_TEXTS.popup;
+à àà à àà constà langà =à currentLang;
+à àà à àà constà safeNomà =à escapeHTML(g.nom);
+
+à àà à àà //à ===à Propretééà &à D�FIBRILLATEURSà (affichageà compactà surà uneà ligne)à ===
+à àà à àà constà PropretéeDataà =à getPropretéeData(g.nom);
+à àà à àà constà defibDataà =à getDefibData(g.lat,à g.lon);
+à àà à àà 
+à àà à àà letà servicesHtmlà =à '';
+à àà à àà constà hasPropretéeDataà =à PropretéeDataà !==à null;
+à àà à àà constà hasDefibDataà =à defibDataà &&à defibData.nb_appareilsà >à 0;
+à àà à àà 
+à àà à àà //à Ic�neà SVGà d�fibrillateurà (c�urà +à �clair)
+à àà à àà constà defibSvgà =à `<svgà width="14"à height="14"à viewBox="0à 0à 24à 24"à fill="none"à xmlns="http://www.w3.org/2000/svg"à style="vertical-align:middle;">
+à àà à àà à àà à àà <pathà d="M12à 21.35l-1.45-1.32C5.4à 15.36à 2à 12.28à 2à 8.5à 2à 5.42à 4.42à 3à 7.5à 3c1.74à 0à 3.41.81à 4.5à 2.09C13.09à 3.81à 14.76à 3à 16.5à 3à 19.58à 3à 22à 5.42à 22à 8.5c0à 3.78-3.4à 6.86-8.55à 11.54L12à 21.35z"à fill="${hasDefibDataà ?à '#ef4444'à :à '#cbd5e1'}"/>
+à àà à àà à àà à àà <pathà d="M13à 7h-2l-1à 4h2l-1à 5à 4-6h-3l1-3z"à fill="#ffffff"/>
+à àà à àà </svg>`;
+à àà à àà 
+à àà à àà ifà (hasPropretéeDataà ||à hasDefibDataà !==à undefined)à {
+à àà à àà à àà à àà constà PropretéeColorà =à hasPropretéeDataà ?à 
+à àà à àà à àà à àà à àà à àà (PropretéeData.note_Propretéeà >=à 4à ?à '#10b981'à :à PropretéeData.note_Propretéeà >=à 2à ?à '#f59e0b'à :à '#ef4444')à :à '#94a3b8';
+à àà à àà à àà à àà 
+à àà à àà à àà à àà servicesHtmlà =à `
+à àà à àà à àà à àà à àà à àà <divà style="display:flex;gap:12px;margin:10pxà 0;padding:8pxà 10px;background:#f8fafc;border-radius:8px;align-items:center;font-size:0.8rem;">
+à àà à àà à àà à àà à àà à àà à àà à àà ${hasPropretéeDataà ?à `
+à àà à àà à àà à àà à àà à àà à àà à àà <divà style="display:flex;align-items:center;gap:4px;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <span>??</span>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <spanà style="color:#475569;">Propretéé:</span>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <spanà style="font-weight:700;color:${PropretéeColor};">${PropretéeData.note_Propretée}/5</span>
+à àà à àà à àà à àà à àà à àà à àà à àà </div>`à :à ''}
+à àà à àà à àà à àà à àà à àà à àà à àà <divà style="display:flex;align-items:center;gap:4px;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <spanà style="color:#475569;">D�fib.${defibSvg}:</span>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <spanà style="font-weight:700;color:${hasDefibDataà ?à '#10b981'à :à '#94a3b8'};">${hasDefibDataà ?à 'Oui'à :à 'Non'}</span>
+à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà </div>`;
+à àà à àà }
+
+à àà à àà returnà `
+à àà à àà à àà à àà <divà style="font-family:'Inter',sans-serif;">
+à àà à àà à àà à àà à àà à àà <divà class="photo-container"><imgà id="photo-${g.id}"à class="city-photo"à src=""à alt="${safeNom}"></div>
+à àà à àà à àà à àà à àà à àà <divà id="weather-${g.id}"à class="weather-box">
+à àà à àà à àà à àà à àà à àà à àà à àà <span><ià class="fa-solidà fa-spinnerà fa-spin"></i>à ${APP_TEXTS.weather.loading[lang]}</span>
+à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà <divà style="padding:15px;">
+à àà à àà à àà à àà à àà à àà à àà à àà <divà style="display:flex;à justify-content:space-between;à align-items:center;à margin-bottom:10px;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <div><h3à style="margin:0;à font-size:1.2rem;à color:#0f172a;">${safeNom}</h3><spanà style="background:${isTGV?'#3b82f6':'#10b981'};à color:white;à padding:3pxà 8px;à border-radius:4px;à font-size:11px;à font-weight:bold;">${g.type}</span></div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <ià id="fav-${g.id}"à onclick="toggleFavori(${g.id},à '${safeNom.replace(/'/g,à "\\'")}',à '${g.type}')"à class="fa-solidà fa-heartà fav-btnà ${isFavori(g.id)?'fav-active':'fav-inactive'}"></i>
+à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà à àà à àà 
+à àà à àà à àà à àà à àà à àà à àà à àà <divà style="background:#f8fafc;à padding:10px;à border-radius:8px;à margin-bottom:10px;à font-style:italic;à font-size:0.9rem;à color:#475569;à border-left:à 3pxà solidà ${colorScore};">"à ${avis}à "</div>
+à àà à àà à àà à àà à àà à àà à àà à àà ${servicesHtml}
+à àà à àà à àà à àà à àà à àà à àà à àà <divà id="action-container-${g.id}">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <buttonà class="btn-analyse"à onclick="event.stopPropagation();à lancerAnalyseComplete(${g.id})"à style="width:100%;à background:#0f172a;à color:white;à border:none;à padding:12px;à border-radius:8px;à cursor:pointer;à font-weight:bold;à margin-bottom:5px;">${t.analyse[lang]}</button>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <buttonà class="btn-walk"à onclick="event.stopPropagation();à showWalkZone(${g.lat},à ${g.lon})"><ià class="fa-solidà fa-person-walking"></i>à ${t.zone[lang]}</button>
+à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà </div>`;
+}
+
+//à Fonctionà pourà chargéerà uneà photoà deà laà gareà viaà Wikimediaà Commons
+asyncà functionà loadPhoto(nom,à id)à {
+à àà à àà constà imgà =à document.getElementById(`photo-${id}`);
+à àà à àà ifà (!img)à {
+à àà à àà à àà à àà console.log(`Photoà elementà notà foundà forà id:à ${id}`);
+à àà à àà à àà à àà return;
+à àà à àà }
+à àà à àà 
+à àà à àà //à affichéerà unà placeholderà pendantà leà chargéement
+à àà à àà img.style.backgroundà =à '#e2e8f0';
+à àà à àà img.altà =à 'chargéement...';
+à àà à àà 
+à àà à àà //à Nettoyerà leà nomà deà laà gareà pourà laà recherche
+à àà à àà constà cleanNameà =à nom.replace(/['']/g,à "'").trim();
+à àà à àà //à Extraireà leà nomà deà villeà principal
+à àà à àà constà villeNameà =à cleanName.split(/[-\s]/)[0];
+à àà à àà 
+à àà à àà console.log(`Loadingà photoà for:à ${nom}à (ville:à ${villeName})`);
+à àà à àà 
+à àà à àà //à Construireà îlesà termesà deà rechercheà pourà Wikimediaà Commons
+à àà à àà constà searchTermsà =à [
+à àà à àà à àà à àà `Gareà deà ${cleanName}`,
+à àà à àà à àà à àà `Gareà ${villeName}`,
+à àà à àà à àà à àà `${villeName}à gareà SNCF`,
+à àà à àà à àà à àà `${villeName}à trainà station`
+à àà à àà ];
+à àà à àà 
+à àà à àà //à Fonctionà pourà chercherà uneà imageà surà Wikimediaà Commons
+à àà à àà asyncà functionà searchWikimediaImage(searchTerm)à {
+à àà à àà à àà à àà tryà {
+à àà à àà à àà à àà à àà à àà constà urlà =à `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(searchTerm)}&srnamespace=6&srlimit=10&format=json&origin=*`;
+à àà à àà à àà à àà à àà à àà console.log(`Searchingà Wikimedia:à ${searchTerm}`);
+à àà à àà à àà à àà à àà à àà constà responseà =à awaità fetch(url);
+à àà à àà à àà à àà à àà à àà constà dataà =à awaità response.json();
+à àà à àà à àà à àà à àà à àà 
+à àà à àà à àà à àà à àà à àà ifà (data.queryà &&à data.query.searchà &&à data.query.search.lengthà >à 0)à {
+à àà à àà à àà à àà à àà à àà à àà à àà console.log(`Foundà ${data.query.search.length}à resultsà forà "${searchTerm}"`);
+à àà à àà à àà à àà à àà à àà à àà à àà //à Chercherà uneà imageà valideà parmià îlesà r�sultats
+à àà à àà à àà à àà à àà à àà à àà à àà forà (constà resultà ofà data.query.search)à {
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà constà titleà =à result.title;
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà console.log(`Checking:à ${title}`);
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà //à V�rifierà queà c'està bienà uneà imageà (jpg,à jpeg,à png,à gif,à webp)
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà ifà (/\.(jpg|jpeg|png|gif|webp)$/i.test(title))à {
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà //à Extraireà leà nomà duà fichierà sansà leà pr�fixeà "File:"
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà constà fileNameà =à title.replace(/^File:/i,à '');
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà //à Construireà l'URLà deà l'imageà viaà leà serviceà deà thumbnailsà Wikimedia
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà constà imageUrlà =à `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}?width=500`;
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà console.log(`Imageà URL:à ${imageUrl}`);
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà returnà imageUrl;
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà }à catchà (e)à {
+à àà à àà à àà à àà à àà à àà console.error(`Wikimediaà searchà errorà forà "${searchTerm}":`,à e);
+à àà à àà à àà à àà }
+à àà à àà à àà à àà returnà null;
+à àà à àà }
+à àà à àà 
+à àà à àà //à Essayerà chaqueà termeà deà rechercheà successivement
+à àà à àà forà (constà termà ofà searchTerms)à {
+à àà à àà à àà à àà constà imageUrlà =à awaità searchWikimediaImage(term);
+à àà à àà à àà à àà ifà (imageUrl)à {
+à àà à àà à àà à àà à àà à àà img.onloadà =à ()à =>à {
+à àà à àà à àà à àà à àà à àà à àà à àà img.classList.add('loaded');
+à àà à àà à àà à àà à àà à àà à àà à àà console.log(`Photoà loadedà successfullyà forà ${nom}`);
+à àà à àà à àà à àà à àà à àà };
+à àà à àà à àà à àà à àà à àà img.onerrorà =à ()à =>à {
+à àà à àà à àà à àà à àà à àà à àà à àà console.log(`Imageà loadà failed,à usingà fallback`);
+à àà à àà à àà à àà à àà à àà à àà à àà //à Sià l'imageà Wikimediaà �échoue,à utiliséerà fallback
+à àà à àà à àà à àà à àà à àà à àà à àà constà fallbackIndexà =à idà %à FALLBACK_IMAGES.length;
+à àà à àà à àà à àà à àà à àà à àà à àà img.srcà =à FALLBACK_IMAGES[fallbackIndex];
+à àà à àà à àà à àà à àà à àà à àà à àà img.classList.add('loaded');
+à àà à àà à àà à àà à àà à àà };
+à àà à àà à àà à àà à àà à àà img.srcà =à imageUrl;
+à àà à àà à àà à àà à àà à àà console.log(`Photoà URLà setà forà ${nom}:à ${imageUrl}`);
+à àà à àà à àà à àà à àà à àà return;
+à àà à àà à àà à àà }
+à àà à àà }
+à àà à àà 
+à àà à àà //à Sià aucuneà imageà trouv�e,à utiliséerà uneà imageà deà fallbackà nature/paysage
+à àà à àà console.log(`Noà imageà foundà forà ${nom},à usingà fallback`);
+à àà à àà constà fallbackIndexà =à idà %à FALLBACK_IMAGES.length;
+à àà à àà img.onloadà =à ()à =>à img.classList.add('loaded');
+à àà à àà img.srcà =à FALLBACK_IMAGES[fallbackIndex];
+}
+
+asyncà functionà loadWeather(lat,à lon,à id)à {
+à àà à àà constà elà =à document.getElementById(`weather-${id}`);
+à àà à àà ifà (!el)à return;
+à àà à àà tryà {
+à àà à àà à àà à àà //à chargéerà laà m�t�o
+à àà à àà à àà à àà constà weatherResà =à awaità fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+à àà à àà à àà à àà constà weatherDataà =à awaità weatherRes.json();
+à àà à àà à àà à àà constà wà =à weatherData.current_weatherà ||à weatherData.current;
+
+à àà à àà à àà à àà ifà (w)à {
+à àà à àà à àà à àà à àà à àà //à affichéerà d'abordà laà m�t�o
+à àà à àà à àà à àà à àà à àà el.innerHTMLà =à `
+à àà à àà à àà à àà à àà à àà à àà à àà <divà class="weather-item"><ià class="fa-solidà fa-temperature-halfà weather-icon"></i>à ${w.temperature}�C</div>
+à àà à àà à àà à àà à àà à àà à àà à àà <divà class="weather-item"><ià class="fa-solidà fa-windà weather-icon"></i>à ${w.windspeed}à km/h</div>
+à àà à àà à àà à àà à àà à àà à àà à àà <divà class="weather-itemà air-qualitéy-loading"><ià class="fa-solidà fa-lungsà weather-icon"></i>à <spanà style="color:#64748b">...</span></div>
+à àà à àà à àà à àà à àà à àà `;
+à àà à àà à àà à àà à àà à àà 
+à àà à àà à àà à àà à àà à àà //à Puisà chargéerà laà qualité�à deà l'airà enà arri�re-plan
+à àà à àà à àà à àà à àà à àà tryà {
+à àà à àà à àà à àà à àà à àà à àà à àà constà airResà =à awaità fetch(`${API_BASE_URL}/api/air-qualitéy?lat=${lat}&lon=${lon}`);
+à àà à àà à àà à àà à àà à àà à àà à àà constà airDataà =à awaità airRes.json();
+à àà à àà à àà à àà à àà à àà à àà à àà 
+à àà à àà à àà à àà à àà à àà à àà à àà ifà (airData.successà &&à airData.data)à {
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà constà noteà =à airData.data.note;
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà constà colorà =à airData.data.color;
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà constà airElà =à el.querySelector('.air-qualitéy-loading');
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà ifà (airEl)à {
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà airEl.innerHTMLà =à `<ià class="fa-solidà fa-lungsà weather-icon"à style="color:${color}"></i>à <spanà style="color:${color}">${note}/10</span>`;
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà airEl.classList.remove('air-qualitéy-loading');
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà à àà à àà }à catchà (airErr)à {
+à àà à àà à àà à àà à àà à àà à àà à àà console.log('Airà qualitéyà nonà disponible:',à airErr.message);
+à àà à àà à àà à àà à àà à àà à àà à àà //à Enleverà leà placeholderà sià erreur
+à àà à àà à àà à àà à àà à àà à àà à àà constà airElà =à el.querySelector('.air-qualitéy-loading');
+à àà à àà à àà à àà à àà à àà à àà à àà ifà (airEl)à airEl.remove();
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà }à elseà {
+à àà à àà à àà à àà à àà à àà throwà newà Error('Noà Data');
+à àà à àà à àà à àà }
+à àà à àà }à catchà (e)à {
+à àà à àà à àà à àà el.innerHTMLà =à `<spanà style="font-size:0.8rem;à color:#64748b;">${APP_TEXTS.weather.error[currentLang]}</span>`;
+à àà à àà à àà à àà console.error(`M�t�oà errà ${id}:`,à e.message);
+à àà à àà }
+}
+
+//à Refonteà compl�teà desà popupsà IRVEà &à Covoiturage
+functionà initSecondaryMarkers(irve,à covoit,à velos)à {
+à àà à àà constà iBufà =à [],
+à àà à àà à àà à àà cBufà =à [],
+à àà à àà à àà à àà vBufà =à [];
+à àà à àà 
+à àà à àà constà langà =à currentLang;
+à àà à àà constà tIrveà =à APP_TEXTS.irvePopup;
+à àà à àà constà tCovoità =à APP_TEXTS.covoitPopup;
+
+à àà à àà //à Bornesà IRVE
+à àà à àà (irve.featuresà ||à []).forEach(fà =>à {
+à àà à àà à àà à àà ifà (f.geometry.coordinates)à {
+à àà à àà à àà à àà à àà à àà constà propsà =à f.propertiesà ||à {};
+à àà à àà à àà à àà à àà à àà constà nomà =à escapeHTML(props.nom_amenageurà ||à props.n_enseigneà ||à "Borneà deà rechargée");
+à àà à àà à àà à àà à àà à àà constà priseà =à props.nbre_pdcà ?à `${props.nbre_pdc}à ${tIrve.prises[lang]}`à :à tIrve.unknown[lang];
+à àà à àà à àà à àà à àà à àà constà puissanceà =à props.puissance_nominaleà ?à `${props.puissance_nominale}à kW`à :à "";
+à àà à àà à àà à àà à àà à àà constà accesà =à props.acces_rechargéeà ||à tIrve.access[lang];
+
+à àà à àà à àà à àà à àà à àà letà hà =à `
+à àà à àà à àà à àà à àà à àà <divà style="font-family:'Inter',sans-serif;à width:250px;">
+à àà à àà à àà à àà à àà à àà à àà à àà <divà class="simple-popup-headerà header-irve"><ià class="fa-solidà fa-charging-station"></i>à ${tIrve.title[lang]}</div>
+à àà à àà à àà à àà à àà à àà à àà à àà <divà class="simple-popup-body">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <divà style="font-weight:bold;à color:#0f172a;à margin-bottom:10px;">${nom}</div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <div><ià class="fa-solidà fa-plug"à style="color:#f59e0b"></i>à ${prise}à ${puissanceà ?à 'à �à 'à +à puissanceà :à ''}</div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <div><ià class="fa-solidà fa-unlock"à style="color:#64748b"></i>à ${acces}</div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <aà href="https://www.google.com/maps?q=${f.geometry.coordinates[1]},${f.geometry.coordinates[0]}"à target="_blank"à class="btn-maps"><ià class="fa-solidà fa-map-location-dot"></i>à ${tIrve.maps[lang]}</a>
+à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà </div>`;
+à àà à àà à àà à àà à àà à àà iBuf.push(L.marker([f.geometry.coordinates[1],à f.geometry.coordinates[0]],à {
+à àà à àà à àà à àà à àà à àà à àà à àà icon:à L.divIcon({
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà className:à 'c',
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà html:à `<divà class="marker-pinà irve"><ià class="fa-solidà fa-plug"à style="color:black"></i></div>`,
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà iconSize:à [30,à 30]
+à àà à àà à àà à àà à àà à àà à àà à àà })
+à àà à àà à àà à àà à àà à àà }).bindPopup(h));
+à àà à àà à àà à àà }
+à àà à àà });
+
+à àà à àà //à Covoiturage
+à àà à àà (covoit.featuresà ||à []).forEach(fà =>à {
+à àà à àà à àà à àà ifà (f.geometry.coordinates)à {
+à àà à àà à àà à àà à àà à àà constà propsà =à f.propertiesà ||à {};
+à àà à àà à àà à àà à àà à àà constà nomà =à props.nom_aireà ||à props.villeà ||à "Aireà deà covoiturage";
+à àà à àà à àà à àà à àà à àà constà placesà =à props.nb_placesà ?à `${props.nb_places}à ${tCovoit.places[lang]}`à :à tCovoit.unknown[lang];
+à àà à àà à àà à àà à àà à àà constà typeà =à props.type_aireà ||à tCovoit.type[lang];
+
+à àà à àà à àà à àà à àà à àà letà hà =à `
+à àà à àà à àà à àà à àà à àà <divà style="font-family:'Inter',sans-serif;à width:250px;">
+à àà à àà à àà à àà à àà à àà à àà à àà <divà class="simple-popup-headerà header-covoit"><ià class="fa-solidà fa-car"></i>à ${tCovoit.title[lang]}</div>
+à àà à àà à àà à àà à àà à àà à àà à àà <divà class="simple-popup-body">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <divà style="font-weight:bold;à color:#0f172a;à margin-bottom:10px;">${nom}</div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <div><ià class="fa-solidà fa-square-parking"à style="color:#a855f7"></i>à ${places}</div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <div><ià class="fa-solidà fa-road"à style="color:#64748b"></i>à ${type}</div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <aà href="https://www.google.com/maps?q=${f.geometry.coordinates[1]},${f.geometry.coordinates[0]}"à target="_blank"à class="btn-maps"><ià class="fa-solidà fa-map-location-dot"></i>à ${tIrve.maps[lang]}</a>
+à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà </div>`;
+à àà à àà à àà à àà à àà à àà cBuf.push(L.marker([f.geometry.coordinates[1],à f.geometry.coordinates[0]],à {
+à àà à àà à àà à àà à àà à àà à àà à àà icon:à L.divIcon({
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà className:à 'c',
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà html:à `<divà class="marker-pinà covoit"><ià class="fa-solidà fa-car"à style="color:black"></i></div>`,
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà iconSize:à [30,à 30]
+à àà à àà à àà à àà à àà à àà à àà à àà })
+à àà à àà à àà à àà à àà à àà }).bindPopup(h));
+à àà à àà à àà à àà }
+à àà à àà });
+
+à àà à àà //à vélos
+à àà à àà constà tVeloà =à APP_TEXTS.veloPopup;
+à àà à àà (velos.featuresà ||à []).forEach(fà =>à {
+à àà à àà à àà à àà ifà (f.geometry.coordinates)à {
+à àà à àà à àà à àà à àà à àà constà propsà =à f.propertiesà ||à {};
+à àà à àà à àà à àà à àà à àà constà communeà =à escapeHTML(props.meta_name_comà ||à props.nomà ||à "Parkingà v�lo");
+à àà à àà à àà à àà à àà à àà constà capaciteà =à props.capaciteà ?à `${props.capacite}à ${tVelo.capacity[lang]}`à :à tVelo.unknown[lang];
+à àà à àà à àà à àà à àà à àà constà mobilierà =à props.mobilierà ?à props.mobilier.charAt(0)à +à props.mobilier.slice(1).toLowerCase()à :à "";
+à àà à àà à àà à àà à àà à àà constà couvertureà =à props.couvertureà ===à "true"à ?à tVelo.covered[lang]à :à tVelo.uncovered[lang];
+
+à àà à àà à àà à àà à àà à àà letà hà =à `
+à àà à àà à àà à àà à àà à àà <divà style="font-family:'Inter',sans-serif;à width:250px;">
+à àà à àà à àà à àà à àà à àà à àà à àà <divà class="simple-popup-headerà header-velo"><ià class="fa-solidà fa-bicycle"></i>à ${tVelo.title[lang]}</div>
+à àà à àà à àà à àà à àà à àà à àà à àà <divà class="simple-popup-body">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <divà style="font-weight:bold;à color:#0f172a;à margin-bottom:10px;">${commune}</div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <div><ià class="fa-solidà fa-square-parking"à style="color:#10b981"></i>à ${capacite}</div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà ${mobilierà ?à `<div><ià class="fa-solidà fa-lock"à style="color:#64748b"></i>à ${mobilier}</div>`à :à ''}
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <div><ià class="fa-solidà fa-umbrella"à style="color:#64748b"></i>à ${couverture}</div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <aà href="https://www.google.com/maps?q=${f.geometry.coordinates[1]},${f.geometry.coordinates[0]}"à target="_blank"à class="btn-maps"><ià class="fa-solidà fa-map-location-dot"></i>à ${tVelo.maps[lang]}</a>
+à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà </div>`;
+à àà à àà à àà à àà à àà à àà vBuf.push(L.marker([f.geometry.coordinates[1],à f.geometry.coordinates[0]],à {
+à àà à àà à àà à àà à àà à àà à àà à àà icon:à L.divIcon({
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà className:à 'c',
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà html:à `<divà class="marker-pinà velo"><ià class="fa-solidà fa-bicycle"></i></div>`,
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà iconSize:à [30,à 30]
+à àà à àà à àà à àà à àà à àà à àà à àà })
+à àà à àà à àà à àà à àà à àà }).bindPopup(h));
+à àà à àà à àà à àà }
+à àà à àà });
+
+à àà à àà irveLayer.addLayers(iBuf);
+à àà à àà covoitLayer.addLayers(cBuf);
+à àà à àà veloParkingLayer.addLayers(vBuf);
+}
+
+functionà setupSearchListeners()à {
+à àà à àà constà sInputà =à document.getElementById('search-input');
+à àà à àà ifà (sInput)à {
+à àà à àà à àà à àà sInput.addEventListener('focus',à ()à =>à {});
+à àà à àà à àà à àà sInput.addEventListener('change',à (e)à =>à {
+à àà à àà à àà à àà à àà à àà constà gà =à DATA.gares.find(xà =>à x.nomà ===à e.target.value);
+à àà à àà à àà à àà à àà à àà ifà (g)à goToGare(g.id);
+à àà à àà à àà à àà à àà à àà ifà (tutoStepà ===à 3)à skipTuto();
+à àà à àà à àà à àà });
+à àà à àà }
+}
+
+//à Refonteà Popupà Localisationà Found
+map.on('locationfound',à (e)à =>à {
+à àà à àà map.eachLayer((layer)à =>à {
+à àà à àà à àà à àà ifà (layer.optionsà &&à layer.options.iconà &&à layer.options.icon.options.classNameà ===à 'user-pin-icon')à map.removeLayer(layer);
+à àà à àà });
+à àà à àà constà userIconà =à L.divIcon({
+à àà à àà à àà à àà className:à 'user-pin-icon',
+à àà à àà à àà à àà html:à '<divà class="user-pin"></div>',
+à àà à àà à àà à àà iconSize:à [20,à 20]
+à àà à àà });
+
+à àà à àà constà tà =à APP_TEXTS.location;
+à àà à àà constà langà =à currentLang;
+
+à àà à àà constà popupContentà =à `
+à àà à àà à àà à àà <divà class="location-popup">
+à àà à àà à àà à àà à àà à àà <divà class="location-header">${t.title[lang]}</div>
+à àà à àà à àà à àà à àà à àà <divà class="location-body">
+à àà à àà à àà à àà à àà à àà à àà à àà <ià class="fa-solidà fa-sêtreet-view"à style="font-size:2rem;à margin-bottom:10px;à display:block;"></i>
+à àà à àà à àà à àà à àà à àà à àà à àà <pà style="margin:0à 0à 10pxà 0;">${t.text[lang]}à <b>${Math.round(e.accuracy)}à ${t.meters[lang]}</b>.</p>
+à àà à àà à àà à àà à àà à àà à àà à àà <smallà style="color:#64748b;">${e.latlng.lat.toFixed(4)},à ${e.latlng.lng.toFixed(4)}</small>
+à àà à àà à àà à àà à àà à àà à àà à àà <buttonà class="location-btn"à onclick="window.findNearbyStation(${e.latlng.lat},à ${e.latlng.lng})">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <ià class="fa-solidà fa-magnifying-glass-location"></i>à ${t.findStation[lang]}
+à àà à àà à àà à àà à àà à àà à àà à àà </button>
+à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà </div>
+à àà à àà `;
+
+à àà à àà L.marker(e.latlng,à {
+à àà à àà à àà à àà icon:à userIcon
+à àà à àà }).addTo(map).bindPopup(popupContent).openPopup();
+à àà à àà L.circle(e.latlng,à {
+à àà à àà à àà à àà radius:à e.accuracyà /à 2,
+à àà à àà à àà à àà color:à '#3b82f6',
+à àà à àà à àà à àà fillOpacity:à 0.1,
+à àà à àà à àà à àà weight:à 1
+à àà à àà }).addTo(map);
+});
+map.on('locationerror',à ()à =>à alert(APP_TEXTS.errors.localization[currentLang]));
+
+//à Choisità uneà gareà al�atoireà uniquementà lorsqueà îlesà marqueursà sontà Pr�ts
+//à PERF:à Cacheà duà poolà deà garesà validesà pourà éééviterà filter()à �à chaqueà clic
+letà cachedValidGaresà =à null;
+letà cachedValidGaresTimeà =à 0;
+
+window.randomGareà =à ()à =>à {
+à àà à àà //à PERF:à D�sactivationà boutonà avecà feedbackà visuelà imm�diatà (am�lioreà INP)
+à àà à àà constà diceBtnà =à document.getElementById('btnRandomGare');
+à àà à àà ifà (diceBtn)à {
+à àà à àà à àà à àà diceBtn.style.pointerEventsà =à 'none';
+à àà à àà à àà à àà diceBtn.style.opacityà =à '0.6';
+à àà à àà }
+à àà à àà 
+à àà à àà //à PERF:à setTimeout(0)à lib�reà leà threadà principalà imm�diatementà pourà leà paint
+à àà à àà setTimeout(()à =>à {
+à àà à àà à àà à àà ifà (!DATA.garesà ||à !DATA.gares.length)à {
+à àà à àà à àà à àà à àà à àà ifà (diceBtn)à {à diceBtn.style.pointerEventsà =à 'auto';à diceBtn.style.opacityà =à '1';à }
+à àà à àà à àà à àà à àà à àà return;
+à àà à àà à àà à àà }
+à àà à àà à àà à àà 
+à àà à àà à àà à àà //à PERF:à Cacheà duà poolà valideà pendantà 60sà pourà éééviterà filter()à r�p�t�s
+à àà à àà à àà à àà constà nowà =à Date.now();
+à àà à àà à àà à àà ifà (!cachedValidGaresà ||à nowà -à cachedValidGaresTimeà >à 60000)à {
+à àà à àà à àà à àà à àà à àà cachedValidGaresà =à DATA.gares.filter(gà =>à gà &&à g.marker);
+à àà à àà à àà à àà à àà à àà cachedValidGaresTimeà =à now;
+à àà à àà à àà à àà }
+à àà à àà à àà à àà 
+à àà à àà à àà à àà ifà (!cachedValidGares.length)à {
+à àà à àà à àà à àà à àà à àà showToast(APP_TEXTS.errors.loading[currentLang],à false);
+à àà à àà à àà à àà à àà à àà ifà (diceBtn)à {à diceBtn.style.pointerEventsà =à 'auto';à diceBtn.style.opacityà =à '1';à }
+à àà à àà à àà à àà à àà à àà return;
+à àà à àà à àà à àà }
+à àà à àà à àà à àà 
+à àà à àà à àà à àà //à Nettoyageà l�ger
+à àà à àà à àà à àà hideWalkZone();
+à àà à àà à àà à àà 
+à àà à àà à àà à àà constà pickà =à cachedValidGares[Math.floor(Math.random()à *à cachedValidGares.length)];
+à àà à àà à àà à àà goToGare(pick.id);
+à àà à àà à àà à àà 
+à àà à àà à àà à àà //à R�activerà leà bouton
+à àà à àà à àà à àà setTimeout(()à =>à {
+à àà à àà à àà à àà à àà à àà ifà (diceBtn)à {à diceBtn.style.pointerEventsà =à 'auto';à diceBtn.style.opacityà =à '1';à }
+à àà à àà à àà à àà },à 400);
+à àà à àà },à 0);
+};
+
+//à Cenêtreà laà carteà surà laà gareà età ouvreà deà fa�onà robusteà laà popup
+window.goToGareà =à (id)à =>à {
+à àà à àà //à PERF:à Acc�sà O(1)à viaà Mapà auà lieuà deà find()à O(n)
+à àà à àà constà gà =à DATA.garesById.get(id)à ||à DATA.gares.find(xà =>à x.idà ===à id);
+à àà à àà ifà (!gà ||à !g.marker)à {
+à àà à àà à àà à àà showToast(APP_TEXTS.errors.unavailable[currentLang],à true);
+à àà à àà à àà à àà return;
+à àà à àà }
+
+à àà à àà constà targetà =à L.latLng(g.lat,à g.lon);
+à àà à àà hideWalkZone();
+à àà à àà map.closePopup();
+à àà à àà ifà (!map.hasLayer(markersLayer))à map.addLayer(markersLayer);
+
+à àà à àà //à PERF:à Animationà simplifi�e
+à àà à àà markersLayer.zoométéoShowLayer(g.marker,à ()à =>à {
+à àà à àà à àà à àà map.setView(target,à Math.max(map.getZoom(),à 14),à {à animate:à true,à duration:à 0.4à });
+à àà à àà à àà à àà setTimeout(()à =>à {à tryà {à g.marker.openPopup();à }à catchà (e)à {}à },à 100);
+à àà à àà });
+};
+
+//à Naviguerà versà uneà gareà parà sesà coordonn�esà (utilisé�à parà îlesà statsà m�t�oà età topà v�lo)
+window.goToGareByCoordsà =à (lat,à lon,à gareName)à =>à {
+à àà à àà //à Fermerà leà panneauà stats
+à àà à àà constà statsPanelà =à document.getElementById('statsPanel');
+à àà à àà ifà (statsPanel)à statsPanel.classList.remove('active');
+à àà à àà 
+à àà à àà //à Chercherà laà gareà correspondanteà dansà îlesà donn�es
+à àà à àà constà gareà =à DATA.gares.find(gà =>à {
+à àà à àà à àà à àà //à Correspondanceà parà nomà (partiel)à ouà parà coordonn�esà proches
+à àà à àà à àà à àà constà nameMatchà =à g.nomà &&à gareNameà &&à g.nom.toLowerCase().includes(gareName.toLowerCase().substring(0,à 10));
+à àà à àà à àà à àà constà coordMatchà =à Math.abs(g.latà -à lat)à <à 0.01à &&à Math.abs(g.lonà -à lon)à <à 0.01;
+à àà à àà à àà à àà returnà nameMatchà ||à coordMatch;
+à àà à àà });
+à àà à àà 
+à àà à àà ifà (gareà &&à gare.marker)à {
+à àà à àà à àà à àà //à Gareà trouv�e,à utiliséerà goToGare
+à àà à àà à àà à àà goToGare(gare.id);
+à àà à àà }à elseà {
+à àà à àà à àà à àà //à Gareà nonà trouv�eà dansà îlesà donn�esà charg�es,à naviguerà versà îlesà coordonn�es
+à àà à àà à àà à àà hideWalkZone();
+à àà à àà à àà à àà map.closePopup();
+à àà à àà à àà à àà map.flyTo([lat,à lon],à 14,à {à duration:à 1à });
+à àà à àà à àà à àà showToast(`??à ${gareName}`,à false);
+à àà à àà }
+};
+
+//à Nouvelleà fonctionà pourà laà rechercheà proche
+window.findNearbyStationà =à (lat,à lon)à =>à {
+à àà à àà ifà (!DATA.gares.length)à return;
+à àà à àà 
+à àà à àà //à PERF:à utiliséerà reduceà auà lieuà deà sort()à pourà trouvéerà leà minà enà O(n)à auà lieuà deà O(nà logà n)
+à àà à àà letà closestà =à null;
+à àà à àà letà minDistà =à Infinity;
+à àà à àà forà (letà ià =à 0;à ià <à DATA.gares.length;à i++)à {
+à àà à àà à àà à àà constà gà =à DATA.gares[i];
+à àà à àà à àà à àà ifà (!g.latà ||à !g.lon)à continue;
+à àà à àà à àà à àà constà dà =à getDist(lat,à lon,à g.lat,à g.lon);
+à àà à àà à àà à àà ifà (dà <à minDist)à {
+à àà à àà à àà à àà à àà à àà minDistà =à d;
+à àà à àà à àà à àà à àà à àà closestà =à g;
+à àà à àà à àà à àà }
+à àà à àà }
+à àà à àà 
+à àà à àà ifà (closest)à {
+à àà à àà à àà à àà map.flyTo([closest.lat,à closest.lon],à 13,à {à duration:à 1à });
+à àà à àà à àà à àà setTimeout(()à =>à {
+à àà à àà à àà à àà à àà à àà markersLayer.zoométéoShowLayer(closest.marker,à ()à =>à {
+à àà à àà à àà à àà à àà à àà à àà à àà closest.marker.openPopup();
+à àà à àà à àà à àà à àà à àà });
+à àà à àà à àà à àà },à 1200);
+à àà à àà }
+};
+
+//à Fonctionà pourà cacherà laà zoneà pi�tonne
+functionà hideWalkZone()à {
+à àà à àà ifà (!walkCircle)à return;à //à PERF:à Earlyà exità sià rienà �à faire
+à àà à àà tryà {à map.removeLayer(walkCircle);à }à catchà (e)à {}
+à àà à àà walkCircleà =à null;
+à àà à àà //à Resetà desà variabîlesà deà navigationà vélos
+à àà à àà velosInZoneà =à [];
+à àà à àà velosZoneIndexà =à 0;
+à àà à àà //à Cacherà laà notificationà persistanteà desà vélos
+à àà à àà constà veloNotifà =à document.getElementById('velo-zone-notif');
+à àà à àà ifà (veloNotif)à veloNotif.classList.remove('active');
+à àà à àà //à Cacherà îlesà fl�chesà deà navigation
+à àà à àà updateVeloNavArrows(0);
+}
+
+//à Variableà pourà emp�cherà îlesà clicsà multipîlesà rapides
+letà isCreatingWalkZoneà =à false;
+
+/**
+à *à Activeà l'affichageà deà laà zoneà pi�tonneà (10à min)à autourà d'uneà gare.
+à *à Calculeà unà cercleà deà 800mà età compteà îlesà parkingsà vélosà �à l'int�rieur.
+à */
+window.showWalkZoneà =à function(lat,à lon)à {
+à àà à àà //à FIX:à Emp�cherà îlesà clicsà multipîlesà rapides
+à àà à àà ifà (isCreatingWalkZone)à return;
+à àà à àà isCreatingWalkZoneà =à true;
+à àà à àà //à d�sactiverà (invisiblement)à leà boutonà �à 10à minà �à dansà laà popupà courante
+à àà à àà tryà {
+à àà à àà à àà à àà constà walkBtnà =à document.querySelector('.leaflet-popupà .btn-walk');
+à àà à àà à àà à àà ifà (walkBtn)à {
+à àà à àà à àà à àà à àà à àà walkBtn.style.pointerEventsà =à 'none';
+à àà à àà à àà à àà à àà à àà walkBtn.setAttribute('aria-disabled',à 'true');
+à àà à àà à àà à àà à àà à àà walkBtn.tabIndexà =à -1;
+à àà à àà à àà à àà }
+à àà à àà }à catchà (e)à {}
+
+à àà à àà //à SAFETY:à Ensureà anyà previousà circleà isà removedà beforeà drawingà aà newà one.
+à àà à àà hideWalkZone();
+
+à àà à àà //à FIX:à Fermerà laà popupà avantà deà zoomerà pourà éééviterà îlesà conflitsà visuels
+à àà à àà map.closePopup();
+
+à àà à àà //à FIX:à D'abordà zoomerà surà laà gare,à PUISà ajouterà leà cercleà uneà foisà leà zoomà terminé�
+à àà à àà map.flyTo([lat,à lon],à 15,à {
+à àà à àà à àà à àà duration:à 1.2
+à àà à àà });
+
+à àà à àà //à Attendreà laà finà deà l'animationà deà zoomà avantà d'ajouterà leà cercle
+à àà à àà map.once('moveend',à function()à {
+à àà à àà à àà à àà //à CR�ATIONà duà cercleà deà 800mà (10-15à minà deà marche).
+à àà à àà à àà à àà walkCircleà =à L.circle([lat,à lon],à {
+à àà à àà à àà à àà à àà à àà radius:à 800,
+à àà à àà à àà à àà à àà à àà color:à '#10b981',
+à àà à àà à àà à àà à àà à àà fillColor:à '#10b981',
+à àà à àà à àà à àà à àà à àà fillOpacity:à 0.15,
+à àà à àà à àà à àà à àà à àà weight:à 3,
+à àà à àà à àà à àà à àà à àà dashArray:à '10,à 10'
+à àà à àà à àà à àà }).addTo(map);
+
+à àà à àà à àà à àà //à FIX:à S'assurerà queà îlesà railsà restentà au-dessusà duà cercle
+à àà à àà à àà à àà setTimeout(()à =>à {
+à àà à àà à àà à àà à àà à àà ifà (railsLayerà &&à map.hasLayer(railsLayer))à {
+à àà à àà à àà à àà à àà à àà à àà à àà railsLayer.bringToFront();
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà },à 50);
+
+à àà à àà à àà à àà //à Comptageà età collecteà desà parkingsà vélosà dansà laà zoneà pourà laà navigation
+à àà à àà à àà à àà letà countà =à 0;
+à àà à àà à àà à àà velosInZoneà =à [];à //à Resetà duà tableauà global
+à àà à àà à àà à àà velosZoneIndexà =à 0;à //à Resetà deà l'index
+à àà à àà à àà à àà constà boundsà =à walkCircle.getBounds();
+à àà à àà à àà à àà DATA.velos.forEach(và =>à {
+à àà à àà à àà à àà à àà à àà ifà (bounds.contains({
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà lat:à v.lat,
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà lng:à v.lon
+à àà à àà à àà à àà à àà à àà à àà à àà }))à {
+à àà à àà à àà à àà à àà à àà à àà à àà count++;
+à àà à àà à àà à àà à àà à àà à àà à àà velosInZone.push(v);à //à Stockerà leà v�loà pourà navigation
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà });
+
+à àà à àà à àà à àà checkTutoAdvancement('walk');
+
+à àà à àà à àà à àà //à affichéerà laà notificationà persistanteà desà vélosà avecà traductions
+à àà à àà à àà à àà constà veloNotifà =à document.getElementById('velo-zone-notif');
+à àà à àà à àà à àà constà veloCountElà =à document.getElementById('velo-zone-count');
+à àà à àà à àà à àà constà veloTitleElà =à document.getElementById('velo-zone-title');
+à àà à àà à àà à àà constà veloLabelElà =à document.getElementById('velo-zone-label');
+à àà à àà à àà à àà ifà (veloNotifà &&à veloCountEl)à {
+à àà à àà à àà à àà à àà à àà veloCountEl.textContentà =à count;
+à àà à àà à àà à àà à àà à àà ifà (veloTitleEl)à veloTitleEl.textContentà =à APP_TEXTS.veloZone.title[currentLang];
+à àà à àà à àà à àà à àà à àà ifà (veloLabelEl)à veloLabelEl.textContentà =à APP_TEXTS.veloZone.count[currentLang];
+à àà à àà à àà à àà à àà à àà veloNotif.classList.add('active');
+à àà à àà à àà à àà à àà à àà //à Metêtreà �à jourà îlesà fl�chesà deà navigation
+à àà à àà à àà à àà à àà à àà updateVeloNavArrows(count);
+à àà à àà à àà à àà }
+
+à àà à àà à àà à àà //à FIX:à R�activerà îlesà clicsà apr�sà unà courtà d�lai
+à àà à àà à àà à àà setTimeout(()à =>à {
+à àà à àà à àà à àà à àà à àà isCreatingWalkZoneà =à false;
+à àà à àà à àà à àà },à 300);
+à àà à àà });
+};
+
+//à ===à MODIFIÉ�à :à optimiséATIONà CRITIQUEà DESà PERFORMANCESà ===
+
+/**
+à *à Analyseà uneà gareà pourà calculerà sonà scoreà �écologique.
+à *à Comptabiliseà îlesà vélosà (800m),à bornesà IRVEà (3km)à età covoiturageà (3km).
+à *à @paramà {Object}à gà -à L'objetà gareà �à analyser.
+à *à @returnsà {Object}à Unà objetà contenantà laà noteà (/10),à îlesà d�tailsà desà compteursà età leà total.
+à */
+functionà analyser(g)à {
+à àà à àà letà dà =à {
+à àà à àà à àà à àà bornes:à 0,
+à àà à àà à àà à àà covoit:à 0,
+à àà à àà à àà à àà velos:à 0
+à àà à àà };
+à àà à àà //à optimiséationà :à Boundingà Boxà (environà +/-à 0.05à degr�s,à soità ~5km)
+à àà à àà constà latMinà =à g.latà -à 0.05,
+à àà à àà à àà à àà latMaxà =à g.latà +à 0.05;
+à àà à àà constà lonMinà =à g.lonà -à 0.05,
+à àà à àà à àà à àà lonMaxà =à g.lonà +à 0.05;
+à àà à àà constà fastFilterà =à (p)à =>à p.latà >=à latMinà &&à p.latà <=à latMaxà &&à p.lonà >=à lonMinà &&à p.lonà <=à lonMax;
+à àà à àà DATA.velos.forEach(và =>à {
+à àà à àà à àà à àà ifà (fastFilter(v)à &&à getDist(g.lat,à g.lon,à v.lat,à v.lon)à <=à 0.8)à d.velos++;
+à àà à àà });
+à àà à àà DATA.bornes.forEach(bà =>à {
+à àà à àà à àà à àà ifà (fastFilter(b)à &&à getDist(g.lat,à g.lon,à b.lat,à b.lon)à <=à 3)à d.bornes++;
+à àà à àà });
+à àà à àà DATA.covoit.forEach(cà =>à {
+à àà à àà à àà à àà ifà (fastFilter(c)à &&à getDist(g.lat,à g.lon,à c.lat,à c.lon)à <=à 3)à d.covoit++;
+à àà à àà });
+à àà à àà letà sà =à (g.typeà ===à 'TGV'à ?à 1à :à 0)à +à Math.min(d.velosà *à 1,à 7)à +à Math.min(d.bornesà *à 0.5,à 2)à +à Math.min(d.covoità *à 0.5,à 1);
+à àà à àà returnà {
+à àà à àà à àà à àà note:à Math.min(Math.round(sà *à 10)à /à 10,à 10),
+à àà à àà à àà à àà details:à d,
+à àà à àà à àà à àà total:à d.velosà +à d.bornesà +à d.covoit
+à àà à àà };
+}
+//à ========================================================
+
+functionà preComputeScoresSync()à {
+à àà à àà forà (letà ià =à 0;à ià <à DATA.gares.length;à i++)à {
+à àà à àà à àà à àà constà gà =à DATA.gares[i];
+à àà à àà à àà à àà g.tagsà =à [];
+
+à àà à àà à àà à àà ifà (g.latà <à 45.7)à g.tags.push('sud');
+à àà à àà à àà à àà ifà (g.latà >à 49.0)à g.tags.push('nord');à //à Ajoutà Nord
+
+à àà à àà à àà à àà //à Parisà sp�cifique
+à àà à àà à àà à àà ifà (getDist(g.lat,à g.lon,à 48.8566,à 2.3522)à <à 20)à g.tags.push('paris');
+
+à àà à àà à àà à àà constà isAlpesà =à (g.lonà >à 5.5à &&à g.latà <à 46.2à &&à g.latà >à 44.0);
+à àà à àà à àà à àà constà isPyreneesà =à (g.latà <à 43.2à &&à g.lonà <à 3.0);
+à àà à àà à àà à àà ifà (isAlpesà ||à isPyrenees)à g.tags.push('montagne');
+
+à àà à àà à àà à àà //à S�parationà Merà /à Oc�an
+à àà à àà à àà à àà constà isMedà =à (g.latà <à 43.7à &&à g.lonà >à 3.0);
+à àà à àà à àà à àà constà isAtlantiqueà =à (g.lonà <à -1.0à &&à g.latà <à 48.0);
+à àà à àà à àà à àà constà isMancheà =à (g.latà >à 48.5à &&à g.lonà <à -1.5);
+
+à àà à àà à àà à àà ifà (isMed)à g.tags.push('mer');
+à àà à àà à àà à àà ifà (isAtlantiqueà ||à isManche)à g.tags.push('ocean');
+
+à àà à àà à àà à àà constà cleanNameà =à g.nom.replace(/Gareà de\s?/i,à '').trim();
+à àà à àà à àà à àà ifà (MAJOR_CITIES.some(cityà =>à cleanName.includes(city)))à g.tags.push('ville');
+à àà à àà }
+}
+
+/**
+à *à Lanceà uneà analyseà comparativeà compl�teà pourà uneà gare.
+à *à Compareà avecà îlesà garesà environnantesà pourà trouvéerà uneà meilleureà alternative.
+à *à Metà �à jourà l'interfaceà utiliséateurà avecà îlesà scoresà d�taill�sà età îlesà barresà deà progèression.
+à *à @paramà {number}à idà -à L'identifiantà deà laà gareà �à analyser.
+à */
+window.lancerAnalyseCompleteà =à function(id)à {
+à àà à àà //à PERF:à Feedbackà visuelà imm�diatà pourà am�liorerà l'INPà per�u
+à àà à àà constà containerà =à document.getElementById(`action-container-${id}`);
+à àà à àà ifà (container)à {
+à àà à àà à àà à àà container.innerHTMLà =à `<divà style="text-align:center;padding:20px;color:#64748b;"><ià class="fa-solidà fa-spinnerà fa-spin"></i>à Analyse...</div>`;
+à àà à àà }
+à àà à àà 
+à àà à àà //à PERF:à setTimeout(0)à lib�reà compl�tementà leà threadà pourà leà paintà (meilleurà INPà queà rAF)
+à àà à àà setTimeout(()à =>à {
+à àà à àà à àà à àà //à PERF:à Acc�sà O(1)à viaà Map
+à àà à àà à àà à àà constà gà =à DATA.garesById.get(id)à ||à DATA.gares.find(xà =>à x.idà ===à id);
+à àà à àà à àà à àà ifà (!g)à return;
+à àà à àà à àà à àà 
+à àà à àà à àà à àà //à PERF:à utiliséerà leà scoreà pr�-calcul�à sià disponible
+à àà à àà à àà à àà constà sà =à g.computedScoreà ?à {à note:à g.computedScore,à details:à g.computedDetails,à total:à (g.computedDetails?.velosà ||à 0)à +à (g.computedDetails?.bornesà ||à 0)à +à (g.computedDetails?.covoità ||à 0)à }à :à analyser(g);
+à àà à àà à àà à àà 
+à àà à àà à àà à àà letà bestà =à null;
+à àà à àà à àà à àà letà bestSà =à s.note;
+à àà à àà à àà à àà letà bestTotalà =à s.total;
+à àà à àà à àà à àà 
+à àà à àà à àà à àà //à PERF:à Boundingà boxà pr�-filtr�eà +à utiliséationà desà scoresà pr�-calcul�s
+à àà à àà à àà à àà constà latMinà =à g.latà -à 0.15,à latMaxà =à g.latà +à 0.15;
+à àà à àà à àà à àà constà lonMinà =à g.lonà -à 0.15,à lonMaxà =à g.lonà +à 0.15;
+à àà à àà à àà à àà 
+à àà à àà à àà à àà forà (letà ià =à 0;à ià <à DATA.gares.length;à i++)à {
+à àà à àà à àà à àà à àà à àà constà và =à DATA.gares[i];
+à àà à àà à àà à àà à àà à àà ifà (v.idà ===à idà ||à v.latà <à latMinà ||à v.latà >à latMaxà ||à v.lonà <à lonMinà ||à v.lonà >à lonMax)à continue;
+à àà à àà à àà à àà à àà à àà 
+à àà à àà à àà à àà à àà à àà constà distà =à getDist(g.lat,à g.lon,à v.lat,à v.lon);
+à àà à àà à àà à àà à àà à àà ifà (distà >à 10)à continue;
+à àà à àà à àà à àà à àà à àà 
+à àà à àà à àà à àà à àà à àà //à PERF:à utiliséerà scoreà pr�-calcul�à sià dispo
+à àà à àà à àà à àà à àà à àà constà svà =à v.computedScoreà ?à {à note:à v.computedScore,à total:à (v.computedDetails?.velosà ||à 0)à +à (v.computedDetails?.bornesà ||à 0)à +à (v.computedDetails?.covoità ||à 0)à }à :à analyser(v);
+à àà à àà à àà à àà à àà à àà 
+à àà à àà à àà à àà à àà à àà ifà (sv.noteà >à bestSà ||à (sv.noteà ===à bestSà &&à sv.totalà >à bestTotal))à {
+à àà à àà à àà à àà à àà à àà à àà à àà bestSà =à sv.note;
+à àà à àà à àà à àà à àà à àà à àà à àà bestTotalà =à sv.total;
+à àà à àà à àà à àà à àà à àà à àà à àà bestà =à v;
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà }
+
+à àà à àà à àà à àà //à utiliséationà compl�teà deà APP_TEXTS.analysisà pourà laà traductionà dynamique
+à àà à àà à àà à àà constà tà =à APP_TEXTS.analysis;
+à àà à àà à àà à àà constà langà =à currentLang;
+
+à àà à àà à àà à àà constà pctVà =à Math.min((s.details.velosà /à 5)à *à 100,à 100);
+à àà à àà à àà à àà constà pctBà =à Math.min((s.details.bornesà /à 6)à *à 100,à 100);
+à àà à àà à àà à àà constà pctCà =à Math.min((s.details.covoità /à 2)à *à 100,à 100);
+à àà à àà à àà à àà constà colorà =à s.noteà >=à 7à ?à '#059669'à :à s.noteà >=à 4à ?à '#d97706'à :à '#dc2626';
+
+à àà à àà à àà à àà letà htmlà =à `
+à àà à àà à àà à àà à àà à àà <divà class="analyse-container">
+à àà à àà à àà à àà à àà à àà à àà à àà <divà style="display:flex;à justify-content:space-between;à margin-bottom:10px;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <span>${t.score[lang]}</span><spanà style="font-weight:900;à color:${color}">${s.note}/10</span>
+à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà à àà à àà <divà class="stat-row"><ià class="fa-solidà fa-bicycle"à style="width:25px;à color:#0891b2;"></i>à <spanà style="flex:1">${t.bikes[lang]}</span>à <b>${s.details.velos}</b><divà class="progèress-bg"><divà class="progèress-fill"à style="width:${pctV}%;à background:#0891b2;"></div></div></div>
+à àà à àà à àà à àà à àà à àà à àà à àà <divà class="stat-row"><ià class="fa-solidà fa-plug"à style="width:25px;à color:#d97706;"></i>à <spanà style="flex:1">${t.irve[lang]}</span>à <b>${s.details.bornes}</b><divà class="progèress-bg"><divà class="progèress-fill"à style="width:${pctB}%;à background:#d97706;"></div></div></div>
+à àà à àà à àà à àà à àà à àà à àà à àà <divà class="stat-row"><ià class="fa-solidà fa-car"à style="width:25px;à color:#9333ea;"></i>à <spanà style="flex:1">${t.covoit[lang]}</span>à <b>${s.details.covoit}</b><divà class="progèress-bg"><divà class="progèress-fill"à style="width:${pctC}%;à background:#9333ea;"></div></div></div>
+à àà à àà à àà à àà `;
+
+à àà à àà à àà à àà ifà (best)à {
+à àà à àà à àà à àà à àà à àà htmlà +=à `<buttonà onclick="goToGare(${best.id})"à style="width:100%;
+à àà à àà à àà à àà à àà à àà margin-top:15px;à background:white;à border:1pxà solidà ${color};à color:${color};à padding:10pxà 12px;à border-radius:6px;à font-weight:600;à font-size:0.85rem;à display:flex;à justify-content:space-between;à align-items:center;
+à àà à àà à àà à àà à àà à àà cursor:pointer;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <span>${t.alt[lang]}à ${escapeHTML(best.nom.replace("Gareà deà ",à ""))}</span>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <spanà style="background:${color};
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà color:white;à padding:2pxà 6px;à border-radius:4px;">${bestS}à ${t.go[lang].replace('Yà allerà ',à '')}</span>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à </button>`;
+à àà à àà à àà à àà }à elseà {
+à àà à àà à àà à àà à àà à àà htmlà +=à `<divà style="margin-top:15px;à background:#ecfdf5;à color:#047857;à padding:12px;à border-radius:6px;à font-weight:800;à text-align:center;à border:1pxà solidà #a7f3d0;"><ià class="fa-solidà fa-trophy"></i>à ${t.best[lang]}</div>`;
+à àà à àà à àà à àà }
+
+à àà à àà à àà à àà htmlà +=à `<buttonà class="btn-walk"à onclick="event.stopPropagation();à showWalkZone(${g.lat},à ${g.lon})"><ià class="fa-solidà fa-person-walking"></i>à ${t.zone[lang]}</button>`;
+à àà à àà à àà à àà htmlà +=à `</div>`;
+à àà à àà à àà à àà 
+à àà à àà à àà à àà ifà (container)à container.innerHTMLà =à html;
+
+à àà à àà à àà à àà //à d�clenchementà confettisà sià scoreà excellentà (d�port�à pourà neà pasà bloquer)
+à àà à àà à àà à àà ifà (s.noteà >=à 9)à {
+à àà à àà à àà à àà à àà à àà setTimeout(()à =>à {
+à àà à àà à àà à àà à àà à àà à àà à àà confetti({
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà particleCount:à 150,
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà spread:à 70,
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà origin:à {à y:à 0.6à },
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà colors:à ['#10b981',à '#22c55e',à '#84cc16',à '#a3e635']
+à àà à àà à àà à àà à àà à àà à àà à àà });
+
+à àà à àà à àà à àà à àà à àà à àà à àà ifà (s.noteà ===à 10)à {
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà setTimeout(()à =>à {
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà confetti({à particleCount:à 200,à angle:à 60,à spread:à 55,à origin:à {à x:à 0à }à });
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà confetti({à particleCount:à 200,à angle:à 120,à spread:à 55,à origin:à {à x:à 1à }à });
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà },à 250);
+à àà à àà à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà à àà à àà },à 50);
+à àà à àà à àà à àà }
+
+à àà à àà à àà à àà checkTutoAdvancement('analyse');
+à àà à àà });
+};
+
+constà overlaysà =à {
+à àà à àà "??à Gares":à markersLayer,
+à àà à àà "???à Rails":à railsLayer,
+à àà à àà "?à Bornes":à irveLayer,
+à àà à àà "??à Covoit":à covoitLayer,
+à àà à àà "??à vélos":à veloParkingLayer
+};
+L.control.layers(null,à overlays,à {
+à àà à àà position:à 'bottomright'
+}).addTo(map);
+L.control.scale({
+à àà à àà imperial:à false
+}).addTo(map);
+
+tryà {
+à àà à àà newà L.Control.MiniMap(L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'),à {
+à àà à àà à àà à àà toggleDisplay:à true,
+à àà à àà à àà à àà position:à 'bottomleft'
+à àà à àà }).addTo(map);
+}à catchà (e)à {}
+
+//à PERF:à Cacheà duà dernierà niveauà deà zoomà pourà éééviterà îlesà recalculsà inutiîles
+letà lastZoomLevelà =à -1;
+letà zoomRafIdà =à null;
+
+//à PERF:à Handlerà zoomendà combiné�à età optimisé�à avecà RAFà throttlingà +30%à CPU
+constà handleZoomEndà =à ()à =>à {
+à àà à àà constà zoomà =à map.getZoom();
+à àà à àà 
+à àà à àà //à PERF:à Skipà sià leà niveauà deà zoomà n'aà pasà chang�à significativement
+à àà à àà constà zoomBandà =à zoomà <à 8à ?à 0à :à zoomà <à 12à ?à 1à :à zoomà <à 14à ?à 2à :à 3;
+à àà à àà constà lastBandà =à lastZoomLevelà <à 8à ?à 0à :à lastZoomLevelà <à 12à ?à 1à :à lastZoomLevelà <à 14à ?à 2à :à 3;
+à àà à àà 
+à àà à àà //à OSMBuildingsà (toujoursà v�rifi�)
+à àà à àà ifà (zoomà >=à 15à &&à !osmbà &&à typeofà OSMBuildingsà !==à 'undefined')à {
+à àà à àà à àà à àà tryà {
+à àà à àà à àà à àà à àà à àà osmbà =à newà OSMBuildings(map).load('https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
+à àà à àà à àà à àà }à catchà (e)à {
+à àà à àà à àà à àà à àà à àà console.warn('OSMBuildingsà nonà disponible');
+à àà à àà à àà à àà }
+à àà à àà }
+à àà à àà 
+à àà à àà //à PERF:à Neà recalculerà queà sià onà changeà deà bandeà deà zoom
+à àà à àà ifà (zoomBandà ===à lastBandà &&à lastZoomLevelà !==à -1)à return;
+à àà à àà lastZoomLevelà =à zoom;
+
+à àà à àà ifà (zoomà <à 8)à {
+à àà à àà à àà à àà //à Vueà Franceà :à Seulementà TGVà +à railsà simplifi�s
+à àà à àà à àà à àà railsLayer.setStyle({
+à àà à àà à àà à àà à àà à àà weight:à 1.5,
+à àà à àà à àà à àà à àà à àà opacity:à 0.5
+à àà à àà à àà à àà });
+à àà à àà à àà à àà irveLayer.remove();
+à àà à àà à àà à àà covoitLayer.remove();
+à àà à àà à àà à àà veloParkingLayer.remove();
+
+à àà à àà }à elseà ifà (zoomà >=à 8à &&à zoomà <à 12)à {
+à àà à àà à àà à àà //à Vueà R�gionaleà :à TGVà +à TERà +à railsà normaux
+à àà à àà à àà à àà ifà (!map.hasLayer(railsLayer))à map.addLayer(railsLayer);
+à àà à àà à àà à àà railsLayer.setStyle({
+à àà à àà à àà à àà à àà à àà weight:à 2,
+à àà à àà à àà à àà à àà à àà opacity:à 0.6
+à àà à àà à àà à àà });
+à àà à àà à àà à àà irveLayer.remove();
+à àà à àà à àà à àà covoitLayer.remove();
+à àà à àà à àà à àà veloParkingLayer.remove();
+
+à àà à àà }à elseà ifà (zoomà >=à 12à &&à zoomà <à 14)à {
+à àà à àà à àà à àà //à Vueà localeà :à Toutà affichéer
+à àà à àà à àà à àà ifà (!map.hasLayer(railsLayer))à map.addLayer(railsLayer);
+à àà à àà à àà à àà railsLayer.setStyle({
+à àà à àà à àà à àà à àà à àà weight:à 3,
+à àà à àà à àà à àà à àà à àà opacity:à 0.7
+à àà à àà à àà à àà });
+à àà à àà à àà à àà ifà (!map.hasLayer(irveLayer))à map.addLayer(irveLayer);
+à àà à àà à àà à àà ifà (!map.hasLayer(covoitLayer))à map.addLayer(covoitLayer);
+à àà à àà à àà à àà ifà (!map.hasLayer(veloParkingLayer))à map.addLayer(veloParkingLayer);
+à àà à àà }à elseà {
+à àà à àà à àà à àà //à Vueà localeà :à Toutà visible
+à àà à àà à àà à àà ifà (!map.hasLayer(railsLayer))à map.addLayer(railsLayer);
+à àà à àà à àà à àà ifà (!map.hasLayer(irveLayer))à map.addLayer(irveLayer);
+à àà à àà à àà à àà ifà (!map.hasLayer(covoitLayer))à map.addLayer(covoitLayer);
+à àà à àà à àà à àà ifà (!map.hasLayer(veloParkingLayer))à map.addLayer(veloParkingLayer);
+à àà à àà }
+};
+
+//à PERF:à Debounceà +à RAFà pourà zoomendà (�éviteà îlesà appelésà excessifsà pendantà zoomà continu)
+map.on('zoomend',à ()à =>à {
+à àà à àà ifà (zoomRafId)à cancelAnimationFrame(zoomRafId);
+à àà à àà zoomRafIdà =à requestAnimationFrame(handleZoomEnd);
+});
+
+loadEverything();
+
+functionà checkUrlActions()à {
+à àà à àà constà urlParamsà =à newà URLSearchParams(window.location.search);
+à àà à àà constà targetIdà =à urlParams.get('target');
+à àà à àà constà actionà =à urlParams.get('action');
+à àà à àà ifà (targetId)à {
+à àà à àà à àà à àà setTimeout(()à =>à goToGare(parseInt(targetId)),à 500);
+à àà à àà à àà à àà returnà true;
+à àà à àà }à elseà ifà (actionà ===à 'random')à {
+à àà à àà à àà à àà setTimeout(()à =>à randomGare(),à 500);
+à àà à àà à àà à àà returnà true;
+à àà à àà }
+à àà à àà returnà false;
+}
+
+window.openDiscoverModalà =à ()à =>à {
+à àà à àà document.getElementById('discoverModal').classList.add('active');
+à àà à àà document.getElementById('catGrid').style.displayà =à 'grid';
+à àà à àà document.getElementById('resultsContainer').style.displayà =à 'none';
+};
+window.closeDiscoverà =à ()à =>à document.getElementById('discoverModal').classList.remove('active');
+
+window.showCategoryà =à (category,à titleArg)à =>à {
+à àà à àà document.getElementById('catGrid').style.displayà =à 'none';
+à àà à àà document.getElementById('resultsContainer').style.displayà =à 'grid';
+à àà à àà document.getElementById('btnBackCat').style.displayà =à 'inline-block';
+
+à àà à àà //à MODIFIÉ�à :à Ignoreà leà tiêtreà pass�à enà param�êtreà età utiliséeà laà traductionà viaà l'IDà category
+à àà à àà constà tCatsà =à APP_TEXTS.categories;
+à àà à àà constà êtresà =à APP_TEXTS.results;
+à àà à àà constà langà =à currentLang;
+
+à àà à àà document.getElementById('discoverTitle').innerTextà =à tCats[category]à ?à tCats[category][lang]à :à titleArg;
+à àà à àà document.getElementById('discoverSubtitle').innerTextà =à êtres.top9[lang];
+
+à àà à àà ifà (!DATA.gares[0].computedScore)à {
+à àà à àà à àà à àà DATA.gares.forEach(gà =>à {
+à àà à àà à àà à àà à àà à àà constà anà =à analyser(g);
+à àà à àà à àà à àà à àà à àà g.computedScoreà =à an.note;
+à àà à àà à àà à àà à àà à àà g.computedDetailsà =à an.details;
+à àà à àà à àà à àà });
+à àà à àà }
+
+à àà à àà letà candidatesà =à DATA.gares.filter(gà =>à g.tagsà &&à g.tags.includes(category));
+à àà à àà candidates.sort((a,à b)à =>à b.computedScoreà -à a.computedScore);
+à àà à àà constà top9à =à candidates.slice(0,à 9);
+à àà à àà constà containerà =à document.getElementById('resultsContainer');
+à àà à àà container.innerHTMLà =à '';
+
+à àà à àà ifà (top9.lengthà ===à 0)à {
+à àà à àà à àà à àà container.innerHTMLà =à `<divà style="color:white;à grid-column:spanà 3;">${êtres.loading[lang]}</div>`;
+à àà à àà }à elseà {
+à àà à àà à àà à àà top9.forEach((g,à idx)à =>à {
+à àà à àà à àà à àà à àà à àà constà cleanNameà =à g.nom.split('à ')[0].replace(/-/g,à '');
+à àà à àà à àà à àà à àà à àà constà imgUrlà =à `https://loremflickr.com/400/200/${cleanName},city/all?lock=${g.id}`;
+à àà à àà à àà à àà à àà à àà constà htmlà =à `
+à àà à àà à àà à àà à àà à àà à àà à àà <divà class="result-cardà rank-${idx+1}"à style="overflow:hidden;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <divà style="height:120px;à background:url('${imgUrl}')à center/coverà no-repeat;à position:relative;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <divà class="rank-badge">#${idx+1}</div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <divà class="sêtreet-view-btn"à onclick="window.open('https://www.google.com/maps?q=${encodeURIComponent(g.nom)}',à '_blank');à event.stopPropagation();"><ià class="fa-solidà fa-sêtreet-view"></i></div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <divà style="padding:15px;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <h3à style="color:white;à margin:0à 0à 5pxà 0;">${escapeHTML(g.nom)}</h3>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <divà style="font-weight:900;à color:#10b981;à font-size:1.5rem;
+margin-bottom:10px;">${g.computedScore}/10</div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <divà style="font-size:0.85rem;
+color:#94a3b8;à margin-bottom:15px;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <ià class="fa-solidà fa-bicycle"></i>à ${g.computedDetails.velos}à ${êtres.bikes[lang]}à �à 
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <ià class="fa-solidà fa-plug"></i>à ${g.computedDetails.bornes}à ${êtres.bornes[lang]}
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à 
+à àà à àà à àà à àà à àà à àà à àà à <buttonà onclick="goToGare(${g.id});à closeDiscover();"à style="background:var(--primary);à border:none;
+padding:10px;à width:100%;à border-radius:6px;à font-weight:bold;à cursor:pointer;à color:#022c22;">${êtres.go[lang]}</button>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà à àà à àà </div>`;
+à àà à àà à àà à àà à àà à àà container.innerHTMLà +=à html;
+à àà à àà à àà à àà });
+à àà à àà }
+};
+
+window.resetDiscoverà =à ()à =>à {
+à àà à àà document.getElementById('catGrid').style.displayà =à 'grid';
+à àà à àà document.getElementById('resultsContainer').style.displayà =à 'none';
+à àà à àà document.getElementById('btnBackCat').style.displayà =à 'none';
+à àà à àà //à FIX:à Useà translatedà textsà fromà APP_TEXTSà insteadà ofà hardcodedà Frenchà strings.
+à àà à àà constà tà =à APP_TEXTS.discover;
+à àà à àà constà langà =à currentLang;
+à àà à àà document.getElementById('discoverTitle').innerTextà =à t.title[lang];
+à àà à àà document.getElementById('discoverSubtitle').innerTextà =à t.subtitle[lang];
+};
+
+functionà startBackgroundAnalysis()à {
+à àà à àà letà indexà =à 0;
+à àà à àà constà chunkSizeà =à 100;
+
+à àà à àà functionà processChunk()à {
+à àà à àà à àà à àà constà endà =à Math.min(indexà +à chunkSize,à DATA.gares.length);
+à àà à àà à àà à àà forà (letà ià =à index;à ià <à end;à i++)à {
+à àà à àà à àà à àà à àà à àà constà gà =à DATA.gares[i];
+à àà à àà à àà à àà à àà à àà constà analysisà =à analyser(g);
+à àà à àà à àà à àà à àà à àà g.computedScoreà =à analysis.note;
+à àà à àà à àà à àà à àà à àà g.computedDetailsà =à analysis.details;
+à àà à àà à àà à àà à àà à àà ifà (!g.tags)à g.tagsà =à [];
+à àà à àà à àà à àà à àà à àà ifà (g.computedDetails.velosà >à 2à &&à getDist(g.lat,à g.lon,à 48.8566,à 2.3522)à >à 50)à g.tags.push('nature');
+à àà à àà à àà à àà }
+à àà à àà à àà à àà indexà +=à chunkSize;
+à àà à àà à àà à àà ifà (indexà <à DATA.gares.length)à requestAnimationFrame(processChunk);
+à àà à àà à àà à àà elseà {
+à àà à àà à àà à àà à àà à àà constà btnà =à document.querySelector('.btn-discover');
+à àà à àà à àà à àà à àà à àà ifà (btn)à btn.style.opacityà =à '1';
+à àà à àà à àà à àà }
+à àà à àà }
+à àà à àà processChunk();
+}
+
+functionà computeGlobalStats()à {
+à àà à àà ifà (!DATA.gares.length)à returnà null;
+à àà à àà letà totalScoreà =à 0;
+à àà à àà letà tgvCountà =à 0;
+à àà à àà letà sumVelosà =à 0;
+à àà à àà letà sumBornesà =à 0;
+à àà à àà letà sumCovoità =à 0;
+à àà à àà letà nà =à 0;
+à àà à àà 
+à àà à àà //à Nouvelîlesà stats
+à àà à àà letà garesAvecVeloà =à 0;
+à àà à àà letà garesSansVeloà =à 0;
+à àà à àà letà topVeloGareà =à null;
+à àà à àà letà topVeloCountà =à 0;
+à àà à àà letà topVeloLatà =à null;
+à àà à àà letà topVeloLonà =à null;
+à àà à àà 
+à àà à àà DATA.gares.forEach(gà =>à {
+à àà à àà à àà à àà ifà (!g.computedScoreà ||à !g.computedDetails)à return;
+à àà à àà à àà à àà n++;
+à àà à àà à àà à àà totalScoreà +=à g.computedScore;
+à àà à àà à àà à àà ifà (g.typeà ===à 'TGV')à tgvCount++;
+à àà à àà à àà à àà sumVelosà +=à g.computedDetails.velos;
+à àà à àà à àà à àà sumBornesà +=à g.computedDetails.bornes;
+à àà à àà à àà à àà sumCovoità +=à g.computedDetails.covoit;
+à àà à àà à àà à àà 
+à àà à àà à àà à àà //à Compterà îlesà garesà avec/sansà v�loà dansà zoneà 10minà (800m)
+à àà à àà à àà à àà ifà (g.computedDetails.velosà >à 0)à {
+à àà à àà à àà à àà à àà à àà garesAvecVelo++;
+à àà à àà à àà à àà à àà à àà //à trouvéerà laà gareà avecà leà plusà deà vélos
+à àà à àà à àà à àà à àà à àà ifà (g.computedDetails.velosà >à topVeloCount)à {
+à àà à àà à àà à àà à àà à àà à àà à àà topVeloCountà =à g.computedDetails.velos;
+à àà à àà à àà à àà à àà à àà à àà à àà topVeloGareà =à g.nom;
+à àà à àà à àà à àà à àà à àà à àà à àà topVeloLatà =à g.lat;
+à àà à àà à àà à àà à àà à àà à àà à àà topVeloLonà =à g.lon;
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà }à elseà {
+à àà à àà à àà à àà à àà à àà garesSansVelo++;
+à àà à àà à àà à àà }
+à àà à àà });
+à àà à àà ifà (nà ===à 0)à returnà null;
+à àà à àà returnà {
+à àà à àà à àà à àà gares:à n,
+à àà à àà à àà à àà scoreMoyen:à (totalScoreà /à n).toFixed(1),
+à àà à àà à àà à àà partTGV:à Math.round((tgvCountà /à n)à *à 100)à +à '%',
+à àà à àà à àà à àà moyVelos:à (sumVelosà /à n).toFixed(1),
+à àà à àà à àà à àà moyBornes:à (sumBornesà /à n).toFixed(1),
+à àà à àà à àà à àà moyCovoit:à (sumCovoità /à n).toFixed(1),
+à àà à àà à àà à àà //à Nouvelîlesà stats
+à àà à àà à àà à àà totalVelos:à DATA.velos.length,
+à àà à àà à àà à àà totalCovoit:à DATA.covoit.length,
+à àà à àà à àà à àà totalIrve:à DATA.bornes.length,
+à àà à àà à àà à àà garesAvecVelo:à garesAvecVelo,
+à àà à àà à àà à àà garesSansVelo:à garesSansVelo,
+à àà à àà à àà à àà topVeloGare:à topVeloGare,
+à àà à àà à àà à àà topVeloCount:à topVeloCount,
+à àà à àà à àà à àà topVeloLat:à topVeloLat,
+à àà à àà à àà à àà topVeloLon:à topVeloLon,
+à àà à àà à àà à àà totalGares:à n
+à àà à àà };
+}
+
+constà statsPanelà =à document.getElementById('statsPanel');
+constà btnStatsà =à document.getElementById('btnStats');
+constà btnStatsCloseà =à document.getElementById('closeStats');
+
+//à Cacheà pourà îlesà donn�esà m�t�oà enrichies
+letà enrichedStatsCacheà =à null;
+letà enrichedStatsLastFetchà =à 0;
+letà statsRefreshIntervalà =à null;
+
+//à Fonctionà pourà r�cup�rerà îlesà statsà m�t�oà enrichiesà depuisà leà backend
+asyncà functionà fetchEnrichedStats()à {
+à àà à àà tryà {
+à àà à àà à àà à àà constà centerà =à map.getCenter();
+à àà à àà à àà à àà constà urlà =à `${API_BASE_URL}/api/enriched-stats?centerLat=${center.lat}&centerLon=${center.lng}`;
+à àà à àà à àà à àà constà responseà =à awaità fetch(url);
+à àà à àà à àà à àà ifà (response.ok)à {
+à àà à àà à àà à àà à àà à àà enrichedStatsCacheà =à awaità response.json();
+à àà à àà à àà à àà à àà à àà enrichedStatsLastFetchà =à Date.now();
+à àà à àà à àà à àà à àà à àà console.log('??à Enrichedà statsà loaded:',à enrichedStatsCache);
+à àà à àà à àà à àà }
+à àà à àà }à catchà (e)à {
+à àà à àà à àà à àà console.warn('??à Impossibleà deà chargéerà îlesà statsà enrichies:',à e.message);
+à àà à àà }
+}
+
+functionà refreshStatsPanel()à {
+à àà à àà ifà (!GLOBAL_STATS)à {
+à àà à àà à àà à àà //à Recalculerà sià n�cessaire
+à àà à àà à àà à àà GLOBAL_STATSà =à computeGlobalStats();
+à àà à àà }
+à àà à àà ifà (!GLOBAL_STATS)à return;
+à àà à àà 
+à àà à àà //à Anciennesà stats
+à àà à àà document.getElementById('stat-gares').innerTextà =à GLOBAL_STATS.gares;
+à àà à àà document.getElementById('stat-score').innerTextà =à GLOBAL_STATS.scoreMoyenà +à '/10';
+à àà à àà document.getElementById('stat-tgv').innerTextà =à GLOBAL_STATS.partTGV;
+à àà à àà document.getElementById('stat-velos').innerTextà =à GLOBAL_STATS.moyVelos;
+à àà à àà document.getElementById('stat-bornes').innerTextà =à GLOBAL_STATS.moyBornes;
+à àà à àà document.getElementById('stat-covoit').innerTextà =à GLOBAL_STATS.moyCovoit;
+à àà à àà 
+à àà à àà //à Nouvelîlesà statsà -à Totauxà nationaux
+à àà à àà constà totalVelosElà =à document.getElementById('stat-total-velos');
+à àà à àà constà totalCovoitElà =à document.getElementById('stat-total-covoit');
+à àà à àà constà totalIrveElà =à document.getElementById('stat-total-irve');
+à àà à àà constà garesVeloElà =à document.getElementById('stat-gares-velo');
+à àà à àà constà topVeloElà =à document.getElementById('stat-top-velo');
+à àà à àà constà noVeloElà =à document.getElementById('stat-no-velo');
+à àà à àà constà hottestElà =à document.getElementById('stat-hottest');
+à àà à àà constà coldestElà =à document.getElementById('stat-coldest');
+à àà à àà 
+à àà à àà ifà (totalVelosEl)à totalVelosEl.innerTextà =à GLOBAL_STATS.totalVelosà ||à DATA.velos.lengthà ||à 0;
+à àà à àà ifà (totalCovoitEl)à totalCovoitEl.innerTextà =à GLOBAL_STATS.totalCovoità ||à DATA.covoit.lengthà ||à 0;
+à àà à àà ifà (totalIrveEl)à totalIrveEl.innerTextà =à GLOBAL_STATS.totalIrveà ||à DATA.bornes.lengthà ||à 0;
+à àà à àà ifà (garesVeloEl)à garesVeloEl.innerTextà =à `${GLOBAL_STATS.garesAvecVeloà ||à 0}/${GLOBAL_STATS.totalGaresà ||à 0}`;
+à àà à àà 
+à àà à àà //à Classementà vélosà -à avecà boutonà pourà naviguer
+à àà à àà ifà (topVeloEl)à {
+à àà à àà à àà à àà ifà (GLOBAL_STATS.topVeloGareà &&à GLOBAL_STATS.topVeloLatà &&à GLOBAL_STATS.topVeloLon)à {
+à àà à àà à àà à àà à àà à àà constà nomà =à GLOBAL_STATS.topVeloGare.lengthà >à 12à 
+à àà à àà à àà à àà à àà à àà à àà à àà ?à GLOBAL_STATS.topVeloGare.substring(0,à 12)à +à '...'
+à àà à àà à àà à àà à àà à àà à àà à àà :à GLOBAL_STATS.topVeloGare;
+à àà à àà à àà à àà à àà à àà topVeloEl.innerHTMLà =à `<spanà class="stat-clickable"à onclick="goToGareByCoords(${GLOBAL_STATS.topVeloLat},à ${GLOBAL_STATS.topVeloLon},à '${GLOBAL_STATS.topVeloGare.replace(/'/g,à "\\'")}')">
+à àà à àà à àà à àà à àà à àà à àà à àà ${nom}à (${GLOBAL_STATS.topVeloCount})à <ià class="fa-solidà fa-arrow-up-right-from-square"à style="font-size:0.7rem;margin-left:4px;"></i>
+à àà à àà à àà à àà à àà à àà </span>`;
+à àà à àà à àà à àà }à elseà ifà (GLOBAL_STATS.topVeloGare)à {
+à àà à àà à àà à àà à àà à àà topVeloEl.innerTextà =à `${GLOBAL_STATS.topVeloGare}à (${GLOBAL_STATS.topVeloCount})`;
+à àà à àà à àà à àà }à elseà {
+à àà à àà à àà à àà à àà à àà topVeloEl.innerTextà =à '-';
+à àà à àà à àà à àà }
+à àà à àà }
+à àà à àà ifà (noVeloEl)à noVeloEl.innerTextà =à GLOBAL_STATS.garesSansVeloà ||à 0;
+à àà à àà 
+à àà à àà //à M�t�oà -à depuisà îlesà statsà enrichiesà -à avecà boutonsà pourà naviguer
+à àà à àà ifà (enrichedStatsCacheà &&à enrichedStatsCache.weather)à {
+à àà à àà à àà à àà constà weatherà =à enrichedStatsCache.weather;
+à àà à àà à àà à àà ifà (hottestElà &&à weather.hottest)à {
+à àà à àà à àà à àà à àà à àà constà nomHotà =à weather.hottest.name.lengthà >à 12à ?à weather.hottest.name.substring(0,à 12)à +à '...'à :à weather.hottest.name;
+à àà à àà à àà à àà à àà à àà ifà (weather.hottest.latà &&à weather.hottest.lon)à {
+à àà à àà à àà à àà à àà à àà à àà à àà hottestEl.innerHTMLà =à `<spanà class="stat-clickable"à onclick="goToGareByCoords(${weather.hottest.lat},à ${weather.hottest.lon},à '${weather.hottest.name.replace(/'/g,à "\\'")}')">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà ${nomHot}à (${weather.hottest.temp}�C)à <ià class="fa-solidà fa-arrow-up-right-from-square"à style="font-size:0.7rem;margin-left:4px;"></i>
+à àà à àà à àà à àà à àà à àà à àà à àà </span>`;
+à àà à àà à àà à àà à àà à àà }à elseà {
+à àà à àà à àà à àà à àà à àà à àà à àà hottestEl.innerTextà =à `${nomHot}à (${weather.hottest.temp}�C)`;
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà }
+à àà à àà à àà à àà ifà (coldestElà &&à weather.coldest)à {
+à àà à àà à àà à àà à àà à àà constà nomColdà =à weather.coldest.name.lengthà >à 12à ?à weather.coldest.name.substring(0,à 12)à +à '...'à :à weather.coldest.name;
+à àà à àà à àà à àà à àà à àà ifà (weather.coldest.latà &&à weather.coldest.lon)à {
+à àà à àà à àà à àà à àà à àà à àà à àà coldestEl.innerHTMLà =à `<spanà class="stat-clickable"à onclick="goToGareByCoords(${weather.coldest.lat},à ${weather.coldest.lon},à '${weather.coldest.name.replace(/'/g,à "\\'")}')">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà ${nomCold}à (${weather.coldest.temp}�C)à <ià class="fa-solidà fa-arrow-up-right-from-square"à style="font-size:0.7rem;margin-left:4px;"></i>
+à àà à àà à àà à àà à àà à àà à àà à àà </span>`;
+à àà à àà à àà à àà à àà à àà }à elseà {
+à àà à àà à àà à àà à àà à àà à àà à àà coldestEl.innerTextà =à `${nomCold}à (${weather.coldest.temp}�C)`;
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà }
+à àà à àà }à elseà {
+à àà à àà à àà à àà //à chargéerà îlesà donn�esà m�t�oà sià pasà encoreà fait
+à àà à àà à àà à àà ifà (Date.now()à -à enrichedStatsLastFetchà >à 30000)à {
+à àà à àà à àà à àà à àà à àà fetchEnrichedStats();
+à àà à àà à àà à àà }
+à àà à àà à àà à àà ifà (hottestEl)à hottestEl.innerTextà =à 'chargéement...';
+à àà à àà à àà à àà ifà (coldestEl)à coldestEl.innerTextà =à 'chargéement...';
+à àà à àà }
+}
+
+//à Fonctionà pourà forcerà leà rafra�chissementà desà stats
+window.forceRefreshStatsà =à asyncà function()à {
+à àà à àà constà btnà =à document.getElementById('btnRefreshStats');
+à àà à àà ifà (btn)à {
+à àà à àà à àà à àà btn.classList.add('spinning');
+à àà à àà }
+à àà à àà 
+à àà à àà //à Recalculerà îlesà statsà globaîles
+à àà à àà GLOBAL_STATSà =à computeGlobalStats();
+à àà à àà 
+à àà à àà //à Rechargéerà îlesà donn�esà m�t�o
+à àà à àà awaità fetchEnrichedStats();
+à àà à àà 
+à àà à àà //à Rafra�chirà l'affichage
+à àà à àà refreshStatsPanel();
+à àà à àà 
+à àà à àà ifà (btn)à {
+à àà à àà à àà à àà setTimeout(()à =>à btn.classList.remove('spinning'),à 500);
+à àà à àà }
+à àà à àà 
+à àà à àà showToast(currentLangà ===à 'fr'à ?à 'Statsà actualis�esà !'à :à 'Statsà refreshed!');
+};
+
+//à D�marrerà leà rafra�chissementà automatiqueà toutesà îlesà 30sà quandà leà panneauà està ouvert
+functionà startStatsAutoRefresh()à {
+à àà à àà ifà (statsRefreshInterval)à clearInterval(statsRefreshInterval);
+à àà à àà statsRefreshIntervalà =à setInterval(()à =>à {
+à àà à àà à àà à àà ifà (statsPanelà &&à statsPanel.classList.contains('active'))à {
+à àà à àà à àà à àà à àà à àà GLOBAL_STATSà =à computeGlobalStats();
+à àà à àà à àà à àà à àà à àà fetchEnrichedStats().then(()à =>à refreshStatsPanel());
+à àà à àà à àà à àà }
+à àà à àà },à 30000);
+}
+
+ifà (btnStatsà &&à statsPanel)à {
+à àà à àà btnStats.addEventListener('click',à ()à =>à {
+à àà à àà à àà à àà GLOBAL_STATSà =à computeGlobalStats();
+à àà à àà à àà à àà refreshStatsPanel();
+à àà à àà à àà à àà fetchEnrichedStats().then(()à =>à refreshStatsPanel());
+à àà à àà à àà à àà statsPanel.classList.add('active');
+à àà à àà à àà à àà startStatsAutoRefresh();
+à àà à àà });
+}
+ifà (btnStatsCloseà &&à statsPanel)à {
+à àà à àà btnStatsClose.addEventListener('click',à ()à =>à {
+à àà à àà à àà à àà statsPanel.classList.remove('active');
+à àà à àà });
+}
+
+//à Fermerà leà statsPanelà enà cliquantà enà dehors
+document.addEventListener('click',à (e)à =>à {
+à àà à àà ifà (statsPanelà &&à statsPanel.classList.contains('active'))à {
+à àà à àà à àà à àà //à V�rifierà sià leà clicà està enà dehorsà duà panelà età duà boutonà stats
+à àà à àà à àà à àà ifà (!statsPanel.contains(e.target)à &&à !btnStats.contains(e.target))à {
+à àà à àà à àà à àà à àà à àà statsPanel.classList.remove('active');
+à àà à àà à àà à àà }
+à àà à àà }
+});
+
+letà tutoStepà =à 0;
+letà currentTutoTargetà =à null;
+
+functionà checkTutorialMode()à {
+à àà à àà constà urlParamsà =à newà URLSearchParams(window.location.search);
+à àà à àà ifà (urlParams.get('tuto')à ===à 'true')à {
+à àà à àà à àà à àà startTutorialScenario();
+à àà à àà à àà à àà returnà true;
+à àà à àà }
+à àà à àà returnà false;
+}
+
+window.skipTutoà =à function()à {
+à àà à àà constà boxà =à document.getElementById('tutoBox');
+à àà à àà box.classList.remove('active');
+à àà à àà window.history.replaceState({},à document.title,à "map.html");
+à àà à àà document.querySelectorAll('.highlight-target').forEach(elà =>à el.classList.remove('highlight-target'));
+à àà à àà constà searchBoxà =à document.getElementById('searchBox');
+à àà à àà ifà (searchBox)à searchBox.classList.remove('highlight-target');
+à àà à àà tutoStepà =à 0;
+à àà à àà currentTutoTargetà =à null;
+à àà à àà map.flyTo([46.6,à 2.2],à 6,à {
+à àà à àà à àà à àà animate:à true,
+à àà à àà à àà à àà duration:à 2
+à àà à àà });
+à àà à àà ifà (railsLayer.getLayers().lengthà >à 0à &&à !map.hasLayer(railsLayer))à map.addLayer(railsLayer);
+};
+//à CORRIG�à BUGà URGENTà 4à :à utiliséationà desà traductionsà tutoriel
+functionà updateTutoBox(title,à text,à showNextà =à false)à {
+à àà à àà constà boxà =à document.getElementById('tutoBox');
+à àà à àà document.getElementById('tutoTitle').innerTextà =à title;
+à àà à àà document.getElementById('tutoText').innerTextà =à text;
+à àà à àà box.classList.add('active');
+à àà à àà constà btnà =à document.getElementById('tutoBtn');
+à àà à àà ifà (showNext)à {
+à àà à àà à àà à àà btn.style.displayà =à 'inline-block';
+à àà à àà à àà à àà btn.innerTextà =à APP_TEXTS.tutorialButtons.next[currentLang];
+à àà à àà à àà à àà btn.onclickà =à nextTutoStep;
+à àà à àà }à elseà {
+à àà à àà à àà à àà btn.style.displayà =à 'none';
+à àà à àà }
+}
+
+window.nextTutoStepà =à function()à {
+à àà à àà ifà (tutoStepà ===à 1)à {
+à àà à àà à àà à àà markersLayer.zoométéoShowLayer(currentTutoTarget.marker,à ()à =>à {
+à àà à àà à àà à àà à àà à àà currentTutoTarget.marker.openPopup();
+à àà à àà à àà à àà à àà à àà setTimeout(()à =>à {
+à àà à àà à àà à àà à àà à àà à àà à àà //à Metêtreà �à jourà l'�étapeà affich�eà (�étapeà 2)
+à àà à àà à àà à àà à àà à àà à àà à àà currentTutoDisplayStepà =à 2;
+à àà à àà à àà à àà à àà à àà à àà à àà updateTutoBox(APP_TEXTS.tuto2.title[currentLang],à APP_TEXTS.tuto2.text[currentLang]);
+à àà à àà à àà à àà à àà à àà à àà à àà constà btnà =à document.querySelector(`button[onclick*="lancerAnalyseComplete(${currentTutoTarget.id})"]`);
+à àà à àà à àà à àà à àà à àà à àà à àà ifà (btn)à btn.classList.add('highlight-target');
+à àà à àà à àà à àà à àà à àà },à 1000);
+à àà à àà à àà à àà });
+à àà à àà }
+à àà à àà ifà (tutoStepà ===à 3)à {
+à àà à àà à àà à àà skipTuto();
+à àà à àà }
+};
+
+functionà startTutorialScenario()à {
+à àà à àà console.log("SC�NARIOà TUTORIEL");
+à àà à àà constà targetà =à DATA.gares.find(gà =>à g.nom.includes("Avignonà Cenêtre"))à ||à DATA.gares[0];
+à àà à àà ifà (!target)à return;
+à àà à àà currentTutoTargetà =à target;
+à àà à àà map.setView([46.6,à 2.2],à 6);
+à àà à àà //à Metêtreà �à jourà l'�étapeà affich�eà età utiliséerà currentLang
+à àà à àà currentTutoDisplayStepà =à 1;
+à àà à àà updateTutoBox(APP_TEXTS.tuto1.title[currentLang],à APP_TEXTS.tuto1.text[currentLang],à true);
+à àà à àà tutoStepà =à 1;
+}
+
+functionà checkTutoAdvancement(action)à {
+à àà à àà constà urlParamsà =à newà URLSearchParams(window.location.search);
+à àà à àà ifà (urlParams.get('tuto')à !==à 'true')à return;
+à àà à àà 
+à àà à àà ifà (actionà ===à 'analyse'à &&à tutoStepà ===à 1)à {
+à àà à àà à àà à àà tutoStepà =à 2;
+à àà à àà à àà à àà setTimeout(()à =>à {
+à àà à àà à àà à àà à àà à àà //à Metêtreà �à jourà l'�étapeà affich�eà (�étapeà 3)
+à àà à àà à àà à àà à àà à àà currentTutoDisplayStepà =à 3;
+à àà à àà à àà à àà à àà à àà updateTutoBox(APP_TEXTS.tuto3.title[currentLang],à APP_TEXTS.tuto3.text[currentLang]);
+à àà à àà à àà à àà à àà à àà constà btnà =à document.querySelector(`button[onclick*="toggleWalkZone(${currentTutoTarget.id})"]`);
+à àà à àà à àà à àà à àà à àà ifà (btn)à btn.classList.add('highlight-target');
+à àà à àà à àà à àà },à 800);
+à àà à àà }
+à àà à àà ifà (actionà ===à 'walk'à &&à tutoStepà ===à 2)à {
+à àà à àà à àà à àà tutoStepà =à 3;
+à àà à àà à àà à àà setTimeout(()à =>à {
+à àà à àà à àà à àà à àà à àà document.querySelectorAll('.highlight-target').forEach(elà =>à el.classList.remove('highlight-target'));
+à àà à àà à àà à àà à àà à àà constà searchBoxà =à document.getElementById('searchBox');
+à àà à àà à àà à àà à àà à àà ifà (searchBox)à searchBox.classList.add('highlight-target');
+à àà à àà à àà à àà à àà à àà constà btnà =à document.getElementById('tutoBtn');
+à àà à àà à àà à àà à àà à àà //à Metêtreà �à jourà l'�étapeà affich�eà (�étapeà 4)
+à àà à àà à àà à àà à àà à àà currentTutoDisplayStepà =à 4;
+à àà à àà à àà à àà à àà à àà btn.innerTextà =à APP_TEXTS.tutorialButtons.finish[currentLang];
+à àà à àà à àà à àà à àà à àà btn.style.displayà =à "inline-block";
+à àà à àà à àà à àà à àà à àà btn.onclickà =à skipTuto;
+à àà à àà à àà à àà à àà à àà updateTutoBox(APP_TEXTS.tuto4.title[currentLang],à APP_TEXTS.tuto4.text[currentLang]);
+à àà à àà à àà à àà },à 1500);
+à àà à àà }
+}
+
+//à ============================================================
+//à NOUVELîlesà FONCTIONSà APIà -à donn�esà �écologiques
+//à AJOUT�à :à 02/01/2026
+//à ============================================================
+
+/**
+à *à chargéeà età affichéeà laà qualité�à deà l'airà pourà uneà gare
+à *à @paramà {number}à latà -à Latitude
+à *à @paramà {number}à lonà -à Longitude
+à *à @paramà {number}à gareIdà -à IDà deà laà gare
+à */
+asyncà functionà loadAirqualitéy(lat,à lon,à gareId)à {
+à àà à àà tryà {
+à àà à àà à àà à àà constà responseà =à awaità fetch(`${API_BASE_URL}/api/air-qualitéy?lat=${lat}&lon=${lon}`);
+à àà à àà à àà à àà constà resultà =à awaità response.json();
+
+à àà à àà à àà à àà ifà (result.successà &&à result.data.valueà !==à null)à {
+à àà à àà à àà à àà à àà à àà constà airDataà =à result.data;
+
+à àà à àà à àà à àà à àà à àà constà containerà =à document.getElementById('ecoDataContainer');
+
+à àà à àà à àà à àà à àà à àà //à Initialiseà leà containerà vide
+à àà à àà à àà à àà à àà à àà ifà (!container.dataset.hasData)à {
+à àà à àà à àà à àà à àà à àà à àà à àà container.innerHTMLà =à '';
+à àà à àà à àà à àà à àà à àà à àà à àà container.dataset.hasDataà =à 'true';
+à àà à àà à àà à àà à àà à àà }
+
+à àà à àà à àà à àà à àà à àà //à utiliséeà innerHTMLà +=à seulementà apr�sà avoirà vid�à auà premierà chargéement
+à àà à àà à àà à àà à àà à àà container.innerHTMLà +=à `
+à àà à àà à àà à àà à àà à àà à àà à àà <divà style="background:rgba(255,255,255,0.05);à padding:15px;à border-radius:10px;à margin-top:15px;à border-left:4pxà solidà ${airData.color};">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <h3à style="color:${airData.color};à margin-top:0;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <ià class="fa-solidà fa-wind"></i>à qualité�à deà l'Air
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà </h3>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <pà style="font-size:1.2rem;à font-weight:bold;à color:white;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà ${airData.qualitéy}à -à ${airData.value}à ${airData.unit}
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà </p>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <smallà style="color:#94a3b8;">Stationà :à ${airData.station}</small>
+à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà `;
+à àà à àà à àà à àà }
+à àà à àà }à catchà (error)à {
+à àà à àà à àà à àà console.error('Erreurà chargéementà qualité�à air:',à error);
+à àà à àà à àà à àà //à UX:à Displayà anà errorà messageà inà theà panelà ifà theà APIà callà fails.
+à àà à àà à àà à àà constà airContainerà =à document.getElementById(`air-qualitéy-${gareId}`);
+à àà à àà à àà à àà ifà (airContainer)à {
+à àà à àà à àà à àà à àà à àà airContainer.innerHTMLà =à `<pà style="color:#ef4444">${APP_TEXTS.ecoPanel.error[currentLang]}</p>`;
+à àà à àà à àà à àà }
+à àà à àà }
+}
+
+/**
+à *à chargéeà età affichéeà laà biodiversit�à localeà pourà uneà gare
+à *à @paramà {number}à latà -à Latitude
+à *à @paramà {number}à lonà -à Longitude
+à *à @paramà {number}à gareIdà -à IDà deà laà gare
+à */
+asyncà functionà loadBiodiversity(lat,à lon,à gareId)à {
+à àà à àà tryà {
+à àà à àà à àà à àà constà responseà =à awaità fetch(`${API_BASE_URL}/api/biodiversity?lat=${lat}&lon=${lon}&radius=5`);
+à àà à àà à àà à àà constà resultà =à awaità response.json();
+
+à àà à àà à àà à àà ifà (result.successà &&à result.data.countà >à 0)à {
+à àà à àà à àà à àà à àà à àà constà bioDataà =à result.data;
+
+à àà à àà à àà à àà à àà à àà constà containerà =à document.getElementById('ecoDataContainer');
+
+à àà à àà à àà à àà à àà à àà //à Initialiseà leà containerà videà sià pasà d�j�à fait
+à àà à àà à àà à àà à àà à àà ifà (!container.dataset.hasData)à {
+à àà à àà à àà à àà à àà à àà à àà à àà container.innerHTMLà =à '';
+à àà à àà à àà à àà à àà à àà à àà à àà container.dataset.hasDataà =à 'true';
+à àà à àà à àà à àà à àà à àà }
+
+à àà à àà à àà à àà à àà à àà //à utiliséationà deà innerHTMLà +=à pourà empilerà avecà laà qualité�à deà l'air
+à àà à àà à àà à àà à àà à àà letà speciesHtmlà =à '';
+à àà à àà à àà à àà à àà à àà bioData.species.forEach(sà =>à {
+à àà à àà à àà à àà à àà à àà à àà à àà ifà (s.photo)à {
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà speciesHtmlà +=à `
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <divà style="display:flex;à align-items:center;à gap:10px;à margin-bottom:10px;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <imgà src="${s.photo}"à style="width:60px;à height:60px;à object-fit:cover;à border-radius:8px;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <strongà style="color:white;">${s.name}</strong><br>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <smallà style="color:#94a3b8;">${s.scientificName}</small><br>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <small>${s.rarity}</small>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà `;
+à àà à àà à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà à àà à àà });
+
+à àà à àà à àà à àà à àà à àà constà tBioà =à APP_TEXTS.biodiversity;
+à àà à àà à àà à àà à àà à àà constà langà =à currentLang;
+
+à àà à àà à àà à àà à àà à àà container.innerHTMLà +=à `
+à àà à àà à àà à àà à àà à àà à àà à àà <divà style="background:rgba(255,255,255,0.05);à padding:15px;à border-radius:10px;à margin-top:15px;à border-left:4pxà solidà #10b981;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <h3à style="color:#10b981;à margin-top:0;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <ià class="fa-solidà fa-seedling"></i>à ${tBio.title[lang]}
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà </h3>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <pà style="color:#cbd5e1;à margin-bottom:15px;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <strong>${bioData.count}</strong>à ${tBio.species[lang]}
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà </p>
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà ${speciesHtml}
+à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà `;
+
+à àà à àà à àà à àà à àà à àà //à Badgeà hotspotà sià >30à esp�ces
+à àà à àà à àà à àà à àà à àà ifà (bioData.countà >à 30)à {
+à àà à àà à àà à àà à àà à àà à àà à àà container.innerHTMLà +=à `
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà <divà style="background:#10b981;à color:white;à padding:10px;à border-radius:8px;à text-align:center;à font-weight:bold;à margin-top:10px;">
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà ${tBio.hotspot[lang]}
+à àà à àà à àà à àà à àà à àà à àà à àà à àà à àà </div>
+à àà à àà à àà à àà à àà à àà à àà à àà `;
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà }
+à àà à àà }à catchà (error)à {
+à àà à àà à àà à àà console.error('Erreurà chargéementà biodiversit�:',à error);
+à àà à àà à àà à àà //à UX:à Displayà anà errorà messageà inà theà panelà ifà theà APIà callà fails.
+à àà à àà à àà à àà constà bioContainerà =à document.getElementById(`biodiversity-${gareId}`);
+à àà à àà à àà à àà ifà (bioContainer)à {
+à àà à àà à àà à àà à àà à àà bioContainer.innerHTMLà =à `<pà style="color:#ef4444">${APP_TEXTS.ecoPanel.error[currentLang]}</p>`;
+à àà à àà à àà à àà }
+à àà à àà }
+}
+
+//à Fonctionà pourà resetà panneauà �coà quandà onà cliqueà surà nouvelleà gare
+functionà resetEcoPanel()à {
+à àà à àà constà containerà =à document.getElementById('ecoDataContainer');
+à àà à àà ifà (container)à {
+à àà à àà à àà à àà container.innerHTMLà =à `<pà style="color:#94a3b8;">${APP_TEXTS.errors.ecoLoading[currentLang]}</p>`;
+à àà à àà à àà à àà container.dataset.initializedà =à 'false';
+à àà à àà à àà à àà container.dataset.hasDataà =à 'false';
+à àà à àà }
+}
+
+//à ============================================================
+//à NOUVELîlesà FONCTIONSà UIà -à BOUTONSà FEATURES
+//à AJOUT�à :à 02/01/2026à pourà contr�îlesà desà nouvelîlesà fonctionnalit�s
+//à ============================================================
+
+/**
+à *à Toggleà IGNà Reliefà Layer
+à *à Basculeà enêtreà Googleà Satelliteà età carteà topographiqueà IGN
+à */
+letà ignLayerActiveà =à false;
+letà iGénèreliefLayerà =à null;
+//à Googleà Mapsà Standardà auà lieuà d'IGNà Relief
+window.toggleIgnLayerà =à function()à {
+à àà à àà constà btnà =à document.getElementById('btnIgn');
+
+à àà à àà ifà (!iGénèreliefLayer)à {
+à àà à àà à àà à àà //à Carteà Googleà Mapsà Standardà (pasà satellite)
+à àà à àà à àà à àà iGénèreliefLayerà =à L.tileLayer(
+à àà à àà à àà à àà à àà à àà 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',à {
+à àà à àà à àà à àà à àà à àà à àà à àà attribution:à '�à Googleà Maps',
+à àà à àà à àà à àà à àà à àà à àà à àà maxZoom:à 20
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà );
+à àà à àà }
+
+à àà à àà ifà (!ignLayerActive)à {
+à àà à àà à àà à àà map.removeLayer(googîlesat);
+à àà à àà à àà à àà map.addLayer(iGénèreliefLayer);
+à àà à àà à àà à àà btn.classList.add('active');
+à àà à àà à àà à àà ignLayerActiveà =à true;
+à àà à àà à àà à àà //à FIX:à Useà translationà fromà APP_TEXTSà forà toastà message.
+à àà à àà à àà à àà showToast(APP_TEXTS.toast.googleMapsActive[currentLang]);
+à àà à àà }à elseà {
+à àà à àà à àà à àà map.removeLayer(iGénèreliefLayer);
+à àà à àà à àà à àà map.addLayer(googîlesat);
+à àà à àà à àà à àà btn.classList.remove('active');
+à àà à àà à àà à àà ignLayerActiveà =à false;
+à àà à àà à àà à àà //à FIX:à Useà translationà fromà APP_TEXTSà forà toastà message.
+à àà à àà à àà à àà showToast(APP_TEXTS.toast.satelliteActive[currentLang]);
+à àà à àà }
+};
+
+/**
+à *à Openà Themeà Selectorà Panel
+à *à Ouvreà leà panneauà deà s�lectionà desà Th�mesà visuels
+à */
+window.openThemeSelectorà =à function()à {
+à àà à àà constà panelà =à document.getElementById('themeSelectorPanel');
+à àà à àà panel.classList.toggle('active');
+};
+
+//à Changementà Th�meà VISIBLEà surà tousà îlesà �l�ments
+window.applyThemeà =à function(themeName)à {
+à àà à àà constà rootà =à document.documentElement;
+
+à àà à àà //à Suppressionà Th�mesà forest,à sunsetà età midnight
+à àà à àà constà themesà =à {
+à àà à àà à àà à àà 'default':à {
+à àà à àà à àà à àà à àà à àà primary:à '#10b981',
+à àà à àà à àà à àà à àà à àà secondary:à '#3b82f6',
+à àà à àà à àà à àà à àà à àà bg:à '#0f172a',
+à àà à àà à àà à àà à àà à àà bgLight:à '#1e293b',
+à àà à àà à àà à àà à àà à àà text:à '#ffffff'
+à àà à àà à àà à àà },
+à àà à àà à àà à àà 'ocean':à {
+à àà à àà à àà à àà à àà à àà primary:à '#06b6d4',
+à àà à àà à àà à àà à àà à àà secondary:à '#0284c7',
+à àà à àà à àà à àà à àà à àà bg:à '#0c4a6e',
+à àà à àà à àà à àà à àà à àà bgLight:à '#075985',
+à àà à àà à àà à àà à àà à àà text:à '#e0f2fe'
+à àà à àà à àà à àà }
+à àà à àà };
+
+à àà à àà constà themeà =à themes[themeName]à ||à themes['default'];
+
+à àà à àà //à Applicationà desà variabîlesà CSS
+à àà à àà root.style.setProperty('--primary',à theme.primary);
+à àà à àà root.style.setProperty('--secondary',à theme.secondary);
+à àà à àà root.style.setProperty('--dark',à theme.bg);
+à àà à àà root.style.setProperty('--bg-light',à theme.bgLight);
+à àà à àà root.style.setProperty('--text-color',à theme.text);
+
+à àà à àà //à Changementà DIRECTà desà �l�mentsà visuelsà principaux
+à àà à àà constà headerà =à document.querySelector('.dashboard-header');
+à àà à àà ifà (header)à {
+à àà à àà à àà à àà header.style.backgroundà =à `rgba(${hexToRgb(theme.bg)},à 0.95)`;
+à àà à àà à àà à àà header.style.borderColorà =à `${theme.primary}30`;
+à àà à àà }
+
+à àà à àà constà buttonsà =à document.querySelectorAll('.btn-tool,à .btn-analyse,à .btn-walk');
+à àà à àà buttons.forEach(btnà =>à {
+à àà à àà à àà à àà ifà (btn.classList.contains('active'))à {
+à àà à àà à àà à àà à àà à àà btn.style.backgroundà =à theme.primary;
+à àà à àà à àà à àà }
+à àà à àà });
+
+à àà à àà constà statsPanelà =à document.querySelector('.stats-panel');
+à àà à àà ifà (statsPanel)à {
+à àà à àà à àà à àà statsPanel.style.backgroundà =à `rgba(${hexToRgb(theme.bg)},à 0.96)`;
+à àà à àà à àà à àà statsPanel.style.borderColorà =à `${theme.primary}50`;
+à àà à àà }
+
+à àà à àà constà toastà =à document.getElementById('map-toast');
+à àà à àà ifà (toast)à {
+à àà à àà à àà à àà toast.style.backgroundà =à theme.bgLight;
+à àà à àà à àà à àà toast.style.borderColorà =à theme.primary;
+à àà à àà }
+
+à àà à àà //à Th�meà Oc�anà avecà CartoDBà Positronà auà lieuà d'ArcGIS
+à àà à àà constà mapThemesà =à {
+à àà à àà à àà à àà 'default':à googîlesat,
+à àà à àà à àà à àà 'ocean':à L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',à {
+à àà à àà à àà à àà à àà à àà attribution:à '�à OpenSêtreetMapà contributorsà �à CARTO',
+à àà à àà à àà à àà à àà à àà maxZoom:à 20,
+à àà à àà à àà à àà à àà à àà subdomains:à 'abcd'
+à àà à àà à àà à àà })
+à àà à àà };
+
+à àà à àà ifà (!ignLayerActive)à {
+à àà à àà à àà à àà map.eachLayer(là =>à {
+à àà à àà à àà à àà à àà à àà ifà (là instanceofà L.TileLayerà &&à là !==à railsLayer)à {
+à àà à àà à àà à àà à àà à àà à àà à àà map.removeLayer(l);
+à àà à àà à àà à àà à àà à àà }
+à àà à àà à àà à àà });
+à àà à àà à àà à àà map.addLayer(mapThemes[themeName]à ||à googîlesat);
+à àà à àà }
+
+à àà à àà localStorage.setItem('eco_theme',à themeName);
+à àà à àà document.getElementById('themeSelectorPanel').classList.remove('active');
+à àà à àà //à FIX:à Useà translationà fromà APP_TEXTSà forà theà toastà message.
+à àà à àà showToast(`??à ${APP_TEXTS.toast.themeApplied[currentLang]}`);
+};
+
+//à Helperà pourà conversionà hexà toà RGB
+functionà hexToRgb(hex)à {
+à àà à àà constà resultà =à /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+à àà à àà returnà resultà ?
+à àà à àà à àà à àà `${parseInt(result[1],à 16)},à ${parseInt(result[2],à 16)},à ${parseInt(result[3],à 16)}`à :
+à àà à àà à àà à àà '15,à 23,à 42';
+}
+
+/**
+à *à Toggleà Ecoà Panel
+à *à affichée/masqueà leà panneauà d'informationsà �écologiquesà avanc�es
+à */
+window.toggleEcoPanelà =à function()à {
+à àà à àà constà modalà =à document.getElementById('ecoPanelModal');
+à àà à àà modal.classList.toggle('active');
+};
+
+/**
+à *à Toggleà Heatmap
+à *à Active/d�sactiveà laà carteà deà chaleurà temporelleà (placeholderà pourà impl�mentationà future)
+à */
+letà heatmapActiveà =à false;
+window.toggleHeatmapà =à function()à {
+à àà à àà constà btnà =à document.getElementById('btnHeatmap');
+
+à àà à àà //à FIX:à Suppressionà deà laà red�finitionà inutileà -à îlesà traductionsà existentà d�j�à dansà APP_TEXTS.toastà (lignesà 284-285)
+
+à àà à àà ifà (!heatmapActive)à {
+à àà à àà à àà à àà btn.classList.add('active');
+à àà à àà à àà à àà heatmapActiveà =à true;
+à àà à àà à àà à àà //à FIX:à Useà translationà fromà APP_TEXTSà forà toastà message.
+à àà à àà à àà à àà showToast(APP_TEXTS.toast.heatmapOn[currentLang]);
+à àà à àà }à elseà {
+à àà à àà à àà à àà btn.classList.remove('active');
+à àà à àà à àà à àà heatmapActiveà =à false;
+à àà à àà à àà à àà //à FIX:à Useà translationà fromà APP_TEXTSà forà toastà message.
+à àà à àà à àà à àà showToast(APP_TEXTS.toast.heatmapOff[currentLang]);
+à àà à àà }
+};
+
+//à Thèmeà parà défautà "Éco-Vert"à (default)
+constà savedThemeà =à localStorage.getItem('eco_theme');
+ifà (savedTheme)à {
+à àà à àà applyTheme(savedTheme);
+}à elseà {
+à àà à àà //à Premierà chargéementà :à appliquéeà Thèmeà Éco-Vertà parà défaut
+à àà à àà applyTheme('default');
+}
+
+//à ============================================================
+//à EXPOSEà FUNCTIONSà TOà WINDOWà FORà ONCLICKà HANDLERS
+//à ============================================================
+window.lancerAnalyseCompleteà =à lancerAnalyseComplete;
+window.randomGareà =à randomGare;
+window.updateAppLanguageà =à updateAppLanguage;
+window.nextTutoStepà =à nextTutoStep;
+window.skipTutoà =à skipTuto;
+window.openDiscoverModalà =à openDiscoverModal;
+window.closeDiscoverà =à closeDiscover;
+window.resetDiscoverà =à resetDiscover;
+window.showCategoryà =à showCategory;
+window.toggleHeatmapà =à toggleHeatmap;
+window.toggleIgnLayerà =à toggleIgnLayer;
+window.openThemeSelectorà =à openThemeSelector;
+window.toggleEcoPanelà =à toggleEcoPanel;
+window.switchLangMapà =à switchLangMap;
+
+//à ============================================================
+//à FINà DUà FICHIER
+//à ============================================================

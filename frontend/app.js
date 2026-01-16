@@ -20,7 +20,7 @@ const API_BASE_URL = (window.location.hostname === 'localhost' || window.locatio
 // ============================================================
 // 2. INITIALISATION CARTE
 // ============================================================
-console.log("?? Initialisation Eco-Escapade - FIX ZONE pi�tonne");
+console.log("🚀 Initialisation Eco-Escapade - FIX ZONE piétonne");
 
 const map = L.map('map', {
     zoomControl: false,
@@ -39,16 +39,16 @@ const googleSat = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z
 });
 map.addLayer(googleSat);
 
-// FIX: Initialisation globale des donn�es et des couches manquantes
-// SAFETY: d�finitions minimales pour �viter les ReferenceError au d�marrage
+// FIX: Initialisation globale des données et des couches manquantes
+// SAFETY: définitions minimales pour éviter les ReferenceError au démarrage
 const DATA = {
     gares: [],
     garesById: new Map(), // PERF: Index O(1) par ID
     velos: [],
     bornes: [],
     covoit: [],
-    proprete: {},       // Donn�es propret� index�es par nom de gare
-    defibrillateurs: [] // Donn�es d�fibrillateurs avec coordonn�es
+    proprete: {},       // Données propreté indexées par nom de gare
+    defibrillateurs: [] // Données défibrillateurs avec coordonnées
 };
 
 const createCluster = (cls) => L.markerClusterGroup({
@@ -78,15 +78,15 @@ const railsLayer = L.geoJSON(null, {
         weight: 2,
         opacity: 0.6
     },
-    // PERF: Simplification g�om�trie pour low-end
+    // PERF: Simplification géométrie pour low-end
     simplifyFactor: 1.5,
     bubblingMouseEvents: false
 });
 
-// FIX: Initialiser variables globales pour la gestion de la zone pi�tonne
+// FIX: Initialiser variables globales pour la gestion de la zone piétonne
 let walkCircle = null;
 
-// FIX: D�claration globale de GLOBAL_STATS pour �viter ReferenceError
+// FIX: Déclaration globale de GLOBAL_STATS pour éviter ReferenceError
 let GLOBAL_STATS = null;
 
 const counterDiv = L.DomUtil.create('div', 'visible-counter');
@@ -99,7 +99,7 @@ toastDiv.className = 'map-toast';
 toastDiv.innerHTML = `<i class="fa-solid fa-person-walking" style="font-size:1.2rem;"></i> <span id="toast-text">Message</span>`;
 document.body.appendChild(toastDiv);
 
-// Notification persistante pour la zone pi�tonne (v�los)
+// Notification persistante pour la zone piétonne (vélos)
 const veloNotifDiv = document.createElement('div');
 veloNotifDiv.id = 'velo-zone-notif';
 veloNotifDiv.className = 'velo-zone-notif';
@@ -109,8 +109,8 @@ veloNotifDiv.innerHTML = `
             <i class="fa-solid fa-bicycle"></i>
         </div>
         <div class="velo-notif-text">
-            <span class="velo-notif-title" id="velo-zone-title">Zone pi�tonne active</span>
-            <span class="velo-notif-count"><span id="velo-zone-count">0</span> <span id="velo-zone-label">parkings v�los � 10 min</span></span>
+            <span class="velo-notif-title" id="velo-zone-title">Zone piétonne active</span>
+            <span class="velo-notif-count"><span id="velo-zone-count">0</span> <span id="velo-zone-label">parkings vélos à 10 min</span></span>
         </div>
         <div class="notif-arrows" id="velo-nav-arrows" style="display:none;margin-left:12px;gap:6px;align-items:center;">
             <svg class="arrow-left" id="velo-arrow-left" viewBox="0 0 24 24" width="28" height="28" style="cursor:pointer;background:#0A74D6;border-radius:50%;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,0.3);transition:all 0.2s ease;">
@@ -127,18 +127,18 @@ veloNotifDiv.innerHTML = `
 `;
 document.body.appendChild(veloNotifDiv);
 
-// === NAVIGATION V�LOS DANS ZONE 10 MIN ===
+// === NAVIGATION VÉLOS DANS ZONE 10 MIN ===
 let velosInZone = [];
 let velosZoneIndex = 0;
 
-// Fonction pour afficher la popup d'un v�lo et centrer la vue
+// Fonction pour afficher la popup d'un vélo et centrer la vue
 function showVeloPopup() {
     if (velosInZone.length === 0) return;
     const velo = velosInZone[velosZoneIndex];
     const lat = velo.lat;
     const lon = velo.lon;
     
-    // Cr�er le contenu de la popup
+    // Créer le contenu de la popup
     const popupContent = `
         <div style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;padding:8px;min-width:180px;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
@@ -146,14 +146,14 @@ function showVeloPopup() {
                     <i class="fa-solid fa-bicycle" style="color:white;font-size:0.9rem;"></i>
                 </div>
                 <div>
-                    <div style="font-weight:700;color:#0A74D6;font-size:0.85rem;">Parking V�lo</div>
+                    <div style="font-weight:700;color:#0A74D6;font-size:0.85rem;">Parking Vélo</div>
                     <div style="font-size:0.7rem;color:#64748b;">${velosZoneIndex + 1} / ${velosInZone.length}</div>
                 </div>
             </div>
             <div style="font-size:0.8rem;color:#334155;">
-                ${velo.nom || velo.name || 'Station v�lo'}
+                ${velo.nom || velo.name || 'Station vélo'}
             </div>
-            ${velo.capacite ? `<div style="font-size:0.75rem;color:#64748b;margin-top:4px;"><i class="fa-solid fa-parking" style="margin-right:4px;"></i>Capacit�: ${velo.capacite} places</div>` : ''}
+            ${velo.capacite ? `<div style="font-size:0.75rem;color:#64748b;margin-top:4px;"><i class="fa-solid fa-parking" style="margin-right:4px;"></i>Capacité: ${velo.capacite} places</div>` : ''}
         </div>
     `;
     
@@ -166,11 +166,11 @@ function showVeloPopup() {
         .setContent(popupContent)
         .openOn(map);
     
-    // Centrer la carte sur le v�lo
+    // Centrer la carte sur le vélo
     map.setView([lat, lon], 17, { animate: true, duration: 0.5 });
 }
 
-// Configuration des event listeners pour les fl�ches
+// Configuration des event listeners pour les flèches
 document.addEventListener('DOMContentLoaded', function() {
     const arrowLeft = document.getElementById('velo-arrow-left');
     const arrowRight = document.getElementById('velo-arrow-right');
@@ -230,11 +230,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (velosInZone.length > 1) {
                 if (swipeDistance > minSwipeDistance) {
-                    // Swipe droite ? v�lo pr�c�dent
+                    // Swipe droite → vélo précédent
                     velosZoneIndex = (velosZoneIndex - 1 + velosInZone.length) % velosInZone.length;
                     showVeloPopup();
                 } else if (swipeDistance < -minSwipeDistance) {
-                    // Swipe gauche ? v�lo suivant
+                    // Swipe gauche → vélo suivant
                     velosZoneIndex = (velosZoneIndex + 1) % velosInZone.length;
                     showVeloPopup();
                 }
@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Fonction pour mettre � jour les fl�ches de navigation
+// Fonction pour mettre à jour les flèches de navigation
 function updateVeloNavArrows(count) {
     const arrows = document.getElementById('velo-nav-arrows');
     if (arrows) {
@@ -292,7 +292,7 @@ function getDist(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-// Fonction pour mettre � jour le compteur de gares visibles
+// Fonction pour mettre à jour le compteur de gares visibles
 function updateCount() {
     const countEl = document.getElementById('count-val');
     if (countEl) {
@@ -304,7 +304,7 @@ function updateCount() {
 // Gestion des favoris avec localStorage
 function getFavoris() {
     try {
-        // FIX: Utilisation de 'eco_favoris' pour coh�rence avec carnet.html
+        // FIX: Utilisation de 'eco_favoris' pour cohérence avec carnet.html
         return JSON.parse(localStorage.getItem('eco_favoris') || '[]');
     } catch (e) {
         return [];
@@ -336,7 +336,7 @@ function toggleFavori(id, nom, type) {
         showToast(`${nom} ${APP_TEXTS.favoris.added[currentLang]}`);
     }
     
-    // FIX: Utilisation de 'eco_favoris' pour coh�rence avec carnet.html
+    // FIX: Utilisation de 'eco_favoris' pour cohérence avec carnet.html
     localStorage.setItem('eco_favoris', JSON.stringify(favoris));
 }
 
@@ -344,16 +344,16 @@ let osmb = null;
 
 let currentLang = 'fr';
 
-// Variable pour tracker l'�tape affich�e du tutoriel (1, 2, 3 ou 4)
+// Variable pour tracker l'étape affichée du tutoriel (1, 2, 3 ou 4)
 let currentTutoDisplayStep = 1;
 
 window.updateAppLanguage = (isFr) => {
     currentLang = isFr ? 'fr' : 'en';
     
-    console.log('?? updateAppLanguage appel� avec isFr=', isFr, '? currentLang=', currentLang);
+    console.log('🔄 updateAppLanguage appelé avec isFr=', isFr, '→ currentLang=', currentLang);
     console.log('   currentTutoDisplayStep =', currentTutoDisplayStep);
     
-    // === MISE � JOUR DU TUTORIEL ===
+    // === MISE À JOUR DU TUTORIEL ===
     const tutoBox = document.getElementById('tutoBox');
     const tutoTitle = document.getElementById('tutoTitle');
     const tutoText = document.getElementById('tutoText');
@@ -363,9 +363,9 @@ window.updateAppLanguage = (isFr) => {
     console.log('   tutoTitle element:', tutoTitle ? 'FOUND' : 'NULL');
     console.log('   tutoText element:', tutoText ? 'FOUND' : 'NULL');
     
-    // Toujours mettre � jour le tutoriel si les �l�ments existent
+    // Toujours mettre à jour le tutoriel si les éléments existent
     if (tutoTitle && tutoText) {
-        // Utiliser currentTutoDisplayStep pour savoir quelle �tape afficher
+        // Utiliser currentTutoDisplayStep pour savoir quelle étape afficher
         const tutoData = {
             1: APP_TEXTS.tuto1,
             2: APP_TEXTS.tuto2,
@@ -374,14 +374,14 @@ window.updateAppLanguage = (isFr) => {
         };
         
         const step = tutoData[currentTutoDisplayStep] || tutoData[1];
-        console.log('   Mise � jour tutoriel avec:', step.title[currentLang]);
+        console.log('   Mise à jour tutoriel avec:', step.title[currentLang]);
         tutoTitle.innerText = step.title[currentLang];
         tutoText.innerText = step.text[currentLang];
     } else {
-        console.log('   ?? �l�ments tutoriel non trouv�s!');
+        console.log('   ⚠️ Éléments tutoriel non trouvés!');
     }
     
-    // Mettre � jour le bouton SUIVANT/NEXT ou TERMINER/FINISH
+    // Mettre à jour le bouton SUIVANT/NEXT ou TERMINER/FINISH
     if (tutoBtn) {
         if (currentTutoDisplayStep === 4) {
             tutoBtn.innerText = APP_TEXTS.tutorialButtons.finish[currentLang];
@@ -390,18 +390,18 @@ window.updateAppLanguage = (isFr) => {
         }
     }
     
-    // Mettre � jour le bouton "Passer le tuto"
+    // Mettre à jour le bouton "Passer le tuto"
     if (skipBtn) {
         skipBtn.innerText = APP_TEXTS.tutorialButtons.skip[currentLang];
     }
     
-    // === MISE � JOUR DE LA NOTIFICATION V�LO ===
+    // === MISE À JOUR DE LA NOTIFICATION VÉLO ===
     const veloTitleEl = document.getElementById('velo-zone-title');
     const veloLabelEl = document.getElementById('velo-zone-label');
     if (veloTitleEl) veloTitleEl.textContent = APP_TEXTS.veloZone.title[currentLang];
     if (veloLabelEl) veloLabelEl.textContent = APP_TEXTS.veloZone.count[currentLang];
     
-    // === MISE � JOUR DES POPUPS DE GARE SI OUVERTES ===
+    // === MISE À JOUR DES POPUPS DE GARE SI OUVERTES ===
     const openPopup = document.querySelector('.leaflet-popup-content');
     if (openPopup) {
         const analyseBtn = openPopup.querySelector('.btn-analyse');
@@ -414,7 +414,7 @@ window.updateAppLanguage = (isFr) => {
         }
     }
     
-    // === MISE � JOUR DU COMPTEUR DE GARES ===
+    // === MISE À JOUR DU COMPTEUR DE GARES ===
     const counterDiv = document.querySelector('.visible-counter');
     if (counterDiv) {
         const countVal = document.getElementById('count-val');
@@ -454,13 +454,13 @@ async function loadEverything() {
     const startTime = Date.now();
     const MIN_LOADING_TIME = 5000; // Temps de chargement minimum : 5 secondes
 
-    // Phase 1 : Afficher "D�marrage du serveur..." pendant 1 seconde
+    // Phase 1 : Afficher "Démarrage du serveur..." pendant 1 seconde
     if (loaderText) {
-        loaderText.innerText = "D�marrage du serveur...";
+        loaderText.innerText = "Démarrage du serveur...";
     }
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Phase 2 : Rotation automatique des phrases al�atoires toutes les 1 seconde
+    // Phase 2 : Rotation automatique des phrases aléatoires toutes les 1 seconde
     const msgInterval = setInterval(() => {
         if (loaderText) {
             const randomPhrase = LOADING_PHRASES[Math.floor(Math.random() * LOADING_PHRASES.length)];
@@ -469,7 +469,7 @@ async function loadEverything() {
     }, 1000);
 
     try {
-        // === D�BUT DU CHARGEMENT DES DONN�ES ===
+        // === DÉBUT DU CHARGEMENT DES DONNÉES ===
         // Gestion d'erreurs robuste
         const promises = [
             fetch(`${API_BASE_URL}/api/wfs-rails`).then(r => r.json()).catch(e => {
@@ -490,15 +490,15 @@ async function loadEverything() {
                 return { features: [] };
             }),
             fetch(`${API_BASE_URL}/api/parking-velo?minLat=41&maxLat=52&minLon=-5&maxLon=10`).then(r => r.json()).catch(e => {
-                console.error("?? V�los:", e);
+                console.error("🚲 Vélos:", e);
                 return { features: [] };
             }),
             fetch(`${API_BASE_URL}/api/proprete-gares`).then(r => r.json()).catch(e => {
-                console.error("?? Propret�:", e);
+                console.error("🧹 Propreté:", e);
                 return [];
             }),
             fetch(`${API_BASE_URL}/api/defibrillateurs-gares`).then(r => r.json()).catch(e => {
-                console.error("?? D�fibrillateurs:", e);
+                console.error("❤️ Défibrillateurs:", e);
                 return [];
             })
         ];
@@ -524,7 +524,7 @@ async function loadEverything() {
             lon: f.geometry.coordinates[0]
         }));
         
-        // Indexer les donn�es de propret� par nom de gare (lowercase pour matching)
+        // Indexer les données de propreté par nom de gare (lowercase pour matching)
         DATA.proprete = (proprete || []).reduce((acc, p) => {
             if (p.nom_gare) {
                 // Indexation multiple : nom court + variantes pour meilleur matching
@@ -536,11 +536,11 @@ async function loadEverything() {
             }
             return acc;
         }, {});
-        console.log(`?? Propret� charg�e : ${Object.keys(DATA.proprete).length} gares index�es`);
+        console.log(`🧹 Propreté chargée : ${Object.keys(DATA.proprete).length} gares indexées`);
         
-        // Stocker les d�fibrillateurs (matching par coordonn�es g�ographiques)
+        // Stocker les défibrillateurs (matching par coordonnées géographiques)
         DATA.defibrillateurs = defibrillateurs || [];
-        console.log(`?? D�fibrillateurs charg�s : ${DATA.defibrillateurs.length} gares �quip�es`);
+        console.log(`❤️ Défibrillateurs chargés : ${DATA.defibrillateurs.length} gares équipées`);
 
         map.addLayer(markersLayer);
         map.addLayer(railsLayer);
@@ -822,7 +822,7 @@ function generatePopupContent(g) {
     const lang = currentLang;
     const safeNom = escapeHTML(g.nom);
 
-    // === PROPRET� & D�FIBRILLATEURS (affichage compact sur une ligne) ===
+    // === PROPRETÉ & DÉFIBRILLATEURS (affichage compact sur une ligne) ===
     const propreteData = getPropreteData(g.nom);
     const defibData = getDefibData(g.lat, g.lon);
     
@@ -830,7 +830,7 @@ function generatePopupContent(g) {
     const hasPropreteData = propreteData !== null;
     const hasDefibData = defibData && defibData.nb_appareils > 0;
     
-    // Ic�ne SVG d�fibrillateur (c�ur + �clair)
+    // Icône SVG défibrillateur (cœur + éclair)
     const defibSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;">
         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="${hasDefibData ? '#ef4444' : '#cbd5e1'}"/>
         <path d="M13 7h-2l-1 4h2l-1 5 4-6h-3l1-3z" fill="#ffffff"/>
@@ -844,12 +844,12 @@ function generatePopupContent(g) {
             <div style="display:flex;gap:12px;margin:10px 0;padding:8px 10px;background:#f8fafc;border-radius:8px;align-items:center;font-size:0.8rem;">
                 ${hasPropreteData ? `
                 <div style="display:flex;align-items:center;gap:4px;">
-                    <span>??</span>
-                    <span style="color:#475569;">Propret�:</span>
+                    <span>🧹</span>
+                    <span style="color:#475569;">Propreté:</span>
                     <span style="font-weight:700;color:${propreteColor};">${propreteData.note_proprete}/5</span>
                 </div>` : ''}
                 <div style="display:flex;align-items:center;gap:4px;">
-                    <span style="color:#475569;">D�fib.${defibSvg}:</span>
+                    <span style="color:#475569;">Défib.${defibSvg}:</span>
                     <span style="font-weight:700;color:${hasDefibData ? '#10b981' : '#94a3b8'};">${hasDefibData ? 'Oui' : 'Non'}</span>
                 </div>
             </div>`;
@@ -973,14 +973,14 @@ async function loadWeather(lat, lon, id) {
         const w = weatherData.current_weather || weatherData.current;
 
         if (w) {
-            // Afficher d'abord la m�t�o
+            // Afficher d'abord la météo
             el.innerHTML = `
-                <div class="weather-item"><i class="fa-solid fa-temperature-half weather-icon"></i> ${w.temperature}�C</div>
+                <div class="weather-item"><i class="fa-solid fa-temperature-half weather-icon"></i> ${w.temperature}°C</div>
                 <div class="weather-item"><i class="fa-solid fa-wind weather-icon"></i> ${w.windspeed} km/h</div>
                 <div class="weather-item air-quality-loading"><i class="fa-solid fa-lungs weather-icon"></i> <span style="color:#64748b">...</span></div>
             `;
             
-            // Puis charger la qualit� de l'air en arri�re-plan
+            // Puis charger la qualité de l'air en arrière-plan
             try {
                 const airRes = await fetch(`${API_BASE_URL}/api/air-quality?lat=${lat}&lon=${lon}`);
                 const airData = await airRes.json();
