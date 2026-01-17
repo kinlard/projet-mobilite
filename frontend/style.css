@@ -1,6 +1,14 @@
 ﻿﻿:root { --primary: #10b981; --secondary: #3b82f6; --dark: #0f172a; --bg: #0b0b0b; --card-bg: #1e293b; }
-body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: white; overflow-x: hidden; overflow-y: auto; }
-body.page-apropos { overflow-y: auto; }
+body { 
+    font-family: 'Inter', sans-serif; 
+    margin: 0; 
+    padding: 0; 
+    background-color: var(--bg); 
+    color: white; 
+    overflow-x: hidden; 
+    overflow-y: auto !important;
+    min-height: 100vh;
+}
 
 .lang-switch {
     background: rgba(255,255,255,0.1);
@@ -702,24 +710,98 @@ h1, h2, h3 {
 left: 50%; transform: translateX(-50%); width: 96%; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); padding: 12px 30px; border-radius: 50px;
 box-shadow: 0 10px 30px rgba(0,0,0,0.6); z-index: 1000; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1);
 }
-.container { width: 96%; margin: 0 auto; padding: 0 20px;
+.container { 
+    width: 96%; 
+    margin: 0 auto; 
+    padding: 0 20px;
+    min-height: 100vh;
+    padding-bottom: 150px;
 }
-.top-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;
-border-bottom: 1px solid #334155; padding-bottom: 20px; gap: 20px; }
-.titles { flex: 1;
+.top-section { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 40px;
+    border-bottom: 1px solid #334155; 
+    padding-bottom: 20px; 
+    gap: 20px;
+    animation: fadeInDown 0.6s ease-out;
 }
-.heatmap-container { width: 350px; height: 160px; border-radius: 16px; overflow: hidden;
-border: 2px solid #334155; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+.titles { flex: 1; }
+.heatmap-container { 
+    width: 350px; 
+    height: 160px; 
+    border-radius: 16px; 
+    overflow: hidden;
+    border: 2px solid rgba(16, 185, 129, 0.3); 
+    position: relative; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: all 0.4s ease;
 }
-#miniMap { width: 100%; height: 100%; background: #111;
+.heatmap-container:hover {
+    border-color: var(--primary);
+    box-shadow: 0 15px 40px rgba(16, 185, 129, 0.3);
 }
-.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px;
+#miniMap { 
+    width: 100%; 
+    height: 100%; 
+    background: #111;
 }
-.card { background: var(--card-bg); padding: 25px; border-radius: 20px;
-box-shadow: 0 10px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; position: relative;
+.card-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
+    gap: 30px;
 }
-.card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(16, 185, 129, 0.1);
-border-color: var(--primary); }
+.card { 
+    background: var(--card-bg); 
+    padding: 25px; 
+    border-radius: 20px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3); 
+    border: 1px solid rgba(255,255,255,0.05); 
+    display: flex; 
+    flex-direction: column; 
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    position: relative;
+    overflow: hidden;
+    animation: cardSlideIn 0.5s ease-out;
+}
+@keyframes cardSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--card-bg);
+    z-index: -1;
+    opacity: 0.5;
+    transition: opacity 0.4s ease;
+}
+.card:hover::before {
+    opacity: 0.3;
+}
+.card:hover { 
+    transform: translateY(-10px) scale(1.02); 
+    box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.5);
+}
 .vs-checkbox-input { display: none;
 }
 .vs-label { position: absolute; top: 20px; right: 20px; width: 30px; height: 30px;
@@ -772,15 +854,39 @@ justify-content: center; align-items: center; font-weight: 900; font-size: 1.2re
     transform: scale(1.05);
     box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
 }
-.tools-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+.tools-grid { 
+    display: grid; 
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 10px;
 }
-.tool-btn { background: rgba(255,255,255,0.05); border: none; color: #94a3b8; border-radius: 8px; padding: 10px;
-cursor: pointer; transition: 0.2s; font-size: 1.1rem; }
-.tool-btn:hover { background: rgba(255,255,255,0.15); color: white;
+.tool-btn { 
+    background: rgba(255,255,255,0.05); 
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #94a3b8; 
+    border-radius: 10px; 
+    padding: 12px;
+    cursor: pointer; 
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.tool-btn.google:hover { background: rgba(255, 255, 255, 0.2); color: white;
+.tool-btn:hover { 
+    background: rgba(255,255,255,0.15); 
+    color: white;
+    transform: scale(1.1) rotate(2deg);
+    box-shadow: 0 8px 16px rgba(255,255,255,0.1);
 }
-.tool-btn.del:hover { background: rgba(239, 68, 68, 0.2); color: var(--danger);
+.tool-btn.google:hover { 
+    background: rgba(59, 130, 246, 0.3); 
+    color: #60a5fa;
+    transform: scale(1.1) rotate(-2deg);
+}
+.tool-btn.del:hover { 
+    background: rgba(239, 68, 68, 0.3); 
+    color: #fca5a5;
+    transform: scale(1.1) rotate(5deg);
 }
 .modal-overlay { 
     position: fixed; 
@@ -915,11 +1021,12 @@ cursor: pointer; transition: 0.2s; font-size: 1.1rem; }
     border: none; 
     cursor: pointer; 
     box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); 
-    z-index: 1500; 
+    z-index: 999; 
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
     display: flex;
     align-items: center; 
     gap: 10px;
+    pointer-events: none;
 }
 #vs-btn:hover {
     transform: translateX(-50%) translateY(160px);
@@ -928,6 +1035,7 @@ cursor: pointer; transition: 0.2s; font-size: 1.1rem; }
 }
 #vs-btn.visible { 
     transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
 }
 #vs-btn.visible:hover {
     transform: translateX(-50%) translateY(-5px);
