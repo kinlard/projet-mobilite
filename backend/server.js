@@ -1,130 +1,215 @@
-﻿//Chargement des variables d'environnement depuis le fichier .env
-require('dotenv').config({ path: require('path').join(__dirname, '.env') });
-const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
-const NodeCache = require('node-cache');
+﻿// ===================================================================================================
+// SERVEUR BACKEND TOURISME VERT - API REST pour le calcul d'éco-scores des gares françaises
+// ===================================================================================================
+// Ce serveur Node.js fournit toutes les données nécessaires au frontend pour évaluer la mobilité verte
+// autour des gares ferroviaires : vélos, bornes électriques, covoiturage, qualité de l'air, biodiversité
 
+// Chargement des variables d'environnement depuis le fichier .env (clés API, port serveur)
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
+
+// Import des modules Node.js nécessaires au fonctionnement du serveur
+const express = require('express');     // Framework web pour créer l'API REST
+const cors = require('cors');           // Autorisation des requêtes cross-origin depuis le frontend
+const axios = require('axios');         // Client HTTP pour interroger les APIs externes
+const fs = require('fs');               // Système de fichiers pour charger les données de secours
+const path = require('path');           // Manipulation des chemins de fichiers
+const NodeCache = require('node-cache'); // Système de cache mémoire pour optimiser les performances
+
+// Initialisation de l'application Express
 const app = express();
+
+// Configuration du port d'écoute (par défaut 3000 si non spécifié dans .env)
 const port = process.env.PORT || 3000;
 
-//Mise en cache des réponses API pour éviter de surcharger les serveurs externes (durée : 1 heure)
+// ===================================================================================================
+// CONFIGURATION DU CACHE ET DES MIDDLEWARES
+// ===================================================================================================
+
+// Mise en cache des réponses API pour éviter de surcharger les serveurs externes
+// stdTTL: 3600 secondes (1 heure) = durée de vie par défaut des données en cache
+// Permet de réduire drastiquement le nombre d'appels aux APIs tierces
 const apiCache = new NodeCache({ stdTTL: 3600 });
 
-//Autorisation des requêtes depuis n'importe quel domaine (nécessaire pour que le frontend puisse communiquer avec le backend)
+// Activation du CORS (Cross-Origin Resource Sharing) pour autoriser les requêtes depuis n'importe quel domaine
+// Nécessaire pour que le frontend (qui tourne sur un port différent en dev) puisse communiquer avec le backend
 app.use(cors());
+
+// Middleware pour parser automatiquement le JSON dans le corps des requêtes POST
 app.use(express.json());
 
-//Chargement d'un fichier local contenant les emplacements de parkings vélo en cas de panne de l'API principale
+// ===================================================================================================
+// CHARGEMENT DES DONNÉES DE SECOURS POUR LES PARKINGS VÉLOS
+// ===================================================================================================
+// En cas de défaillance de l'API OpenDataSoft, un fichier GeoJSON local est utilisé comme fallback
+// Ce fichier contient une copie statique des emplacements de parkings vélos sur le territoire français
+
+// Initialisation d'une collection GeoJSON vide par défaut
 let veloDataCache = { type: "FeatureCollection", features: [] };
+
 try {
+    // Construction du chemin absolu vers le fichier de secours velo.geojson
     const filePath = path.join(__dirname, 'velo.geojson');
+    
+    // Vérification de l'existence du fichier avant tentative de lecture
     if (fs.existsSync(filePath)) {
+        // Lecture synchrone du fichier et parsing JSON en mémoire
         veloDataCache = JSON.parse(fs.readFileSync(filePath, 'utf8'));
         console.log(`🚲 Fichier vélo de secours chargé : ${veloDataCache.features.length} points`);
     }
 } catch (e) { 
+    // Si le fichier est absent ou corrompu, on continue avec la collection vide
     console.warn("⚠️ Fichier velo.geojson introuvable");
 }
 
-//Récupération de la liste complète des gares ferroviaires françaises depuis les données ouvertes SNCF
+// ===================================================================================================
+// ROUTE : /api/gares - Liste complète des gares ferroviaires françaises
+// ===================================================================================================
+// Récupère toutes les gares depuis l'API SNCF Open Data et les transforme en format exploitable
+// par le frontend pour affichage sur la carte interactive
+
 app.get('/api/gares', async (req, res) => {
     try {
+        // Interrogation de l'API SNCF pour obtenir le dataset complet des gares de voyageurs
         const r = await axios.get(
             'https://ressources.data.sncf.com/api/explore/v2.1/catalog/datasets/gares-de-voyageurs/exports/json'
         );
+        
+        // Validation du format de réponse (doit être un tableau d'objets)
         if (!Array.isArray(r.data)) throw new Error('Format API invalide');
 
-        //Transformation des données brutes en format simplifié avec identifiant, nom, coordonnées et type de gare
+        // Transformation des données brutes SNCF en format simplifié pour le frontend
         const d = r.data
             .map((g, i) => ({
-                id: i,
-                nom: g.nom || 'Gare Inconnue',
-                lat: g.position_geographique?.lat,
-                lon: g.position_geographique?.lon,
+                id: i,  // Identifiant unique numérique séquentiel pour chaque gare
+                nom: g.nom || 'Gare Inconnue',  // Nom de la gare avec fallback si absent
+                lat: g.position_geographique?.lat,  // Latitude GPS (optionnel avec ?)
+                lon: g.position_geographique?.lon,  // Longitude GPS (optionnel avec ?)
+                // Détection du type de gare basée sur la présence de "TGV" dans le nom
                 type: g.nom && g.nom.includes('TGV') ? 'TGV' : 'TER'
             }))
+            // Filtrage : conservation uniquement des gares avec coordonnées GPS valides
             .filter((g) => g.lat && g.lon);
 
+        // Renvoi du tableau JSON des gares transformées
         res.json(d);
     } catch (e) {
+        // En cas d'erreur (API indisponible, timeout, etc.), renvoyer un tableau vide
         console.error('❌ Erreur API Gares:', e.message);
         res.json([]);
     }
 });
 
-//Récupération du tracé géographique des lignes ferroviaires nationales
+// ===================================================================================================
+// ROUTE : /api/wfs-rails - Tracé géographique des lignes ferroviaires
+// ===================================================================================================
+// Récupère les formes géométriques (LineString) des lignes du Réseau Ferré National (RFN)
+// Permet d'afficher le tracé des voies ferrées sur la carte pour contextualiser les gares
+
 app.get('/api/wfs-rails', async (req, res) => {
     try {
+        // Téléchargement du dataset GeoJSON des formes de lignes ferroviaires
         const r = await axios.get(
             'https://ressources.data.sncf.com/explore/dataset/formes-des-lignes-du-rfn/download/?format=geojson&timezone=Europe/Berlin&lang=fr'
         );
+        
+        // Renvoi direct du GeoJSON (format standardisé pour données géographiques)
         res.json(r.data);
     } catch (e) {
+        // En cas d'erreur, renvoyer une FeatureCollection GeoJSON vide pour éviter les crashs frontend
         console.error('❌ Erreur API Rails:', e.message);
         res.json({ type: 'FeatureCollection', features: [] });
     }
 });
 
-//Récupération des emplacements de bornes de recharge électrique pour véhicules
+// ===================================================================================================
+// ROUTE : /api/irve - Emplacements des bornes de recharge électrique
+// ===================================================================================================
+// IRVE = Infrastructure de Recharge pour Véhicules Électriques
+// Récupère les positions des bornes depuis OpenStreetMap France pour évaluer l'accessibilité électrique
+
 app.get('/api/irve', async (req, res) => {
     try {
+        // Interrogation de l'API OpenDataSoft avec limite de 15000 bornes (suffisant pour couverture nationale)
         const r = await axios.get(
             'https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/osm-france-charging-station/exports/geojson?limit=15000'
         );
+        
+        // Renvoi du GeoJSON contenant tous les points de recharge
         res.json(r.data);
     } catch (e) {
+        // Fallback sur collection vide si l'API est indisponible
         console.error('❌ Erreur API IRVE:', e.message);
         res.json({ type: 'FeatureCollection', features: [] });
     }
 });
 
-//Récupération des aires de covoiturage disponibles sur le territoire
+// ===================================================================================================
+// ROUTE : /api/covoiturage - Emplacements des aires de covoiturage
+// ===================================================================================================
+// Récupère les parkings dédiés au covoiturage pour évaluer les possibilités de mobilité partagée
+// Critère important pour l'éco-score des gares (dernier kilomètre sans voiture individuelle)
+
 app.get('/api/covoiturage', async (req, res) => {
     try {
+        // Interrogation de l'API OpenDataSoft avec limite de 5000 aires (couverture suffisante)
         const r = await axios.get(
             'https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/aires-covoiturage/exports/geojson?limit=5000'
         );
+        
+        // Renvoi du GeoJSON des aires de covoiturage
         res.json(r.data);
     } catch (e) {
+        // Collection vide en cas d'échec pour maintenir la stabilité du frontend
         console.error('❌ Erreur API Covoiturage:', e.message);
         res.json({ type: 'FeatureCollection', features: [] });
     }
 });
 
-//Récupération des parkings vélos dans une zone géographique définie (tentative API en priorité, fichier local en secours)
+// ===================================================================================================
+// ROUTE : /api/parking-velo - Parkings vélos dans une zone géographique donnée
+// ===================================================================================================
+// Système intelligent avec double fallback : API en ligne → fichier local → collection vide
+// Paramètres : minLat, maxLat, minLon, maxLon (définissent la bounding box de recherche)
+
 app.get('/api/parking-velo', async (req, res) => {
+    // Extraction des coordonnées de la zone géographique depuis les paramètres de requête
     const { minLat, maxLat, minLon, maxLon } = req.query;
 
+    // Validation : si les coordonnées sont incomplètes, renvoyer une collection vide
     if (!minLat || !maxLat || !minLon || !maxLon) {
         return res.json({ type: 'FeatureCollection', features: [] });
     }
 
-    //Tentative de récupération depuis l'API en ligne
+    // TENTATIVE 1 : Récupération depuis l'API OpenDataSoft (source primaire)
     try {
+        // URL de l'API avec limit=-1 pour obtenir TOUS les parkings (dataset complet)
         const url = 'https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/osm-france-bicycle-parking/exports/geojson?limit=-1';
         
         console.log('🔄 Tentative récupération API vélos...');
+        // Requête avec timeout de 8 secondes pour éviter les blocages prolongés
         const r = await axios.get(url, { timeout: 8000 });
         const data = r.data;
 
+        // Extraction du tableau de features depuis la FeatureCollection
         const all = Array.isArray(data.features) ? data.features : [];
 
-        //Filtrage des parkings situés dans la zone demandée par l'utilisateur
+        // Filtrage géographique : conservation uniquement des parkings dans la bounding box demandée
         const resList = all.filter((f) => {
+            // Vérification de l'existence de la géométrie et des coordonnées
             if (!f.geometry || !f.geometry.coordinates) return false;
-            const c = f.geometry.coordinates;
+            const c = f.geometry.coordinates;  // [longitude, latitude] au format GeoJSON
+            
+            // Test d'inclusion dans le rectangle géographique défini
             return (
-                c[1] >= parseFloat(minLat) &&
-                c[1] <= parseFloat(maxLat) &&
-                c[0] >= parseFloat(minLon) &&
-                c[0] <= parseFloat(maxLon)
+                c[1] >= parseFloat(minLat) &&   // Latitude minimum
+                c[1] <= parseFloat(maxLat) &&   // Latitude maximum
+                c[0] >= parseFloat(minLon) &&   // Longitude minimum
+                c[0] <= parseFloat(maxLon)      // Longitude maximum
             );
         });
 
-        //Limitation à 5000 points maximum pour ne pas ralentir l'affichage
+        // Limitation à 5000 points maximum pour ne pas saturer le navigateur lors de l'affichage
+        // Si plus de 5000 points, on applique un échantillonnage régulier (1 point sur N)
         const final = resList.length > 5000
             ? resList.filter((_, i) => i % Math.ceil(resList.length / 5000) === 0)
             : resList;
@@ -133,10 +218,12 @@ app.get('/api/parking-velo', async (req, res) => {
         return res.json({ type: 'FeatureCollection', features: final });
 
     } catch (apiError) {
+        // TENTATIVE 2 : Basculement sur le fichier de secours local (fallback)
         console.warn('⚠️ API vélos échouée, basculement sur fichier local...');
         
-        //Utilisation du fichier de secours si l'API est indisponible
+        // Vérification de la disponibilité du fichier de secours chargé au démarrage
         if (veloDataCache.features.length > 0) {
+            // Application du même filtrage géographique sur les données locales
             const resList = veloDataCache.features.filter(f => {
                 if (!f.geometry || !f.geometry.coordinates) return false;
                 const c = f.geometry.coordinates;
@@ -148,6 +235,7 @@ app.get('/api/parking-velo', async (req, res) => {
                 );
             });
 
+            // Même limitation à 5000 points pour cohérence avec le cas API
             const final = resList.length > 5000
                 ? resList.filter((_, i) => i % Math.ceil(resList.length / 5000) === 0)
                 : resList;
@@ -156,6 +244,7 @@ app.get('/api/parking-velo', async (req, res) => {
             return res.json({ type: 'FeatureCollection', features: final });
         }
 
+        // TENTATIVE 3 : Si aucune source n'est disponible, renvoyer une collection vide
         console.error('❌ Aucune source vélo disponible');
         res.json({ type: 'FeatureCollection', features: [] });
     }
@@ -207,21 +296,29 @@ app.get('/api/air-quality', async (req, res) => {
             let bestStation = null;
             let bestSensor = null;
             
+            // Parcours de toutes les stations de mesure trouvées à proximité
             for (const station of data.results) {
+                // Vérification de la présence de capteurs actifs dans la station
                 if (station.sensors && station.sensors.length > 0) {
-//Priorité aux polluants les plus significatifs : particules fines PM2.5 et PM10, ozone, dioxyde d'azote
+                    // Priorité aux polluants les plus significatifs pour la santé :
+                    // PM2.5 et PM10 (particules fines), O3 (ozone), NO2 (dioxyde d'azote)
                     const priorityParams = ['pm25', 'pm10', 'o3', 'no2'];
+                    
+                    // Recherche du premier capteur mesurant un polluant prioritaire
                     for (const paramName of priorityParams) {
                         const sensor = station.sensors.find(s => 
                             s.parameter?.name === paramName || 
                             (s.name && s.name.toLowerCase().includes(paramName))
                         );
+                        
+                        // Dès qu'un capteur prioritaire est trouvé, on conserve cette station
                         if (sensor) {
                             bestStation = station;
                             bestSensor = sensor;
-                            break;
+                            break;  // Sortie de la boucle des paramètres
                         }
                     }
+                    // Si un capteur a été trouvé, inutile de chercher dans les autres stations
                     if (bestSensor) break;
                 }
             }
