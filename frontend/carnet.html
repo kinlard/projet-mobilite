@@ -48,7 +48,7 @@ margin: 20px auto;">Scanner la carte</a></div>
                     <i class="fa-solid fa-map-marked-alt" style="color: #022c22; font-size: 3rem;"></i>
                 </div>
                 <h3 id="onb-title" style="color: white; font-size: 2rem; margin-bottom: 10px; font-weight: 900; text-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);">Bienvenue dans votre carnet de voyage !</h3>
-                <p style="color: #94a3b8; font-size: 1rem;">Découvrez toutes les fonctionnalités de votre tableau de bord</p>
+                <p id="onb-subtitle" style="color: #94a3b8; font-size: 1rem;">Découvrez toutes les fonctionnalités de votre tableau de bord</p>
             </div>
             
             <div id="onb-text" style="text-align: left; line-height: 1.8; color: #cbd5e1; display: flex; flex-direction: column; gap: 16px; margin-bottom: 30px;">
@@ -57,8 +57,8 @@ margin: 20px auto;">Scanner la carte</a></div>
                         <i class="fa-solid fa-gavel" style="color: #022c22; font-size: 1.4rem;"></i>
                     </div>
                     <div>
-                        <strong style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Comparez 2 gares</strong>
-                        <span style="color: #94a3b8; font-size: 0.95rem;">Sélectionnez deux favoris pour voir leurs scores côte à côte</span>
+                        <strong id="onb-item1-title" style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Comparez 2 gares</strong>
+                        <span id="onb-item1-desc" style="color: #94a3b8; font-size: 0.95rem;">Sélectionnez deux favoris pour voir leurs scores côte à côte</span>
                     </div>
                 </div>
                 
@@ -67,8 +67,8 @@ margin: 20px auto;">Scanner la carte</a></div>
                         <i class="fa-brands fa-wikipedia-w" style="color: white; font-size: 1.4rem;"></i>
                     </div>
                     <div>
-                        <strong style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Explorez les villes</strong>
-                        <span style="color: #94a3b8; font-size: 0.95rem;">Accédez aux images Wikipedia pour découvrir chaque destination</span>
+                        <strong id="onb-item2-title" style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Explorez les villes</strong>
+                        <span id="onb-item2-desc" style="color: #94a3b8; font-size: 0.95rem;">Accédez aux images Wikipedia pour découvrir chaque destination</span>
                     </div>
                 </div>
                 
@@ -77,8 +77,8 @@ margin: 20px auto;">Scanner la carte</a></div>
                         <i class="fa-solid fa-qrcode" style="color: white; font-size: 1.4rem;"></i>
                     </div>
                     <div>
-                        <strong style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Générez un QR Code</strong>
-                        <span style="color: #94a3b8; font-size: 0.95rem;">Partagez facilement vos gares préférées via code scannable</span>
+                        <strong id="onb-item3-title" style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Générez un QR Code</strong>
+                        <span id="onb-item3-desc" style="color: #94a3b8; font-size: 0.95rem;">Partagez facilement vos gares préférées via code scannable</span>
                     </div>
                 </div>
                 
@@ -87,8 +87,8 @@ margin: 20px auto;">Scanner la carte</a></div>
                         <i class="fa-solid fa-map-location-dot" style="color: white; font-size: 1.4rem;"></i>
                     </div>
                     <div>
-                        <strong style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Visualisez la carte</strong>
-                        <span style="color: #94a3b8; font-size: 0.95rem;">Voyez tous vos favoris en temps réel sur la mini-carte heatmap</span>
+                        <strong id="onb-item4-title" style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Visualisez la carte</strong>
+                        <span id="onb-item4-desc" style="color: #94a3b8; font-size: 0.95rem;">Voyez tous vos favoris en temps réel sur la mini-carte heatmap</span>
                     </div>
                 </div>
                 
@@ -97,7 +97,7 @@ margin: 20px auto;">Scanner la carte</a></div>
                         <i class="fa-solid fa-trash-alt" style="color: white; font-size: 1.4rem;"></i>
                     </div>
                     <div>
-                        <strong style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Gérez vos favoris</strong>
+                        <strong id="onb-item5-title" style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Gérez vos favoris</strong>
                         <span style="color: #94a3b8; font-size: 0.95rem;">Supprimez individuellement ou lancez une séquence d'autodestruction complète</span>
                     </div>
                 </div>
@@ -483,15 +483,15 @@ const f2 = favoris[selectedVs[1]];
                     <div>
                         <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 24px;">
                             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
-                                <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center;">
-                                    <i class="fa-solid fa-train" style="color: var(--primary); font-size: 1.1rem;"></i>
+                                <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(96, 165, 250, 0.15); display: flex; align-items: center; justify-content: center;">
+                                    <i class="fa-solid fa-train" style="color: #60a5fa; font-size: 1.1rem;"></i>
                                 </div>
                                 <h3 style="margin: 0; font-size: 1.05rem; font-weight: 600; color: white; flex: 1;">${escapeHTML(f1.nom)}</h3>
                             </div>
                             <div style="text-align: center; margin-bottom: 25px;">
-                                <div style="display: inline-block; width: 90px; height: 90px; border-radius: 50%; background: conic-gradient(var(--primary) ${(f1.score * 36)}deg, rgba(255,255,255,0.06) 0deg); padding: 6px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+                                <div style="display: inline-block; width: 90px; height: 90px; border-radius: 50%; background: conic-gradient(#60a5fa ${(f1.score * 36)}deg, rgba(255,255,255,0.06) 0deg); padding: 6px; box-shadow: 0 4px 12px rgba(96, 165, 250, 0.2);">
                                     <div style="width: 100%; height: 100%; border-radius: 50%; background: #0f172a; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-                                        <div style="font-size: 2rem; font-weight: 900; color: var(--primary);">${f1.score}</div>
+                                        <div style="font-size: 2rem; font-weight: 900; color: #60a5fa;">${f1.score}</div>
                                         <div style="font-size: 0.75rem; color: #64748b; margin-top: -2px; letter-spacing: 0.5px;">/10</div>
                                     </div>
                                 </div>
@@ -639,7 +639,17 @@ window.openOnboarding = () => document.getElementById('onboardingModal').classLi
             document.getElementById('btn-nuke').innerText = isFrCarnet ? t.btnNuke.fr : t.btnNuke.en;
             document.getElementById('btn-compare').innerText = isFrCarnet ? t.btnCompare.fr : t.btnCompare.en;
             document.getElementById('onb-title').innerText = isFrCarnet ? t.onbTitle.fr : t.onbTitle.en;
-            // onb-text contient du HTML structuré - ne pas écraser avec innerText
+            document.getElementById('onb-subtitle').innerText = isFrCarnet ? t.onbSubtitle.fr : t.onbSubtitle.en;
+            document.getElementById('onb-item1-title').innerText = isFrCarnet ? t.onbItem1Title.fr : t.onbItem1Title.en;
+            document.getElementById('onb-item1-desc').innerText = isFrCarnet ? t.onbItem1Desc.fr : t.onbItem1Desc.en;
+            document.getElementById('onb-item2-title').innerText = isFrCarnet ? t.onbItem2Title.fr : t.onbItem2Title.en;
+            document.getElementById('onb-item2-desc').innerText = isFrCarnet ? t.onbItem2Desc.fr : t.onbItem2Desc.en;
+            document.getElementById('onb-item3-title').innerText = isFrCarnet ? t.onbItem3Title.fr : t.onbItem3Title.en;
+            document.getElementById('onb-item3-desc').innerText = isFrCarnet ? t.onbItem3Desc.fr : t.onbItem3Desc.en;
+            document.getElementById('onb-item4-title').innerText = isFrCarnet ? t.onbItem4Title.fr : t.onbItem4Title.en;
+            document.getElementById('onb-item4-desc').innerText = isFrCarnet ? t.onbItem4Desc.fr : t.onbItem4Desc.en;
+            document.getElementById('onb-item5-title').innerText = isFrCarnet ? t.onbItem5Title.fr : t.onbItem5Title.en;
+            document.getElementById('onb-item5-desc').innerText = isFrCarnet ? t.onbItem5Desc.fr : t.onbItem5Desc.en;
             document.getElementById('onb-btn').innerText = isFrCarnet ? t.onbBtn.fr : t.onbBtn.en;
             document.getElementById('google-title').innerHTML = '<i class="fa-brands fa-wikipedia-w"></i> ' + (isFrCarnet ? t.googleTitle.fr : t.googleTitle.en);
             document.getElementById('qr-title').innerText = isFrCarnet ? t.qrTitle.fr : t.qrTitle.en;
