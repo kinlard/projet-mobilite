@@ -46,6 +46,12 @@
     body {
         overflow: hidden !important;
     }
+
+    /* Pages sans carte (ex: a propos) doivent pouvoir défiler */
+    body.page-apropos {
+        overflow-y: auto !important;
+        overscroll-behavior: auto;
+    }
     
     /* Carte toujours en arrière-plan fixe */
     #map {
