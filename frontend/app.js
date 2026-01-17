@@ -2458,7 +2458,8 @@ window.toggleHeatmap = toggleHeatmap;
 window.toggleIgnLayer = toggleIgnLayer;
 window.openThemeSelector = openThemeSelector;
 window.toggleEcoPanel = toggleEcoPanel;
-window.switchLangMap = switchLangMap;
+// switchLangMap est défini dans map.html (module principal)
+// ne pas réassigner ici pour éviter ReferenceError lorsque map.html charge app.js en premier.
 
 // ============================================================
 // FIN DU FICHIER
