@@ -448,7 +448,7 @@ window.openOnboarding = () => document.getElementById('onboardingModal').classLi
             document.getElementById('btn-nuke').innerText = isFrCarnet ? t.btnNuke.fr : t.btnNuke.en;
             document.getElementById('btn-compare').innerText = isFrCarnet ? t.btnCompare.fr : t.btnCompare.en;
             document.getElementById('onb-title').innerText = isFrCarnet ? t.onbTitle.fr : t.onbTitle.en;
-            document.getElementById('onb-text').innerText = isFrCarnet ? t.onbText.fr : t.onbText.en;
+            // onb-text contient du HTML structuré - ne pas écraser avec innerText
             document.getElementById('onb-btn').innerText = isFrCarnet ? t.onbBtn.fr : t.onbBtn.en;
             document.getElementById('google-title').innerHTML = '<i class="fa-brands fa-wikipedia-w"></i> ' + (isFrCarnet ? t.googleTitle.fr : t.googleTitle.en);
             document.getElementById('qr-title').innerText = isFrCarnet ? t.qrTitle.fr : t.qrTitle.en;
