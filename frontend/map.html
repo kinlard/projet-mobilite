@@ -57,45 +57,64 @@
         <button class="tuto-skip-btn" onclick="skipTuto()">Passer le tuto</button>
     </div>
 
+    <!-- Barre de navigation supérieure : visible uniquement sur écran large (ordinateur et tablette) -->
     <div class="dashboard-header">
-        <!-- Navigation adaptée selon la taille d'écran -->
+        <!-- Logo du site cliquable -->
         <div class="brand"><h1>Eco-Escapade</h1></div>
-        <!-- Bouton menu hamburger pour mobile -->
+        <!-- Bouton menu hamburger : apparaît uniquement sur mobile, initialement masqué -->
         <button class="burger-menu" id="burgerMenu" style="display: none;">
+            <!-- Les 3 barres horizontales du menu hamburger -->
             <span></span>
             <span></span>
             <span></span>
         </button>
+        <!-- Liens de navigation vers les autres pages -->
         <div class="nav-links" id="navLinks">
+            <!-- Retour vers la page d'accueil -->
             <a href="index.html" id="nav-home">Accueil</a>
+            <!-- Accès au carnet de voyage avec les gares favorites -->
             <a href="carnet.html" id="nav-fav">Mes favoris</a>
+            <!-- Informations sur le projet -->
             <a href="apropos.html" id="nav-apropos">À propos</a>
         </div>
-        <!-- Barre de recherche de gares par nom -->
+        <!-- Barre de recherche permettant de trouver rapidement une gare par son nom -->
         <div class="search-container" id="searchBox">
+            <!-- Icône de loupe pour identifier visuellement la fonction de recherche -->
             <i class="fa-solid fa-search search-icon"></i>
+            <!-- Champ de saisie avec auto-complétion : suggère les gares correspondantes pendant la frappe -->
             <input type="text" id="search-input" list="gares-list" placeholder="Rechercher..." autocomplete="off">
+            <!-- Liste des suggestions de gares, remplie dynamiquement par JavaScript -->
             <datalist id="gares-list"></datalist>
         </div>
+        <!-- Groupe de boutons d'outils et d'actions situés à droite de la barre de navigation -->
         <div class="actions">
+            <!-- Bouton découvrir : ouvre un assistant de recommandation de destinations (mer, montagne, ville...) -->
             <button class="btn-discover" onclick="openDiscoverModal()"><i class="fa-solid fa-compass"></i> <span id="btn-discover-text">DÉCOUVRIR</span></button>
+            <!-- Bouton statistiques : affiche un tableau de bord avec les données nationales (nombre de gares, scores moyens...) -->
             <button id="btnStats" class="btn-discover" style="background: linear-gradient(135deg, #3b82f6, #2563eb); margin-right: 5px;"><i class="fa-solid fa-chart-column"></i> STATS</button>
+            <!-- Bouton de géolocalisation : centre la carte sur la position GPS de l'utilisateur -->
             <button class="btn-tool" title="Me Localiser" onclick="locateUser()"><i class="fa-solid fa-location-arrow"></i></button>
+            <!-- Bouton gare aléatoire : sélectionne et affiche une gare au hasard sur la carte -->
             <button id="btnRandomGare" class="btn-tool" title="Gare Aléatoire" onclick="randomGare()"><i class="fa-solid fa-dice"></i></button>
             
+            <!-- Bouton carte de chaleur : affiche les zones de forte densité de gares (fonctionnalité masquée par défaut) -->
             <button id="btnHeatmap" class="btn-tool" onclick="toggleHeatmap()" title="Carte de chaleur affluence" style="display:none;">
                 <i class="fa-solid fa-fire"></i>
             </button>
+            <!-- Bouton carte IGN : bascule vers la vue topographique de l'Institut Géographique National -->
             <button id="btnIgn" class="btn-tool" onclick="toggleIgnLayer()" title="Carte topographique IGN">
                 <i class="fa-solid fa-mountain"></i>
             </button>
+            <!-- Bouton sélecteur de thème : permet de changer les couleurs du site (Eco-Vert, Océan...) -->
             <button id="btnThemes" class="btn-tool" onclick="openThemeSelector()" title="Changer le thème">
                 <i class="fa-solid fa-palette"></i>
             </button>
+            <!-- Bouton informations écologiques : affiche des données complémentaires (qualité de l'air, biodiversité...) -->
             <button id="btnEcoInfo" class="btn-tool" onclick="toggleEcoPanel()" title="Infos écologiques avancées">
                 <i class="fa-solid fa-leaf"></i>
             </button>
 
+            <!-- Bouton de changement de langue : bascule entre français et anglais -->
             <button class="lang-switch" onclick="switchLangMap()">FR / EN</button>
         </div>
     </div>
