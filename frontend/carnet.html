@@ -452,36 +452,31 @@ margin: 20px auto;">Scanner la carte</a>
                 // Crée un élément div pour la carte
                 const div = document.createElement('div');
                 div.className = 'card';
-                // Génère le HTML de la carte avec toutes ses fonctionnalités
+                // Génère le HTML complet de la carte favori avec :
+                // - Checkbox pour sélection comparaison (max 2 gares)
+                // - Badge type (TGV/TER) + nom
+                // - Cercle de score circulaire coloré selon la note
+                // - 3 statistiques : vélos, bornes électriques, covoiturage
+                // - Bouton "Y aller" vers map.html
+                // - 4 boutons outils : Photos Wikipedia, Google Maps, QR Code, Supprimer
                 div.innerHTML = `
-                    <!-- Checkbox pour sélectionner la gare pour comparaison (max 2) -->
                     <input type="checkbox" id="chk-${index}" class="vs-checkbox-input" onchange="toggleVs(${index}, this)">
-                    <!-- Label avec icône check personnalisée -->
                     <label for="chk-${index}" class="vs-label"><i class="fa-solid fa-check"></i></label>
-                    <!-- Haut de la carte : badge de type (TGV/TER) + nom de la gare -->
                     <div class="card-top"><div><span class="badge ${fav.type}">${fav.type}</span><h3>${safeName}</h3></div></div>
-                    <!-- Ligne du score : graphique circulaire + statistiques -->
                     <div class="score-row">
-                        <!-- Cercle de score avec dégradé conique visualisant la note sur 10 -->
                         <div class="circle-wrap" style="background: ${gradient}"><div class="circle-inner">${score}</div></div>
-                        <!-- Liste des statistiques : vélos, bornes, covoiturage -->
                         <div class="stats-list">
-                            <!-- Stat 1 : Nombre de vélos disponibles (icône cyan) -->
                             <div class="stat-item"><i class="fa-solid fa-bicycle" style="color:#06b6d4; width:20px;"></i> ${details.velos} ${isFrCarnet ? 'Vélos' : 'Bikes'}</div>
-                            <!-- Stat 2 : Nombre de bornes électriques (icône orange) -->
                             <div class="stat-item"><i class="fa-solid fa-plug" style="color:#f59e0b; width:20px;"></i> ${details.bornes} ${isFrCarnet ? 'Bornes' : 'Terminals'}</div>
-                            <!-- Stat 3 : Nombre de places covoiturage (icône violet) -->
                             <div class="stat-item"><i class="fa-solid fa-car" style="color:#a855f7; width:20px;"></i> ${details.covoit} ${isFrCarnet ? 'Covoit' : 'Carpool'}</div>
                         </div>
                     </div>
                     <a href="map.html?target=${fav.id}" class="btn-main"><i class="fa-solid fa-location-arrow"></i> <span class="txt-go">Y aller</span></a>
                     <div class="tools-grid">
-      
-                   <button class="tool-btn google" title="${isFrCarnet?'Photos':'Photos'}" onclick="openGooglePhotos('${safeName.replace(/'/g, "\\'")}')"><i class="fa-solid fa-image"></i></button>
+                        <button class="tool-btn google" title="${isFrCarnet?'Photos':'Photos'}" onclick="openGooglePhotos('${safeName.replace(/'/g, "\\'")}')"><i class="fa-solid fa-image"></i></button>
                         <button class="tool-btn" title="${isFrCarnet?'Google Maps':'Google Maps'}" onclick="openGoogleMaps('${safeName.replace(/'/g, "\\'")}')"><i class="fa-solid fa-map-location-dot"></i></button>
                         <button class="tool-btn" title="${isFrCarnet?'QR Code':'QR Code'}" onclick="openQr('${safeName.replace(/'/g, "\\'")}')"><i class="fa-solid fa-qrcode"></i></button>
-             
-           <button class="tool-btn del" title="${isFrCarnet?'Supprimer':'Delete'}" onclick="askDelete(${index})"><i class="fa-solid fa-trash"></i></button>
+                        <button class="tool-btn del" title="${isFrCarnet?'Supprimer':'Delete'}" onclick="askDelete(${index})"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 `;
                 grid.appendChild(div);
