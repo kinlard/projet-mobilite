@@ -319,28 +319,41 @@ function isFavori(id) {
 }
 
 function toggleFavori(id, nom, type) {
+    console.log('🔄 toggleFavori appelé:', { id, nom, type });
+    
     let favoris = getFavoris();
     const index = favoris.findIndex(f => f.id === id);
-    const icon = document.getElementById(`fav-${id}`);
     
     if (index >= 0) {
+        // Supprimer des favoris
         favoris.splice(index, 1);
-        if (icon) {
-            icon.classList.remove('fav-active');
-            icon.classList.add('fav-inactive');
-        }
+        console.log('❌ Supprimé des favoris. Nouveau count:', favoris.length);
         showToast(`${nom} ${APP_TEXTS.favoris.removed[currentLang]}`);
     } else {
-        favoris.push({ id, nom, type, date: new Date().toISOString() });
-        if (icon) {
-            icon.classList.remove('fav-inactive');
-            icon.classList.add('fav-active');
-        }
+        // Ajouter aux favoris
+        favoris.push({ 
+            id, 
+            nom, 
+            type,
+            date: new Date().toISOString() 
+        });
+        console.log('✅ Ajouté aux favoris. Nouveau count:', favoris.length);
         showToast(`${nom} ${APP_TEXTS.favoris.added[currentLang]}`);
     }
     
-    // FIX: Utilisation de 'eco_favoris' pour cohérence avec carnet.html
+    // Sauvegarder dans localStorage
     localStorage.setItem('eco_favoris', JSON.stringify(favoris));
+    console.log('💾 localStorage updated:', localStorage.getItem('eco_favoris'));
+    
+    // Mettre à jour le cœur dans le popup
+    const icon = document.getElementById(`fav-${id}`);
+    if (icon) {
+        icon.classList.toggle('fav-active');
+        icon.classList.toggle('fav-inactive');
+        console.log('🎯 Icon updated:', icon.className);
+    } else {
+        console.warn('⚠️ Icon not found for id:', `fav-${id}`);
+    }
 }
 
 let osmb = null;
@@ -2448,6 +2461,9 @@ if (savedTheme) {
 window.lancerAnalyseComplete = lancerAnalyseComplete;
 window.randomGare = randomGare;
 window.updateAppLanguage = updateAppLanguage;
+window.toggleFavori = toggleFavori;
+window.isFavori = isFavori;
+window.getFavoris = getFavoris;
 window.nextTutoStep = nextTutoStep;
 window.skipTuto = skipTuto;
 window.openDiscoverModal = openDiscoverModal;
