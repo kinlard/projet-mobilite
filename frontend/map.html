@@ -397,31 +397,52 @@
         </div>
     </div>
 
+    <!-- SCRIPTS JAVASCRIPT : Bibliothèques externes pour la cartographie -->
+    <!-- Bibliothèque Leaflet : moteur principal pour afficher la carte interactive -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Extension MarkerCluster : regroupe automatiquement les marqueurs proches pour éviter la surcharge visuelle -->
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <!-- Extension MiniMap : affiche une petite carte de navigation dans le coin pour se repérer -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-minimap/3.6.1/Control.MiniMap.min.js"></script>
+    <!-- Extension EasyPrint : permet d'imprimer ou exporter la carte en image PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-easyprint/2.1.9/bundle.js"></script>
+    <!-- Extension OSMBuildings : affiche des bâtiments en 3D sur la carte (fonctionnalité avancée) -->
     <script src="https://cdn.osmbuildings.org/4.1.1/OSMBuildings-Leaflet.js"></script>
+    <!-- SCRIPT PRINCIPAL : Logique de la carte et gestion multilingue -->
     <script type="module">
+        // Import du fichier de traductions (textes en français et anglais)
         import { NAV_TEXTS } from './js/textes.js';
+        // Import du fichier principal de logique applicative (carte, données, scoring)
         import './app.js';
         
+        // Variable indiquant la langue actuelle de l'interface (true = français, false = anglais)
         let isFrMap = true;
+        // Rendre la variable accessible globalement pour les autres scripts
         window.isFrMap = isFrMap;
         
+        // FONCTION : Bascule entre français et anglais
+        // Met à jour tous les textes de l'interface (navigation, boutons, modales, statistiques)
         function switchLangMap() {
+            // Inverser la langue courante
             isFrMap = !isFrMap;
             window.isFrMap = isFrMap;
+            // Log de débogage pour vérifier le changement de langue
             console.log('🔄 switchLangMap() appelé - isFrMap maintenant:', isFrMap);
+            // Référence au dictionnaire de traductions
             const t = NAV_TEXTS;
+            // Mise à jour des liens de navigation
             document.getElementById('nav-home').innerText = isFrMap ? t.navHome.fr : t.navHome.en;
             document.getElementById('nav-fav').innerText = isFrMap ? t.navFav.fr : t.navFav.en;
             document.getElementById('nav-apropos').innerText = isFrMap ? t.navApropos.fr : t.navApropos.en;
+            // Mise à jour du placeholder de la barre de recherche
             document.getElementById('search-input').placeholder = isFrMap ? t.search.fr : t.search.en;
+            // Mise à jour du bouton "Découvrir"
             document.getElementById('btn-discover-text').innerText = isFrMap ? t.btnDiscover.fr : t.btnDiscover.en;
+            // Mise à jour de la modale de découverte (titre, sous-titre, bouton retour)
             document.getElementById('discoverTitle').innerText = isFrMap ? t.discTitle.fr : t.discTitle.en;
             document.getElementById('discoverSubtitle').innerText = isFrMap ? t.discSub.fr : t.discSub.en;
             document.getElementById('btnBackCat').innerText = isFrMap ? t.btnBack.fr : t.btnBack.en;
+            // Mise à jour des noms des catégories d'environnement
             document.getElementById('cat-mer').innerText = isFrMap ? t.catMer.fr : t.catMer.en;
             document.getElementById('cat-ocean').innerText = isFrMap ? t.catOcean.fr : t.catOcean.en;
             document.getElementById('cat-montagne').innerText = isFrMap ? t.catMontagne.fr : t.catMontagne.en;
@@ -434,6 +455,7 @@
             // pour gérer correctement l'étape courante du tutoriel
             
             // --- UPDATING STATS & LOADER (avec vérification null) ---
+            // Récupération des éléments du panneau de statistiques pour traduction
             const loaderMsg = document.getElementById('loader-msg');
             const statsTitle = document.getElementById('stats-title');
             const lblGares = document.getElementById('lbl-gares');
@@ -443,6 +465,7 @@
             const lblBornes = document.getElementById('lbl-bornes');
             const lblCovoit = document.getElementById('lbl-covoit');
             
+            // Mise à jour des textes si les éléments existent (vérification pour éviter les erreurs)
             if (loaderMsg) loaderMsg.innerText = isFrMap ? t.loader.fr : t.loader.en;
             if (statsTitle) statsTitle.innerText = isFrMap ? t.statsTitle.fr : t.statsTitle.en;
             if (lblGares) lblGares.innerText = isFrMap ? t.lblGares.fr : t.lblGares.en;
@@ -453,6 +476,7 @@
             if (lblCovoit) lblCovoit.innerText = isFrMap ? t.lblCovoit.fr : t.lblCovoit.en;
             
             // --- NOUVELLES STATS (8 nouvelles traductions) ---
+            // Récupération des éléments des nouvelles sections de statistiques avancées
             const sectionAnalysis = document.getElementById('section-analysis');
             const sectionTotals = document.getElementById('section-totals');
             const sectionWeather = document.getElementById('section-weather');
@@ -467,6 +491,7 @@
             const lblNoVelo = document.getElementById('lbl-no-velo');
             const statsRefresh = document.getElementById('stats-refresh-text');
             
+            // Mise à jour des titres de section et étiquettes des nouvelles statistiques
             if (sectionAnalysis) sectionAnalysis.innerText = isFrMap ? t.sectionAnalysis.fr : t.sectionAnalysis.en;
             if (sectionTotals) sectionTotals.innerText = isFrMap ? t.sectionTotals.fr : t.sectionTotals.en;
             if (sectionWeather) sectionWeather.innerText = isFrMap ? t.sectionWeather.fr : t.sectionWeather.en;
@@ -481,13 +506,16 @@
             if (lblNoVelo) lblNoVelo.innerText = isFrMap ? t.lblNoVelo.fr : t.lblNoVelo.en;
             if (statsRefresh) statsRefresh.innerText = isFrMap ? t.statsRefresh.fr : t.statsRefresh.en;
 
+            // Déclenchement de l'actualisation de la langue dans app.js pour les autres éléments
             if (window.updateAppLanguage) window.updateAppLanguage(isFrMap);
         }
         
+        // Rendre la fonction accessible globalement pour qu'elle soit appelée par les boutons HTML
         window.switchLangMap = switchLangMap;
     </script>
     
     <!-- Script Mobile Adaptive UI -->
+    <!-- SCRIPT MOBILE : Gère le comportement spécifique aux petits écrans (menu hamburger, tactile...) -->
     <script src="mobile-logic.js"></script>
 </body>
 </html>
