@@ -407,52 +407,71 @@ margin: 20px auto;">Scanner la carte</a>
         // Récupération des favoris depuis le localStorage
         // Si aucune donnée enregistrée : tableau vide par défaut
         let favoris = JSON.parse(localStorage.getItem('eco_favoris')) || [];
+        // Migration des anciens favoris : ajoute score et détails manquants
+        // Boucle sur chaque favori pour vérifier la présence du score
         favoris = favoris.map(f => {
-            if(f.score 
-=== undefined) { 
+            // Si le score n'existe pas : génère un score aléatoire entre 5.0 et 10.0
+            if(f.score === undefined) { 
                 f.score = Math.floor(Math.random() * 50 + 50) / 10; 
+                // Génère aussi des détails aléatoires pour vélos, bornes électriques, covoiturage
                 f.details = { velos: Math.floor(Math.random()*20), bornes: Math.floor(Math.random()*10), covoit: Math.floor(Math.random()*5) };
             }
             return f;
         });
 
-        const grid = document.getElementById('grid');
-   
-     const empty = document.getElementById('empty');
-        let selectedVs = []; 
-        let itemToDeleteIndex = null;
+        // Références DOM pour manipuler les éléments HTML
+        const grid = document.getElementById('grid');  // Grille de cartes
+        const empty = document.getElementById('empty');  // Message "Aucune donnée"
+        let selectedVs = [];  // Tableau des indices sélectionnés pour comparaison (max 2)
+        let itemToDeleteIndex = null;  // Index du favori à supprimer
 
+        // FONCTION PRINCIPALE : Affiche la liste des favoris sous forme de grille de cartes
+        // Appelée au chargement initial et après chaque modification (ajout/suppression)
         function render() {
-            if (favoris.length === 0) { empty.style.display = 'block'; grid.innerHTML = '';
-return; }
+            // Si aucun favori : affiche le message vide et arrête l'exécution
+            if (favoris.length === 0) { empty.style.display = 'block'; grid.innerHTML = ''; return; }
+            // Tri des favoris par score décroissant (meilleurs scores en premier)
             favoris.sort((a,b) => (b.score||0) - (a.score||0));
-grid.innerHTML = '';
+            // Vide la grille avant de la remplir
+            grid.innerHTML = '';
+            // Boucle sur chaque favori pour créer une carte HTML
             favoris.forEach((fav, index) => {
+                // Récupère le score (ou '?' si undefined)
                 const score = fav.score !== undefined ? fav.score : '?';
+                // Récupère les détails (vélos, bornes, covoiturage) ou valeurs par défaut
                 const details = fav.details || { velos: 0, bornes: 0, covoit: 0 };
+                // Détermine la couleur selon le score : rouge < 5, orange 5-8, vert >= 8
                 let color = '#ef4444'; if(score >= 5) color = '#f59e0b'; if(score >= 8) color = '#10b981';
-          
-       const deg = (score !== '?' ? score : 0) * 36;
+                // Calcule l'angle pour le graphique circulaire (score sur 10 × 36° = 360°)
+                const deg = (score !== '?' ? score : 0) * 36;
+                // Crée un dégradé conique pour visualiser le score
                 const gradient = `conic-gradient(${color} ${deg}deg, #334155 0deg)`;
+                // Sécurise le nom de la gare contre les injections XSS
                 const safeName = escapeHTML(fav.nom);
 
+                // Crée un élément div pour la carte
                 const div = document.createElement('div');
                 div.className = 'card';
-     
-           div.innerHTML = `
+                // Génère le HTML de la carte avec toutes ses fonctionnalités
+                div.innerHTML = `
+                    <!-- Checkbox pour sélectionner la gare pour comparaison (max 2) -->
                     <input type="checkbox" id="chk-${index}" class="vs-checkbox-input" onchange="toggleVs(${index}, this)">
+                    <!-- Label avec icône check personnalisée -->
                     <label for="chk-${index}" class="vs-label"><i class="fa-solid fa-check"></i></label>
+                    <!-- Haut de la carte : badge de type (TGV/TER) + nom de la gare -->
                     <div class="card-top"><div><span class="badge ${fav.type}">${fav.type}</span><h3>${safeName}</h3></div></div>
-               
-     <div class="score-row">
+                    <!-- Ligne du score : graphique circulaire + statistiques -->
+                    <div class="score-row">
+                        <!-- Cercle de score avec dégradé conique visualisant la note sur 10 -->
                         <div class="circle-wrap" style="background: ${gradient}"><div class="circle-inner">${score}</div></div>
+                        <!-- Liste des statistiques : vélos, bornes, covoiturage -->
                         <div class="stats-list">
-                            <div class="stat-item"><i class="fa-solid fa-bicycle" style="color:#06b6d4;
-width:20px;"></i> ${details.velos} ${isFrCarnet ? 'Vélos' : 'Bikes'}</div>
-                            <div class="stat-item"><i class="fa-solid fa-plug" style="color:#f59e0b;
-width:20px;"></i> ${details.bornes} ${isFrCarnet ? 'Bornes' : 'Terminals'}</div>
-                            <div class="stat-item"><i class="fa-solid fa-car" style="color:#a855f7;
-width:20px;"></i> ${details.covoit} ${isFrCarnet ? 'Covoit' : 'Carpool'}</div>
+                            <!-- Stat 1 : Nombre de vélos disponibles (icône cyan) -->
+                            <div class="stat-item"><i class="fa-solid fa-bicycle" style="color:#06b6d4; width:20px;"></i> ${details.velos} ${isFrCarnet ? 'Vélos' : 'Bikes'}</div>
+                            <!-- Stat 2 : Nombre de bornes électriques (icône orange) -->
+                            <div class="stat-item"><i class="fa-solid fa-plug" style="color:#f59e0b; width:20px;"></i> ${details.bornes} ${isFrCarnet ? 'Bornes' : 'Terminals'}</div>
+                            <!-- Stat 3 : Nombre de places covoiturage (icône violet) -->
+                            <div class="stat-item"><i class="fa-solid fa-car" style="color:#a855f7; width:20px;"></i> ${details.covoit} ${isFrCarnet ? 'Covoit' : 'Carpool'}</div>
                         </div>
                     </div>
                     <a href="map.html?target=${fav.id}" class="btn-main"><i class="fa-solid fa-location-arrow"></i> <span class="txt-go">Y aller</span></a>
@@ -465,115 +484,165 @@ width:20px;"></i> ${details.covoit} ${isFrCarnet ? 'Covoit' : 'Carpool'}</div>
            <button class="tool-btn del" title="${isFrCarnet?'Supprimer':'Delete'}" onclick="askDelete(${index})"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 `;
-grid.appendChild(div);
+                grid.appendChild(div);
             });
             
-            // Preload images en arrière-plan après le rendu
+            // Précharge les images Wikipedia en arrière-plan après l'affichage
+            // Améliore la vitesse d'ouverture des galeries
             preloadWikipediaImages();
         }
         
-        // Fonction pour preloader les images Wikipedia en arrière-plan
+        // FONCTION : Précharge les images Wikipedia en arrière-plan
+        // Appelée à la fin de render() pour accélérer l'ouverture des galeries
+        // Charge les images silencieusement sans bloquer l'interface
         async function preloadWikipediaImages() {
+            // Boucle sur tous les favoris
             favoris.forEach((fav) => {
-                // Charger silencieusement les images sans afficher
+                // Lance la requête de recherche d'image pour chaque ville
                 fetchWikimediaImage(fav.nom).catch(() => {
-                    // Erreur silencieuse - ça n'affecte pas l'UX
+                    // Erreur silencieuse : n'affecte pas l'expérience utilisateur
+                    // Les images seront simplement rechargées à la demande
                 });
             });
         }
         
-        // Fonction pour chercher une image Wikimedia (utilisée aussi en preload)
+        // FONCTION : Recherche une image sur Wikimedia Commons pour une gare
+        // Utilisée pour le preload ET pour l'affichage en galerie
+        // Retourne l'URL de la première image trouvée (500px de largeur)
         async function fetchWikimediaImage(nom) {
+            // Nettoyage du nom de la gare : retire "Gare de", "TGV", "Centre"
             const cleanName = nom.split(' - ')[0].replace(/Gare de\s?/gi, '').replace(/TGV/gi, '').replace(/Centre/gi, '').trim();
+            // Extrait le nom de la ville (premier mot avant tiret ou espace)
             const villeName = cleanName.split(/[-\s]/)[0];
             
+            // Liste de termes de recherche à tester (du plus précis au plus général)
             const searchTerms = [
-                `${villeName} gare SNCF`,
-                `Gare de ${cleanName}`,
-                `${villeName} train station`,
-                villeName
+                `${villeName} gare SNCF`,  // Ex: "Lyon gare SNCF"
+                `Gare de ${cleanName}`,     // Ex: "Gare de Lyon Part-Dieu"
+                `${villeName} train station`,  // Version anglaise
+                villeName                   // Juste le nom de la ville                   // Juste le nom de la ville
             ];
             
+            // Essaie chaque terme de recherche jusqu'à trouver une image
             for (const term of searchTerms) {
                 try {
+                    // API Wikimedia Commons : recherche de fichiers par mot-clé
+                    // srnamespace=6 : espace de noms "Fichier:"
+                    // srlimit=5 : maximum 5 résultats par recherche
                     const url = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(term)}&srnamespace=6&srlimit=5&format=json&origin=*`;
+                    // Timeout de 5 secondes pour éviter les blocages
                     const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
                     const d = await r.json();
                     
+                    // Vérifie si des résultats ont été trouvés
                     if (d.query?.search?.length > 0) {
+                        // Parcourt les résultats pour trouver une image
                         for (const result of d.query.search) {
+                            // Vérifie que le fichier est bien une image (jpg, png, gif, webp)
                             if (/\.(jpg|jpeg|png|gif|webp)$/i.test(result.title)) {
+                                // Retire le préfixe "File:" du nom
                                 const fileName = result.title.replace(/^File:/i, '');
+                                // Retourne l'URL de l'image redimensionnée à 500px
                                 return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}?width=500`;
                             }
                         }
                     }
                 } catch (e) {
+                    // Erreur : passe au terme de recherche suivant
                     continue;
                 }
             }
+            // Aucune image trouvée avec aucun des termes : lance une erreur
             throw new Error('Pas d\'image trouvée');
         }
         
+        // Appel initial : affiche les favoris au chargement de la page
         render();
-if(favoris.length > 0) {
+        // Si des favoris existent : crée la mini-carte Leaflet en haut du tableau de bord
+        if(favoris.length > 0) {
+            // Délai de 500ms pour laisser le temps au DOM de se charger complètement
             setTimeout(() => {
+                // Initialise la carte Leaflet dans le conteneur #miniMap
+                // zoomControl:false : désactive les boutons +/- de zoom
+                // attributionControl:false : cache le copyright Leaflet
+                // setView([46.5, 2.5], 5) : centre sur la France, zoom niveau 5
                 const miniMap = L.map('miniMap', { zoomControl:false, attributionControl:false }).setView([46.5, 2.5], 5);
+                // Ajoute le fond de carte sombre (CartoDB Dark)
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(miniMap);
                 
+                // Tableau pour stocker les coordonnées de tous les favoris
                 const bounds = [];
+                // Boucle sur chaque favori pour ajouter un marqueur
                 favoris.forEach((f, idx) => {
-                    // Utiliser les coordonnées réelles si disponibles, sinon générer des positions cohérentes
+                    // Utilise les coordonnées réelles si disponibles, sinon génère des positions cohérentes
                     let lat, lon;
                     if (f.lat && f.lon) {
+                        // Coordonnées GPS réelles de la gare
                         lat = f.lat;
                         lon = f.lon;
                     } else {
-                        // Générer des coordonnées cohérentes basées sur un hash du nom
+                        // Génère des coordonnées cohérentes basées sur un hash du nom
+                        // Hash = somme des codes ASCII des caractères du nom
                         const hash = f.nom.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-                        lat = 43 + (hash % 10); // Entre 43 et 53
-                        lon = -2 + (hash % 8);  // Entre -2 et 6
+                        lat = 43 + (hash % 10); // Latitude entre 43 et 53 (France)
+                        lon = -2 + (hash % 8);  // Longitude entre -2 et 6 (France)
                     }
                     
+                    // Ajoute les coordonnées au tableau bounds
                     bounds.push([lat, lon]);
+                    // Crée un marqueur circulaire rouge à cette position
                     L.circleMarker([lat, lon], { 
-                        radius: 6, 
-                        color: '#ef4444', 
-                        fillColor: '#ef4444',
-                        fillOpacity: 0.9, 
-                        weight: 2,
-                        stroke: true
+                        radius: 6,              // Rayon de 6 pixels
+                        color: '#ef4444',       // Bordure rouge
+                        fillColor: '#ef4444',   // Remplissage rouge
+                        fillOpacity: 0.9,       // Opacité 90%
+                        weight: 2,              // Épaisseur de la bordure
+                        stroke: true            // Affiche la bordure
                     }).addTo(miniMap);
                 });
                 
-                // Ajuster la vue pour afficher tous les points
+                // Ajuste automatiquement la vue pour afficher tous les marqueurs
+                // padding: [30, 30] : marge de 30px autour des marqueurs
+                // maxZoom: 6 : ne zoom pas plus que le niveau 6 (vue régionale)
                 if (bounds.length > 0) {
                     miniMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 6 });
                 }
             }, 500);
-}
+        }
 
+        // FONCTION : Affiche une notification toast en bas de l'écran
+        // Utilisée pour confirmer les actions (suppression, sélection, etc.)
         function showToast(msg) {
             const t = document.getElementById('toast');
-document.getElementById('toast-msg').innerText = msg;
+            // Met le message dans le span #toast-msg
+            document.getElementById('toast-msg').innerText = msg;
+            // Ajoute la classe 'visible' pour l'animation d'apparition
             t.classList.add('visible');
+            // Retire la classe après 3 secondes (disparition automatique)
             setTimeout(() => t.classList.remove('visible'), 3000);
         }
-        function closeAll() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
-}
-        function openModal(id) { document.getElementById(id).classList.add('active');
-}
+        // FONCTION : Ferme toutes les modales ouvertes
+        function closeAll() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active')); }
+        // FONCTION : Ouvre une modale spécifique par son ID
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
 
+        // FONCTION : Ouvre la galerie d'images Wikipedia pour une gare
+        // Recherche d'abord sur Wikimedia Commons, puis fallback sur Wikipedia
         async function openGooglePhotos(nom) {
+            // Nettoie le nom de la gare : retire "Gare de", "TGV", "Centre"
             let cleanCity = nom.split(' - ')[0].replace(/Gare de\s?/gi, '').replace(/TGV/gi, '').replace(/Centre/gi, '').trim();
+            // Extrait le nom de la ville (premier mot)
             const villeName = cleanCity.split(/[-\s]/)[0];
+            // Affiche le nom recherché dans la modale
             document.getElementById('googleQuery').innerText = `${isFrCarnet ? 'Recherche pour :' : 'Search for:'} "${cleanCity}"`;
+            // Ouvre la modale de galerie
             openModal('googlePhotosModal');
             const grid = document.getElementById('googleGrid');
             
-            // Vérifier le cache d'abord
+            // Vérifie si l'image est déjà en cache (preloadée ou déjà chargée)
             if (wikiImageCache[villeName]) {
                 console.log('✅ Image en cache:', villeName);
+                // Affiche directement l'image en cache, fallback sur Unsplash si erreur
                 grid.innerHTML = `<img src="${wikiImageCache[villeName]}" class="google-pic" alt="${cleanCity}" onerror="this.src='https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80'">`;
                 return;
             }
