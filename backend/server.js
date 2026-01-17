@@ -1,11 +1,4 @@
-﻿// ============================================================
-// NOM FICHIER : backend/server.js
-// FUSION COMPLÈTE : API vélo prioritaire + Cache + Air & Bio
-// DATE : 06/01/2026
-// ============================================================
-
-// Charger .env depuis le répertoire du script
-require('dotenv').config({ path: require('path').join(__dirname, '.env') });
+﻿require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
@@ -16,13 +9,11 @@ const NodeCache = require('node-cache');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Cache API (TTL 1 heure)
 const apiCache = new NodeCache({ stdTTL: 3600 });
 
 app.use(cors());
 app.use(express.json());
 
-// --- CHARGEMENT FICHIER VÉLO LOCAL (FALLBACK) ---
 let veloDataCache = { type: "FeatureCollection", features: [] };
 try {
     const filePath = path.join(__dirname, 'velo.geojson');
@@ -33,10 +24,6 @@ try {
 } catch (e) { 
     console.warn("⚠️ Fichier velo.geojson introuvable");
 }
-
-// --- ROUTES API ---
-
-// 1. GARES SNCF
 app.get('/api/gares', async (req, res) => {
     try {
         const r = await axios.get(
