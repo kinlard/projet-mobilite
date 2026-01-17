@@ -3,15 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Page principale contenant la carte interactive avec toutes les gares et les données écologiques -->
     <title>Eco-Escapade | Carte Interactive</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%8C%BF</text></svg>">
     
+    <!-- Bibliothèque Leaflet pour afficher la carte interactive -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Extensions pour regrouper les marqueurs en clusters -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    <!-- Mini-carte de navigation en bas à droite -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-minimap/3.6.1/Control.MiniMap.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Bibliothèque pour les confettis lors d'ajout de favoris -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     
     <link rel="stylesheet" href="style.css">
@@ -19,12 +24,14 @@
 </head>
 <body>
 
+    <!-- Écran de chargement affiché pendant le téléchargement des données -->
     <div id="map-loader">
         <i class="fa-solid fa-bicycle bike-loader"></i>
         <div class="loading-bar-container"><div class="loading-bar" id="loadBar" style="width: 100%;"></div></div>
         <p class="loading-text" id="loader-msg">Chargement de la carte...</p>
     </div>
 
+    <!-- Boîte de tutoriel qui guide les nouveaux utilisateurs -->
     <div id="tutoBox" class="tuto-box">
         <div id="tutoTitle" class="tuto-title">TUTORIEL</div>
         <div id="tutoText" class="tuto-text"></div>
@@ -33,8 +40,9 @@
     </div>
 
     <div class="dashboard-header">
-        <!-- ÉTAGE DESKTOP : Navigation classique (>768px) -->
+        <!-- Navigation adaptée selon la taille d'écran -->
         <div class="brand"><h1>Eco-Escapade</h1></div>
+        <!-- Bouton menu hamburger pour mobile -->
         <button class="burger-menu" id="burgerMenu" style="display: none;">
             <span></span>
             <span></span>
@@ -45,6 +53,7 @@
             <a href="carnet.html" id="nav-fav">Mes favoris</a>
             <a href="apropos.html" id="nav-apropos">À propos</a>
         </div>
+        <!-- Barre de recherche de gares par nom -->
         <div class="search-container" id="searchBox">
             <i class="fa-solid fa-search search-icon"></i>
             <input type="text" id="search-input" list="gares-list" placeholder="Rechercher..." autocomplete="off">

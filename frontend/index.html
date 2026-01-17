@@ -9,32 +9,59 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Définition des couleurs principales du site */
         :root { --primary: #10b981; --dark: #0f172a; --glass: rgba(255, 255, 255, 0.1); }
+        /* Réinitialisation des marges et application du modèle de boîte standard */
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* Configuration de base de la page avec fond noir et texte blanc */
         body { font-family: 'Inter', sans-serif; background: #000; color: white; overflow: hidden; height: 100vh; position: relative; }
+        /* Écran de chargement affiché au démarrage du site */
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #020617; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.8s ease; }
+        /* Icône de vélo animée pendant le chargement */
         .bike-loader { font-size: 3rem; color: var(--primary); animation: ride 1s infinite alternate; }
+        /* Conteneur de la barre de progression */
         .loading-bar-container { width: 200px; height: 4px; background: #333; margin-top: 20px; border-radius: 2px; overflow: hidden; }
+        /* Barre de progression qui se remplit progressivement */
         .loading-bar { height: 100%; width: 0; background: var(--primary); transition: width 0.2s; }
+        /* Animation de mouvement pour l'icône de vélo */
         @keyframes ride { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(-10px) rotate(5deg); } }
+        /* Vidéo de fond avec effet de luminosité réduite */
         .video-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.6; filter: brightness(0.5); }
+        /* Barre de navigation en haut de la page */        /* Barre de navigation en haut de la page */
         .nav { position: fixed; top: 40px; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 5%; z-index: 100; }
+        /* Logo du site avec police spéciale */
         .logo { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 900; color: white; cursor: pointer; }
+        /* Tiret du logo en couleur principale */
         .logo span { color: var(--primary); }
+        /* Bouton de changement de langue avec effet de verre */
         .lang-switch { background: var(--glass); padding: 8px 20px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; font-weight: bold; color: white; transition: 0.3s; font-family: 'Inter', sans-serif; }
+        /* Effet au survol du bouton de langue */
         .lang-switch:hover { background: var(--primary); color: #000; border-color: var(--primary); }
+        /* Section principale centrée verticalement et horizontalement */
         .hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 20px; }
+        /* Titre principal en très grand format */
         .hero-title { font-size: 5rem; font-weight: 900; margin-bottom: 10px; line-height: 1.1; text-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        /* Zone de texte qui s'écrit progressivement comme une machine à écrire */
         .hero-typewriter { font-size: 2rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; font-family: 'Space Grotesk', monospace; min-height: 2.5rem; text-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+        /* Curseur clignotant simulant une machine à écrire */
         .cursor-blink { animation: blink 1s infinite; border-right: 3px solid white; margin-left: 5px; }
+        /* Animation de clignotement du curseur */
         @keyframes blink { 50% { opacity: 0; } }
+        /* Sous-titre descriptif avec fond semi-transparent */
         .hero-subtitle { font-size: 1.1rem; color: #cbd5e1; margin-bottom: 40px; max-width: 700px; line-height: 1.6; font-family: 'Inter', sans-serif; font-weight: 400; background: rgba(0,0,0,0.5); padding: 15px 25px; border-radius: 12px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); }
+        /* Conteneur des boutons d'action */
         .actions-row { display: flex; gap: 20px; margin-top: 10px; justify-content: center; }
+        /* Bouton principal d'appel à l'action */
         .cta-btn { padding: 16px 45px; font-size: 1.2rem; font-weight: 800; color: #000; background: var(--primary); border: none; border-radius: 50px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; box-shadow: 0 0 30px rgba(16, 185, 129, 0.3); text-decoration: none; display: inline-flex; align-items: center; gap: 10px; }
+        /* Effet au survol du bouton principal */
         .cta-btn:hover { background: #34d399; box-shadow: 0 0 40px rgba(16, 185, 129, 0.5); transform: translateY(-2px); }
+        /* Calque de transition animé lors du changement de page */
         .transition-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 0%; background: var(--primary); z-index: 99999; transition: height 0.8s cubic-bezier(0.77, 0, 0.175, 1); bottom: 0; }
+        /* État actif de la transition */
         .transition-overlay.active { height: 100%; }
+        /* Train surprise qui traverse l'écran (fonctionnalité cachée) */
         .easter-train { position: fixed; bottom: 50px; left: -200px; font-size: 4rem; transition: left 3s linear; z-index: 50; opacity: 0; }
+        /* Animation du train en mouvement */
         .easter-train.choo-choo { left: 120vw; opacity: 1; }
     </style>
 </head>
@@ -51,9 +78,11 @@
         <div class="actions-row"><a href="#" class="cta-btn" onclick="startAdventure(event)">COMMENCER <i class="fa-solid fa-arrow-right"></i></a></div>
     </div>
     <script>
+        /* Définition de l'URL de l'API selon l'environnement (local ou production) */
         const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3000' : '';
         const bar = document.getElementById('loadBar');
         let width = 0;
+        /* Simulation de progression du chargement avec incréments aléatoires */
         const loadInt = setInterval(() => {
             width += Math.random() * 15;
             if(width > 100) width = 100;
@@ -64,7 +93,7 @@
             }
         }, 100);
 
-        // PrÉ©-chargement silencieux
+        /* Préchargement des données de l'API en arrière-plan pour accélérer la suite */
         fetch(`${API_BASE}/api/gares`).catch(e => console.log("API OFF"));
 
         const textElement = document.getElementById('typewriter');
@@ -73,6 +102,7 @@
         let currentPhrases = phrasesFr;
         let phraseIndex = 0; let charIndex = 0; let isDeleting = false; let typeTimer;
 
+        /* Animation de texte qui s'écrit et s'efface progressivement */
         function type() {
             const currentPhrase = currentPhrases[phraseIndex];
             textElement.innerText = isDeleting ? currentPhrase.substring(0, charIndex - 1) : currentPhrase.substring(0, charIndex + 1);
@@ -85,8 +115,11 @@
         type();
 
         let clicks = 0;
+        /* Animation surprise : un train traverse l'écran après 5 clics sur le logo */
+    
         function triggerEasterEgg() { clicks++; if(clicks === 5) { document.getElementById('train').classList.add('choo-choo'); setTimeout(() => { document.getElementById('train').classList.remove('choo-choo'); clicks = 0; }, 4000); } }
 
+        /*Déclenchement de la transition animée vers la page de la carte*/
         function startAdventure(e) { e.preventDefault(); document.getElementById('transitionLayer').classList.add('active'); setTimeout(() => { window.location.href = 'map.html?tuto=true'; }, 800); }
     </script>
     
@@ -95,6 +128,7 @@
         
         let isFr = true;
         
+        /* Changement de langue entre français et anglais pour tous les textes de la page */
         function switchLang() {
             isFr = !isFr;
             document.querySelector('.hero-title').innerText = isFr ? HOME_TEXTS.title.fr : HOME_TEXTS.title.en;

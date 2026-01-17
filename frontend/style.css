@@ -1,4 +1,6 @@
-﻿﻿:root { --primary: #10b981; --secondary: #3b82f6; --dark: #0f172a; --bg: #0b0b0b; --card-bg: #1e293b; }
+﻿﻿/* Définition des couleurs principales du site pour une maintenance facile */
+:root { --primary: #10b981; --secondary: #3b82f6; --dark: #0f172a; --bg: #0b0b0b; --card-bg: #1e293b; }
+/* Configuration de base de la page avec fond sombre et texte blanc */
 body { 
     font-family: 'Inter', sans-serif; 
     margin: 0; 
@@ -10,6 +12,7 @@ body {
     min-height: 100vh;
 }
 
+/* Bouton de sélection de langue avec effet de verre */
 .lang-switch {
     background: rgba(255,255,255,0.1);
     padding: 5px 15px;
@@ -24,13 +27,15 @@ body {
 }
 .lang-switch:hover { background: var(--primary); color: #000; border-color: var(--primary); }
 
-/* HEADER IDENTIQUE A CARNET.HTML */
+/* Barre de navigation fixe en haut de la page */
 .dashboard-header { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 96%; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); padding: 12px 30px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); z-index: 1000; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1); }
+/* Logo du site avec couleur principale */
 .brand h1 { margin: 0; font-size: 1.4rem; font-weight: 800; color: var(--primary); }
+/* Liens de navigation avec effet au survol */
 .nav-links a { text-decoration: none; color: #cbd5e1; font-weight: 600; margin-left: 20px; transition:0.3s; cursor: pointer; }
 .nav-links a:hover, .nav-links a.active { color: var(--primary); }
 
-/* CONTENU PAGE A PROPOS */
+/* Conteneur principal pour les pages informatives */
 .container { max-width: 900px; margin: 120px auto 60px; padding: 0 20px; animation: fadeIn 0.8s ease-out; }
 .page-apropos .container { margin-top: 160px; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -64,17 +69,15 @@ li::before { content: "\2023"; color: var(--primary); position: absolute; left: 
 .scale-mid { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
 .scale-good { background: rgba(16, 185, 129, 0.2); color: #10b981; }
 
-/* ============================================================ */
-/* STYLES DYNAMIQUES DEPUIS APP.JS                            */
-/* ============================================================ */
+/* Section des styles pour la carte interactive et les marqueurs */
 
-/* PERF: GPU compositing optimizations for smooth animations */
+/* Optimisations GPU pour des animations fluides sur la carte */
 #map { will-change: transform; }
 .leaflet-tile-container { will-change: transform; }
 .leaflet-zoom-animated { will-change: transform; }
 .leaflet-marker-pane { will-change: transform; }
 
-/* PINS & UI DYNAMIQUES (ComplÉ©ment du CSS HTML) */
+/* Marqueurs de gare avec forme de punaise */
 .marker-pin { width: 30px;
 height: 30px; border-radius: 50% 50% 50% 0; position: absolute; transform: rotate(-45deg) translateZ(0); left: 50%; top: 50%; margin: -15px 0 0 -15px;
 border: 2px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; transition: transform 0.2s ease;

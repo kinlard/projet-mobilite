@@ -1,4 +1,5 @@
-﻿require('dotenv').config({ path: require('path').join(__dirname, '.env') });
+﻿//Chargement des variables d'environnement depuis le fichier .env
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
@@ -9,11 +10,14 @@ const NodeCache = require('node-cache');
 const app = express();
 const port = process.env.PORT || 3000;
 
+//Mise en cache des réponses API pour éviter de surcharger les serveurs externes (durée : 1 heure)
 const apiCache = new NodeCache({ stdTTL: 3600 });
 
+//Autorisation des requêtes depuis n'importe quel domaine (nécessaire pour que le frontend puisse communiquer avec le backend)
 app.use(cors());
 app.use(express.json());
 
+//Chargement d'un fichier local contenant les emplacements de parkings vélo en cas de panne de l'API principale
 let veloDataCache = { type: "FeatureCollection", features: [] };
 try {
     const filePath = path.join(__dirname, 'velo.geojson');
@@ -24,6 +28,8 @@ try {
 } catch (e) { 
     console.warn("⚠️ Fichier velo.geojson introuvable");
 }
+
+//Récupération de la liste complète des gares ferroviaires françaises depuis les données ouvertes SNCF
 app.get('/api/gares', async (req, res) => {
     try {
         const r = await axios.get(
@@ -31,6 +37,7 @@ app.get('/api/gares', async (req, res) => {
         );
         if (!Array.isArray(r.data)) throw new Error('Format API invalide');
 
+        //Transformation des données brutes en format simplifié avec identifiant, nom, coordonnées et type de gare
         const d = r.data
             .map((g, i) => ({
                 id: i,
@@ -48,7 +55,7 @@ app.get('/api/gares', async (req, res) => {
     }
 });
 
-// 2. RAILS (WFS)
+//Récupération du tracé géographique des lignes ferroviaires nationales
 app.get('/api/wfs-rails', async (req, res) => {
     try {
         const r = await axios.get(
@@ -61,7 +68,7 @@ app.get('/api/wfs-rails', async (req, res) => {
     }
 });
 
-// 3. BORNES ÉLECTRIQUES (IRVE)
+//Récupération des emplacements de bornes de recharge électrique pour véhicules
 app.get('/api/irve', async (req, res) => {
     try {
         const r = await axios.get(
@@ -74,7 +81,7 @@ app.get('/api/irve', async (req, res) => {
     }
 });
 
-// 4. AIRES DE COVOITURAGE
+//Récupération des aires de covoiturage disponibles sur le territoire
 app.get('/api/covoiturage', async (req, res) => {
     try {
         const r = await axios.get(
@@ -87,7 +94,7 @@ app.get('/api/covoiturage', async (req, res) => {
     }
 });
 
-// 5. PARKINGS VÉLOS (API prioritaire, fichier local en fallback)
+//Récupération des parkings vélos dans une zone géographique définie (tentative API en priorité, fichier local en secours)
 app.get('/api/parking-velo', async (req, res) => {
     const { minLat, maxLat, minLon, maxLon } = req.query;
 
@@ -95,16 +102,17 @@ app.get('/api/parking-velo', async (req, res) => {
         return res.json({ type: 'FeatureCollection', features: [] });
     }
 
-    // PRIORITÉ 1 : Tenter l'API Opendatasoft
+    //Tentative de récupération depuis l'API en ligne
     try {
         const url = 'https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/osm-france-bicycle-parking/exports/geojson?limit=-1';
         
         console.log('🔄 Tentative récupération API vélos...');
-        const r = await axios.get(url, { timeout: 8000 }); // Timeout 8s
+        const r = await axios.get(url, { timeout: 8000 });
         const data = r.data;
 
         const all = Array.isArray(data.features) ? data.features : [];
 
+        //Filtrage des parkings situés dans la zone demandée par l'utilisateur
         const resList = all.filter((f) => {
             if (!f.geometry || !f.geometry.coordinates) return false;
             const c = f.geometry.coordinates;
@@ -116,6 +124,7 @@ app.get('/api/parking-velo', async (req, res) => {
             );
         });
 
+        //Limitation à 5000 points maximum pour ne pas ralentir l'affichage
         const final = resList.length > 5000
             ? resList.filter((_, i) => i % Math.ceil(resList.length / 5000) === 0)
             : resList;
@@ -126,7 +135,7 @@ app.get('/api/parking-velo', async (req, res) => {
     } catch (apiError) {
         console.warn('⚠️ API vélos échouée, basculement sur fichier local...');
         
-        // PRIORITÉ 2 : Utiliser le fichier local
+        //Utilisation du fichier de secours si l'API est indisponible
         if (veloDataCache.features.length > 0) {
             const resList = veloDataCache.features.filter(f => {
                 if (!f.geometry || !f.geometry.coordinates) return false;
@@ -147,13 +156,12 @@ app.get('/api/parking-velo', async (req, res) => {
             return res.json({ type: 'FeatureCollection', features: final });
         }
 
-        // Aucune source disponible
         console.error('❌ Aucune source vélo disponible');
         res.json({ type: 'FeatureCollection', features: [] });
     }
 });
 
-// 6. QUALITÉ DE L'AIR (OpenAQ v3 - avec note sur 10)
+//Récupération de la qualité de l'air à proximité d'une position donnée avec notation sur 10
 app.get('/api/air-quality', async (req, res) => {
     const { lat, lon } = req.query;
     
@@ -169,7 +177,8 @@ app.get('/api/air-quality', async (req, res) => {
     }
     
     try {
-        const radius = 25000; // 25km pour trouver plus de stations
+        //Recherche de stations de mesure dans un rayon de 25 km
+        const radius = 25000;
         let response;
         try {
             response = await axios.get(
@@ -194,14 +203,13 @@ app.get('/api/air-quality', async (req, res) => {
         const data = response.data || {};
         
         if (data.results && data.results.length > 0) {
-            // Chercher une station avec des données récentes (sensors dans API v3)
+            //Recherche d'une station avec des capteurs actifs
             let bestStation = null;
             let bestSensor = null;
             
             for (const station of data.results) {
-                // API v3 utilise 'sensors' au lieu de 'parameters'
                 if (station.sensors && station.sensors.length > 0) {
-                    // Priorité: pm25 > pm10 > o3 > no2
+//Priorité aux polluants les plus significatifs : particules fines PM2.5 et PM10, ozone, dioxyde d'azote
                     const priorityParams = ['pm25', 'pm10', 'o3', 'no2'];
                     for (const paramName of priorityParams) {
                         const sensor = station.sensors.find(s => 
@@ -218,34 +226,24 @@ app.get('/api/air-quality', async (req, res) => {
                 }
             }
             
-            // Calculer la note sur 10 basée sur l'indice de qualité de l'air
-            // On utilise une estimation basée sur les standards européens
+            //Calcul d'une note de qualité de l'air sur 10 basée sur la surveillance de la zone
             let note = 7;
             let quality = 'Bon';
             let color = '#10b981';
             let paramType = (bestSensor && bestSensor.parameter && bestSensor.parameter.name) || 'estimated';
             
-            // Si on n'a pas de données de capteur, on estime basé sur la localisation
-            // Les zones rurales/vertes ont généralement une meilleure qualité d'air
             if (!bestSensor) {
-                // Estimation basée sur le type de zone (gares = souvent urbain)
-                // Note par défaut entre 6 et 8 pour la France
+                //Les zones rurales et vertes ont généralement une meilleure qualité d'air
                 note = 7;
                 quality = 'Bon';
                 color = '#10b981';
                 console.log(`⚠️ Pas de capteur trouvé, estimation: ${note}/10`);
             } else {
-                // Conversion des valeurs en note sur 10 selon le polluant
-                // PM2.5: 0-10 µg/m³ = excellent, 10-25 = bon, 25-50 = moyen, >50 = mauvais
-                // O3: 0-60 µg/m³ = excellent, 60-120 = bon, 120-180 = moyen, >180 = mauvais
-                // Note: Les capteurs peuvent avoir des valeurs dans lastValue ou average
-                
-                // Pour l'API v3, on estime la qualité basée sur la présence de capteurs actifs
-                // Plus il y a de paramètres mesurés, plus la zone est surveillée (souvent urbaine)
+                //Estimation basée sur l'intensité de la surveillance : plus une zone est surveillée, plus elle est potentiellement polluée
                 const sensorCount = bestStation.sensors?.length || 0;
                 
                 if (sensorCount <= 2) {
-                    note = 8; // Zone peu surveillée = probablement bonne qualité
+                    note = 8;
                     quality = 'Très bon';
                     color = '#10b981';
                 } else if (sensorCount <= 4) {
@@ -253,7 +251,7 @@ app.get('/api/air-quality', async (req, res) => {
                     quality = 'Bon';
                     color = '#22c55e';
                 } else {
-                    note = 6; // Zone très surveillée = probablement plus polluée
+                    note = 6;
                     quality = 'Correct';
                     color = '#f59e0b';
                 }
@@ -274,7 +272,7 @@ app.get('/api/air-quality', async (req, res) => {
             console.log(`✅ Air quality récupérée : ${note}/10 (${quality})`);
             res.json(result);
         } else {
-            // Pas de station trouvée, on donne une estimation par défaut
+            //Absence de station proche : estimation optimiste pour les zones peu urbanisées
             const result = {
                 success: true,
                 data: {
@@ -306,7 +304,7 @@ app.get('/api/air-quality', async (req, res) => {
     }
 });
 
-// 7. PROPRETÉ EN GARE (SNCF Open Data)
+//Récupération des notes de propreté mesurées dans les gares françaises (sur 5)
 app.get('/api/proprete-gares', async (req, res) => {
     const cacheKey = 'proprete_gares';
     const cached = apiCache.get(cacheKey);
@@ -320,12 +318,11 @@ app.get('/api/proprete-gares', async (req, res) => {
             'https://ressources.data.sncf.com/api/records/1.0/search/?dataset=proprete-en-gare&q=&rows=1000'
         );
         
-        // API SNCF : taux_de_conformite (%) → conversion en note sur 5
+        //Conversion du taux de conformité (pourcentage) en note sur 5 étoiles
         const data = r.data.records
             .map(record => {
                 const fields = record.fields || {};
                 const tauxConformite = fields.taux_de_conformite;
-                // Conversion taux (0-100%) vers note (0-5)
                 const noteProprete = tauxConformite ? Math.round((tauxConformite / 20) * 10) / 10 : null;
                 
                 return {
@@ -338,7 +335,7 @@ app.get('/api/proprete-gares', async (req, res) => {
             })
             .filter(g => g.nom_gare && g.note_proprete !== null);
         
-        // Dédoublonner : garder la mesure la plus récente par gare
+        //Conservation uniquement de la mesure la plus récente pour chaque gare
         const garesMap = {};
         data.forEach(g => {
             const key = g.nom_gare.toLowerCase();
@@ -358,7 +355,7 @@ app.get('/api/proprete-gares', async (req, res) => {
     }
 });
 
-// 8. DÉFIBRILLATEURS EN GARE (SNCF Open Data)
+//Récupération de la localisation et du nombre de défibrillateurs disponibles dans les gares
 app.get('/api/defibrillateurs-gares', async (req, res) => {
     const cacheKey = 'defibrillateurs_gares';
     const cached = apiCache.get(cacheKey);
@@ -372,14 +369,14 @@ app.get('/api/defibrillateurs-gares', async (req, res) => {
             'https://ressources.data.sncf.com/api/records/1.0/search/?dataset=equipements-defibrillateurs&q=&rows=2000'
         );
         
-        // Grouper les défibrillateurs par gareid et compter
+        //Regroupement des défibrillateurs par gare pour compter le nombre total d'appareils disponibles
         const garesMap = {};
         r.data.records.forEach(record => {
             const fields = record.fields || {};
             const gareid = fields.gareid;
             if (!gareid) return;
             
-            // Parser les coordonnées
+            //Extraction des coordonnées géographiques depuis le format texte
             let lat = null, lon = null;
             if (fields.position_geographique) {
                 const coords = fields.position_geographique.split(',').map(c => parseFloat(c.trim()));
@@ -405,7 +402,7 @@ app.get('/api/defibrillateurs-gares', async (req, res) => {
             }
         });
         
-        // Convertir en tableau avec emplacements uniques
+        //Création d'un résumé avec les 3 emplacements principaux pour chaque gare
         const data = Object.values(garesMap).map(g => ({
             ...g,
             emplacement: [...new Set(g.emplacements)].slice(0, 3).join(', ') || 'Hall principal'
@@ -421,7 +418,8 @@ app.get('/api/defibrillateurs-gares', async (req, res) => {
     }
 });
 
-// 9. BIODIVERSITÉ (iNaturalist)
+
+//Récupération des observations d'espèces vivantes à proximité d'un point géographique
 app.get('/api/biodiversity', async (req, res) => {
     const { lat, lon, radius = 5 } = req.query;
     
@@ -445,9 +443,9 @@ app.get('/api/biodiversity', async (req, res) => {
         
         const observations = response.data.results;
         
-        // FIX: Protection contre obs.taxon undefined pour éviter crash
+        //Extraction des informations essentielles pour chaque espèce observée
         const species = observations
-            .filter(obs => obs.taxon) // Filtrer les observations sans taxon
+            .filter(obs => obs.taxon)
             .map(obs => ({
                 name: obs.taxon.preferred_common_name || obs.taxon.name,
                 scientificName: obs.taxon.name,
@@ -474,7 +472,7 @@ app.get('/api/biodiversity', async (req, res) => {
     }
 });
 
-// 10. ENRICHED STATS - Statistiques enrichies en 1 appel
+//Récupération des statistiques météo enrichies : recherche des gares les plus chaudes et les plus froides de France en temps réel
 app.get('/api/enriched-stats', async (req, res) => {
     const { centerLat, centerLon } = req.query;
     
@@ -486,7 +484,7 @@ app.get('/api/enriched-stats', async (req, res) => {
     }
     
     try {
-        // 1. Récupérer toutes les gares depuis l'API SNCF
+        //Récupération de toutes les gares françaises pour analyse météorologique
         console.log('🔄 Récupération de TOUTES les gares pour météo extrême...');
         const garesRes = await axios.get(
             'https://ressources.data.sncf.com/api/explore/v2.1/catalog/datasets/gares-de-voyageurs/exports/json',
@@ -497,7 +495,7 @@ app.get('/api/enriched-stats', async (req, res) => {
             throw new Error('Aucune gare récupérée');
         }
         
-        // 2. Filtrer les gares avec coordonnées valides (champ = position_geographique)
+        //Conservation uniquement des gares avec coordonnées GPS valides
         const garesAvecCoords = garesRes.data
             .filter(g => g.position_geographique && g.position_geographique.lat && g.position_geographique.lon && g.nom)
             .map(g => ({
@@ -508,27 +506,19 @@ app.get('/api/enriched-stats', async (req, res) => {
         
         console.log(`📍 ${garesAvecCoords.length} gares avec coordonnées`);
         
-        // 3. Stratégie: prendre les extrêmes géographiques pour avoir des températures variées
-        // Gares les plus au nord (froid), sud (chaud), en altitude (froid), côte (doux)
+        //Sélection stratégique des gares pour capturer la diversité climatique française
         const garesSortedByLat = [...garesAvecCoords].sort((a, b) => a.lat - b.lat);
-        
-        // Sélection intelligente: 
-        // - 10 gares les plus au SUD (potentiellement chaudes)
-        // - 10 gares les plus au NORD (potentiellement froides)
-        // - 15 gares en ALTITUDE (Alpes, Pyrénées, Massif Central) - lat entre 43-46, lon > 5 ou < 1
-        // - 15 gares intermédiaires réparties
         
         const garesExtremes = [];
         
-        // Gares du Sud (10 premières par latitude basse)
+        //Gares du Sud (climats méditerranéens chauds)
         garesExtremes.push(...garesSortedByLat.slice(0, 10));
         
-        // Gares du Nord (10 dernières par latitude haute)
+        //Gares du Nord (climats continentaux froids)
         garesExtremes.push(...garesSortedByLat.slice(-10));
         
-        // Gares potentiellement en altitude (Alpes, Pyrénées)
-        const garesAltitude = garesAvecCoords.filter(g => 
-            // Alpes: lat 44-46, lon 5-8
+        //Gares en altitude (Alpes, Pyrénées, Massif Central : températures basses)
+        const garesAltitude = garesAvecCoords.filter(g =>
             (g.lat >= 44 && g.lat <= 46.5 && g.lon >= 5 && g.lon <= 8) ||
             // Pyrénées: lat 42-43.5, lon -2 à 3
             (g.lat >= 42 && g.lat <= 43.5 && g.lon >= -2 && g.lon <= 3) ||
@@ -537,7 +527,7 @@ app.get('/api/enriched-stats', async (req, res) => {
         );
         garesExtremes.push(...garesAltitude.slice(0, 15));
         
-        // Quelques gares intermédiaires
+        //Échantillon de gares intermédiaires pour couverture nationale
         const step = Math.floor(garesSortedByLat.length / 15);
         for (let i = 0; i < 15; i++) {
             const g = garesSortedByLat[i * step];
@@ -546,12 +536,12 @@ app.get('/api/enriched-stats', async (req, res) => {
             }
         }
         
-        // Dédupliquer par nom
+        //Élimination des doublons
         const garesUniques = [...new Map(garesExtremes.map(g => [g.name, g])).values()];
         
         console.log(`🌡️ Météo pour ${garesUniques.length} gares stratégiques`);
         
-        // 4. Appels météo parallèles (par batch pour ne pas surcharger)
+        // Récupération des températures par lots de 20 pour ne pas saturer l'API météo
         const batchSize = 20;
         let allWeatherResults = [];
         
@@ -571,12 +561,12 @@ app.get('/api/enriched-stats', async (req, res) => {
             allWeatherResults.push(...batchResults);
         }
         
-        // 5. Filtrer les gares avec température valide
+            // Conservation uniquement des gares avec température valide
         const validWeather = allWeatherResults.filter(w => w.temp !== null);
         
         console.log(`✅ ${validWeather.length} gares avec température valide`);
         
-        // 6. Trouver la gare la plus chaude et la plus froide
+        // Identification des records de température
         let hottest = null;
         let coldest = null;
         
@@ -595,7 +585,7 @@ app.get('/api/enriched-stats', async (req, res) => {
             timestamp: Date.now()
         };
         
-        // Cache 5 minutes pour les stats enrichies
+        //Mise en cache des statistiques pour 5 minutes (données évolutives)
         apiCache.set(cacheKey, result, 300);
         console.log(`🌡️ Enriched stats - Plus chaud: ${hottest?.name} (${hottest?.temp}°C), Plus froid: ${coldest?.name} (${coldest?.temp}°C)`);
         res.json(result);
@@ -610,19 +600,16 @@ app.get('/api/enriched-stats', async (req, res) => {
     }
 });
 
-// --- SERVIR LE FRONTEND ---
+//Mise à disposition des fichiers du site web (pages HTML, CSS, JavaScript)
 app.use(express.static(path.join(__dirname, '../frontend')));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-// --- DÉMARRAGE DU SERVEUR ---
+//Démarrage du serveur sur le port configuré
 app.listen(port, () => {
     console.log(`🚀 Serveur démarré sur le port ${port}`);
     console.log(`📍 Frontend : http://localhost:${port}`);
 });
 
-// ============================================================
-// FIN DU FICHIER (ttl 09/01/2026)
-// ============================================================

@@ -1,13 +1,11 @@
-// ============================================================
-// CENTRALIZED TEXT & TRANSLATIONS
-// ============================================================
+//Fichier centralisé contenant tous les textes du site pour faciliter la traduction et la maintenance
 
-// ===== AVIS INTELLIGENTS =====
+//Messages d'appréciation affichés selon la qualité de la gare
 export const AVIS_BAD = ["Peu d'équipements.", "Gare isolée.", "Manque de connexions.", "À fuir."];
 export const AVIS_MID = ["Gare correcte.", "Quelques équipements.", "Bon pour un départ.", "Pratique mais basique."];
 export const AVIS_GOOD = ["Excellente gare !", "Top pour le vélo.", "Super connectée.", "Voyage vert idéal.", "Bien desservie."];
 
-// ===== MAJOR CITIES =====
+//Liste des grandes villes françaises pour pré-sélection intelligente
 export const MAJOR_CITIES = [
     "Paris", "Marseille", "Lyon", "Toulouse", "Nice", "Nantes", "Montpellier",
     "Strasbourg", "Bordeaux", "Lille", "Rennes", "Reims", "Saint-Étienne",
@@ -16,7 +14,7 @@ export const MAJOR_CITIES = [
     "Tours", "Amiens", "Limoges", "Annecy", "Perpignan", "Metz", "Besançon"
 ];
 
-// ===== FALLBACK IMAGES =====
+//Images de secours utilisées si aucune photo n'est disponible pour une ville
 export const FALLBACK_IMAGES = [
     "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=500&q=80",
     "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=500&q=80",
@@ -25,7 +23,7 @@ export const FALLBACK_IMAGES = [
     "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&q=80"
 ];
 
-// ===== LOADING PHRASES =====
+//Phrases humoristiques affichées aléatoirement pendant le chargement du site
 export const LOADING_PHRASES = [
     "Gonflage des pneus...",
     "Alignement des rails...",
@@ -72,9 +70,9 @@ export const LOADING_PHRASES = [
     "Compostage des lignes de code inutiles..."
 ];
 
-// ===== APP TEXTS (JS_TEXTS from app.js) =====
+//Textes de l'application en français et anglais pour le système de traduction
 export const APP_TEXTS = {
-    // === TUTORIEL COMPLET (4 TAPES) ===
+    //Contenu du tutoriel en 4 étapes pour guider les nouveaux utilisateurs
     tuto1: {
         title: { fr: "🔔 TUTORIEL - étape 1/4", en: "🔔 TUTORIAL - Step 1/4" },
         text: { fr: "Bienvenue sur Eco-Escapade ! Cette carte interactive vous aide à voyager en train de manière écologique. Utilisez la barre de recherche en haut pour trouver une gare, ou cliquez directement sur un marqueur bleu sur la carte pour voir ses informations.", en: "Welcome to Eco-Escapade! This interactive map helps you travel by train in an eco-friendly way. Use the search bar at the top to find a station, or click directly on a blue marker on the map to see its information." }

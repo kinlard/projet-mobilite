@@ -1,6 +1,4 @@
-﻿// ============================================================
-// 0. IMPORTS ES MODULES
-// ============================================================
+﻿//Importation des textes et messages depuis le fichier centralisé de traduction
 import { 
     AVIS_BAD, AVIS_MID, AVIS_GOOD,
     MAJOR_CITIES, FALLBACK_IMAGES,
@@ -8,18 +6,12 @@ import {
     APP_TEXTS
 } from './js/textes.js';
 
-// ============================================================
-// 1. STYLE & CONFIGURATION
-// ============================================================
-
-// URL de l'API (Localhost ou Prod)
+//Détermination de l'URL de l'API selon l'environnement d'exécution
 const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? 'http://localhost:3000'
     : '';
 
-// ============================================================
-// 2. INITIALISATION CARTE
-// ============================================================
+//Initialisation de la carte interactive centrée sur la France
 console.log("🚀 Initialisation Eco-Escapade - FIX ZONE piétonne");
 
 const map = L.map('map', {
@@ -39,18 +31,18 @@ const googleSat = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z
 });
 map.addLayer(googleSat);
 
-// FIX: Initialisation globale des données et des couches manquantes
-// SAFETY: définitions minimales pour éviter les ReferenceError au démarrage
+// Structure de données centrale contenant toutes les informations chargées depuis l'API
 const DATA = {
     gares: [],
-    garesById: new Map(), // PERF: Index O(1) par ID
+    garesById: new Map(),
     velos: [],
     bornes: [],
     covoit: [],
-    proprete: {},       // Données propreté indexées par nom de gare
-    defibrillateurs: [] // Données défibrillateurs avec coordonnées
+    proprete: {},
+    defibrillateurs: []
 };
 
+//Création de groupes de marqueurs qui se regroupent automatiquement au zoom arrière
 const createCluster = (cls) => L.markerClusterGroup({
     showCoverageOnHover: false,
     // PERF: Optimisations clusters low-end
@@ -86,12 +78,13 @@ const railsLayer = L.geoJSON(null, {
 // Regroupe les éléments de localisation utilisateur (pin + cercle) pour nettoyage facile
 const userLocationLayer = L.layerGroup().addTo(map);
 
-// FIX: Initialiser variables globales pour la gestion de la zone piétonne
+//Cercle indiquant la zone accessible à pied depuis une gare sélectionnée
 let walkCircle = null;
 
-// FIX: Déclaration globale de GLOBAL_STATS pour éviter ReferenceError
+// Statistiques globales sur les conditions météorologiques extrêmes en France
 let GLOBAL_STATS = null;
 
+// Compteur affichant le nombre de gares visibles à l'écran
 const counterDiv = L.DomUtil.create('div', 'visible-counter');
 counterDiv.innerHTML = `<i class="fa-solid fa-eye"></i> <span id="count-val">0</span> gares`;
 document.body.appendChild(counterDiv);
