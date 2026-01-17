@@ -1063,9 +1063,9 @@ function initSecondaryMarkers(irve, covoit, velos) {
                 </div>
                 <div style="padding: 16px; background: white;">
                     <div style="font-weight:700; color:#0f172a; margin-bottom:12px; font-size:1rem;">${nom}</div>
-                    <div style="margin-bottom:8px; display:flex; align-items:center; gap:8px; color:#334155;"><i class="fa-solid fa-plug" style="color:#f59e0b; width:20px;"></i> ${prise} ${puissance ? ' � ' + puissance : ''}</div>
+                    <div style="margin-bottom:8px; display:flex; align-items:center; gap:8px; color:#334155;"><i class="fa-solid fa-plug" style="color:#f59e0b; width:20px;"></i> ${prise} ${puissance ? ' &bull; ' + puissance : ''}</div>
                     <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px; color:#334155;"><i class="fa-solid fa-unlock" style="color:#64748b; width:20px;"></i> ${acces}</div>
-                    <a href="https://www.google.com/maps?q=${f.geometry.coordinates[1]},${f.geometry.coordinates[0]}" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; text-align:center; background:#e2e8f0; color:#1e293b; padding:10px; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.9rem; transition:all 0.2s ease;" onmouseover="this.style.background='#cbd5e1'" onmouseout="this.style.background='#e2e8f0'"><i class="fa-solid fa-map-location-dot"></i> ${tIrve.maps[lang]}</a>
+                    <a href="https://www.google.com/maps?q=${f.geometry.coordinates[1]},${f.geometry.coordinates[0]}" target="_blank" style="display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; text-align:center; background:#e2e8f0; color:#1e293b; padding:10px; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.9rem; transition:all 0.2s ease; box-sizing:border-box;" onmouseover="this.style.background='#cbd5e1'" onmouseout="this.style.background='#e2e8f0'"><i class="fa-solid fa-map-location-dot"></i> ${tIrve.maps[lang]}</a>
                 </div>
             </div>`;
             iBuf.push(L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
