@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="responsive.css">
 </head>
 <body class="page-apropos">
 
@@ -31,41 +32,58 @@
 
         <section class="section-card">
             <h2><i class="fa-solid fa-lightbulb"></i> Concept du projet</h2>
-            <p>Eco-Escapade est une application de webmapping universitaire conçue pour évaluer l'accessibilité écologique des gares SNCF en France. Notre objectif est simple : promouvoir la mobilité durable en mettant en lumière les gares les mieux connectées aux transports doux.</p>
-            <p><strong>Vision :</strong> Faciliter les choix des éco-voyageurs et des étudiants soucieux de leur empreinte carbone en leur fournissant des données claires et transparentes.</p>
+            <p>Eco-Escapade est une application de webmapping universitaire conçue pour évaluer l'accessibilité écologique des gares SNCF en France. L'objectif est de promouvoir la mobilité durable en mettant en lumière les gares les mieux connectées aux transports doux (vélo, véhicules électriques, covoiturage).</p>
+            <p><strong>Public visé :</strong> Éco-voyageurs, étudiants et citoyens soucieux de leur empreinte carbone souhaitant planifier des déplacements en train de manière responsable.</p>
+            <p><strong>Fonctionnalités clés :</strong></p>
+            <ul>
+                <li>Carte interactive avec visualisation des gares TGV et TER</li>
+                <li>Score écologique calculé automatiquement pour chaque gare</li>
+                <li>Zone piétonne de 10 minutes pour identifier les services accessibles à pied</li>
+                <li>Comparateur de gares avec suggestions d'alternatives mieux notées</li>
+                <li>Carnet de favoris avec sauvegarde locale</li>
+                <li>Données météo et qualité de l'air en temps réel</li>
+            </ul>
         </section>
 
         <section class="section-card">
             <h2><i class="fa-solid fa-calculator"></i> Méthodologie</h2>
-            <p>Le cœur du projet repose sur un algorithme qui attribue un score écologique de 0 à 10 à chaque gare. Ce score est calculé dynamiquement en fonction des services de mobilité douce à proximité.</p>
+            <p>Le cœur du projet repose sur un algorithme qui attribue un <strong>score écologique de 0 à 10</strong> à chaque gare. Ce score est calculé dynamiquement en fonction des services de mobilité douce à proximité.</p>
             
             <h3>Formule de calcul :</h3>
             <div class="formula-box">
-                Note = Bonus TGV (1pt) + Points Vélos (max 7pts) + Points Bornes (max 2pts) + Points Covoiturage (max 1pt)
+                <strong>Note = Bonus TGV + Points Vélos + Points Bornes IRVE + Points Covoiturage</strong>
                 <br><br>
-                - <strong>Vélos (10 min à pied) :</strong> 1 point par parking, plafonné à 7 points.
-                <br>
-                - <strong>Bornes IRVE (3km) :</strong> 0,5 point par borne, plafonné à 2 points.
-                <br>
-                - <strong>Covoiturage (3km) :</strong> 0,5 point par aire, plafonné à 1 point.
+                <strong>Bonus TGV :</strong> +1 point si la gare est desservie par des trains TGV.
+                <br><br>
+                <strong>Parkings Vélos (rayon 800m, ~10 min à pied) :</strong>
+                <br>→ +1 point par parking vélo détecté, plafonné à <strong>7 points max</strong>.
+                <br><br>
+                <strong>Bornes IRVE (rayon 3 km) :</strong>
+                <br>→ +0.5 point par borne de recharge électrique, plafonné à <strong>2 points max</strong>.
+                <br><br>
+                <strong>Aires de Covoiturage (rayon 3 km) :</strong>
+                <br>→ +0.5 point par aire de covoiturage, plafonné à <strong>1 point max</strong>.
             </div>
 
             <h3>Échelle de notation :</h3>
             <div class="score-scale">
-                <div class="scale-item scale-bad">0 - 4.9 : 🔴 Potentiel limité</div>
-                <div class="scale-item scale-mid">5 - 7.9 : 🟠 Bon potentiel</div>
-                <div class="scale-item scale-good">8 - 10 : 🟢 Excellent</div>
+                <div class="scale-item scale-bad">0 - 3.9 : 🔴 Potentiel limité</div>
+                <div class="scale-item scale-mid">4 - 6.9 : 🟠 Bon potentiel</div>
+                <div class="scale-item scale-good">7 - 10 : 🟢 Excellent</div>
             </div>
+            <p style="margin-top: 15px; font-size: 0.9rem; color: #94a3b8;"><em>Note : La formule Haversine est utilisée pour calculer les distances géodésiques entre la gare et les équipements environnants.</em></p>
         </section>
 
         <section class="section-card">
             <h2><i class="fa-solid fa-database"></i> Sources de données</h2>
             <ul>
-                <li><strong>API SNCF :</strong> Gares de voyageurs et tracé des lignes ferroviaires (WFS).</li>
-                <li><strong>OpenDataSoft :</strong> Localisation des bornes de recharge électrique (IRVE) et aires de covoiturage.</li>
-                <li><strong>OpenStreetMap :</strong> Base de données de plus de 200 000 parkings vélos en France.</li>
-                <li><strong>Open-Meteo :</strong> Données météorologiques en temps réel pour chaque gare.</li>
-                <li><strong>Wikipedia API :</strong> Récupération dynamique des photos des villes.</li>
+                <li><strong>API SNCF Open Data :</strong> Liste des gares de voyageurs avec coordonnées GPS, type (TGV/TER), et tracé des lignes ferroviaires (WFS GeoJSON). Données de propreté en gare et localisation des défibrillateurs.</li>
+                <li><strong>OpenDataSoft (données OSM) :</strong> Parkings vélos en France (osm-france-bicycle-parking), bornes de recharge électrique IRVE (osm-france-charging-station), et aires de covoiturage (aires-covoiturage).</li>
+                <li><strong>Open-Meteo API :</strong> Données météorologiques en temps réel (température, conditions) pour chaque gare.</li>
+                <li><strong>OpenAQ API :</strong> Indice de qualité de l'air basé sur les stations de mesure proches (PM2.5, PM10, O3, NO2).</li>
+                <li><strong>iNaturalist API :</strong> Données de biodiversité locale (espèces observées dans un rayon de 5 km autour des gares).</li>
+                <li><strong>Wikipedia API :</strong> Récupération dynamique des photos des villes pour illustrer les gares.</li>
+                <li><strong>Google Satellite Tiles :</strong> Fond de carte hybride satellite avec labels.</li>
             </ul>
         </section>
 
@@ -73,29 +91,40 @@
             <h2><i class="fa-solid fa-code"></i> Technologies utilisées</h2>
             <h3>Frontend</h3>
             <div class="tech-tags">
-                <span class="tag frontend">Leaflet.js</span>
-                <span class="tag frontend">MarkerCluster</span>
+                <span class="tag frontend">Leaflet.js 1.9</span>
+                <span class="tag frontend">Leaflet.MarkerCluster</span>
+                <span class="tag frontend">Leaflet.MiniMap</span>
+                <span class="tag frontend">Leaflet.EasyPrint</span>
                 <span class="tag frontend">OSM Buildings</span>
+                <span class="tag frontend">Canvas Confetti</span>
+                <span class="tag frontend">Font Awesome 6</span>
                 <span class="tag frontend">HTML5 / CSS3</span>
-                <span class="tag frontend">JavaScript ES6+</span>
+                <span class="tag frontend">JavaScript ES6+ Modules</span>
             </div>
             
             <h3>Backend</h3>
             <div class="tech-tags">
                 <span class="tag backend">Node.js</span>
-                <span class="tag backend">Express</span>
+                <span class="tag backend">Express 5</span>
                 <span class="tag backend">Axios</span>
-                <span class="tag backend">GeoJSON Caching</span>
+                <span class="tag backend">node-cache</span>
+                <span class="tag backend">dotenv</span>
+                <span class="tag backend">CORS</span>
             </div>
+
+            <h3>Architecture</h3>
+            <p style="margin-top: 10px; color: #cbd5e1; font-size: 0.95rem;">Le backend Node.js/Express agit comme proxy API avec mise en cache (TTL 1h pour les données, 24h pour propreté/défibrillateurs). Il agrège les données de multiples APIs externes et les expose au frontend via des endpoints REST. Le frontend est une Single Page Application (SPA) utilisant Leaflet pour le rendu cartographique avec clusters optimisés et animations fluides (GPU compositing).</p>
         </section>
 
         <section class="section-card">
             <h2><i class="fa-solid fa-user-graduate"></i> Crédits</h2>
-            <p>Ce projet a été réalisé dans le cadre de la Licence Professionnelle GGAT (Géomatique et Géographie de l'Aménagement du Territoire) à l'IUT d'Auch.</p>
+            <p>Ce projet a été réalisé dans le cadre de la <strong>Licence Professionnelle GGAT</strong> (Géomatique et Géographie de l'Aménagement du Territoire) à l'<strong>IUT d'Auch</strong> (Université Toulouse Jean Jaurès).</p>
             <ul>
-                <li><strong>Développeur :</strong> Étudiant LP GGAT</li>
-                <li><strong>Année :</strong> 2025-2026</li>
+                <li><strong>Développeur :</strong> Hanan JEMMAL – Étudiant LP GGAT</li>
+                <li><strong>Année universitaire :</strong> 2025-2026</li>
+                <li><strong>Dernière mise à jour :</strong> Janvier 2026</li>
             </ul>
+            <p style="margin-top: 15px; font-size: 0.9rem; color: #94a3b8;"><em>Projet open source à vocation pédagogique – Données issues d'APIs publiques.</em></p>
         </section>
     </div>
 
