@@ -274,76 +274,124 @@
                 </div>
             </div>
 
+            <!-- Conteneur dynamique pour afficher la liste des gares correspondant à la catégorie choisie -->
+            <!-- Rempli par JavaScript avec des cartes de gares classées par score écologique -->
             <div id="resultsContainer" class="results-container"></div>
         </div>
     </div>
 
+    <!-- MODAL : Panneau de statistiques nationales -->
+    <!-- Affiche un tableau de bord complète avec des données agrégées sur toutes les gares de France -->
     <div id="statsPanel" class="stats-panel stats-panel-enhanced">
+        <!-- En-tête du panneau avec titre et bouton de fermeture -->
         <div class="stats-header">
+           <!-- Titre du tableau de bord avec icône emoji -->
            <h2 id="stats-title">📊 Tableau de bord national</h2>
+           <!-- Bouton croix pour fermer le panneau -->
            <button id="closeStats" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
         </div>
         
         <!-- ANCIENNES STATS (conservées) -->
+        <!-- Première section : données moyennes et générales sur l'ensemble des gares analysées -->
         <div class="stats-section">
+            <!-- Titre de la section avec icône emoji loupe -->
             <div class="stats-section-title" id="section-analysis">🔍 Analyse des gares</div>
+            <!-- Grille de cartes de statistiques organisée en colonnes -->
             <div class="stats-grid">
+                <!-- Nombre total de gares analysées dans la base de données -->
                 <div class="stat-card"><span class="stat-label" id="lbl-gares">Gares analysées</span><span class="stat-value" id="stat-gares">-</span></div>
+                <!-- Score écologique moyen calculé sur toutes les gares (sur 100) -->
                 <div class="stat-card"><span class="stat-label" id="lbl-score">Score moyen écolo</span><span class="stat-value" id="stat-score">-</span></div>
+                <!-- Pourcentage de gares desservies par TGV (lignes à grande vitesse) -->
                 <div class="stat-card"><span class="stat-label" id="lbl-tgv">Part TGV</span><span class="stat-value" id="stat-tgv">-</span></div>
+                <!-- Nombre moyen de parkings à vélos à proximité des gares (rayon de 10 min à pied) -->
                 <div class="stat-card"><span class="stat-label" id="lbl-velos">Moy. parkings vélos</span><span class="stat-value" id="stat-velos">-</span></div>
+                <!-- Nombre moyen de bornes de recharge électrique (IRVE) à proximité -->
                 <div class="stat-card"><span class="stat-label" id="lbl-bornes">Moy. bornes IRVE</span><span class="stat-value" id="stat-bornes">-</span></div>
+                <!-- Nombre moyen d'aires de covoiturage à proximité -->
                 <div class="stat-card"><span class="stat-label" id="lbl-covoit">Moy. aires covoit</span><span class="stat-value" id="stat-covoit">-</span></div>
             </div>
         </div>
         
         <!-- NOUVELLES STATS (8 nouvelles) -->
+        <!-- Deuxième section : totaux cumulés à l'échelle nationale pour visualiser l'infrastructure écologique globale -->
         <div class="stats-section">
+            <!-- Titre de la section avec icône graphique -->
             <div class="stats-section-title" id="section-totals">📈 Totaux nationaux</div>
+            <!-- Grille de cartes avec mise en valeur spéciale (classe stat-highlight) -->
             <div class="stats-grid">
+                <!-- Total de tous les parkings vélo répertoriés en France près des gares -->
                 <div class="stat-card stat-highlight"><span class="stat-emoji">🚲</span><span class="stat-label" id="lbl-total-velos">Parkings vélo</span><span class="stat-value stat-blue" id="stat-total-velos">-</span></div>
+                <!-- Total de tous les points de covoiturage en France près des gares -->
                 <div class="stat-card stat-highlight"><span class="stat-emoji">🚗</span><span class="stat-label" id="lbl-total-covoit">Points covoiturage</span><span class="stat-value stat-purple" id="stat-total-covoit">-</span></div>
+                <!-- Total de toutes les bornes de recharge électrique IRVE en France près des gares -->
                 <div class="stat-card stat-highlight"><span class="stat-emoji">🔌</span><span class="stat-label" id="lbl-total-irve">Bornes IRVE</span><span class="stat-value stat-orange" id="stat-total-irve">-</span></div>
+                <!-- Nombre de gares qui ont au moins 1 parking vélo à moins de 10 min à pied -->
                 <div class="stat-card stat-highlight"><span class="stat-emoji">🚂</span><span class="stat-label" id="lbl-gares-velo">Gares avec vélo (10min)</span><span class="stat-value stat-green" id="stat-gares-velo">-</span></div>
             </div>
         </div>
         
+        <!-- Troisième section : données météorologiques en temps réel -->
         <div class="stats-section">
+            <!-- Titre de la section avec icône thermomètre -->
             <div class="stats-section-title" id="section-weather">🌡️ Météo en direct</div>
+            <!-- Grille spécifique météo avec 2 colonnes pour comparer chaud/froid -->
             <div class="stats-grid stats-grid-weather">
+                <!-- Gare avec la température la plus élevée en France en ce moment -->
                 <div class="stat-card stat-weather stat-hot"><span class="stat-emoji">☀️</span><span class="stat-label" id="lbl-hottest">Plus chaud</span><span class="stat-value" id="stat-hottest">-</span></div>
+                <!-- Gare avec la température la plus basse en France en ce moment -->
                 <div class="stat-card stat-weather stat-cold"><span class="stat-emoji">❄️</span><span class="stat-label" id="lbl-coldest">Plus froid</span><span class="stat-value" id="stat-coldest">-</span></div>
             </div>
         </div>
         
+        <!-- Quatrième section : classement des gares par accessibilité vélo -->
         <div class="stats-section">
+            <!-- Titre de la section avec icône trophée -->
             <div class="stats-section-title" id="section-ranking">🏆 Classement vélos</div>
+            <!-- Grille avec cartes spéciales pour la meilleure et les plus faibles gares -->
             <div class="stats-grid">
+                <!-- Gare championne : celle qui a le plus de parkings vélo dans un rayon de 10 min à pied -->
                 <div class="stat-card stat-champion"><span class="stat-emoji">🥇</span><span class="stat-label" id="lbl-top-velo">Gare top vélo (10min)</span><span class="stat-value stat-gold" id="stat-top-velo">-</span></div>
+                <!-- Nombre de gares sans aucun parking vélo à proximité : alerte écologique -->
                 <div class="stat-card stat-alert"><span class="stat-emoji">⚠️</span><span class="stat-label" id="lbl-no-velo">Gares sans vélo (10min)</span><span class="stat-value stat-red" id="stat-no-velo">-</span></div>
             </div>
         </div>
         
+        <!-- Pied de page du panneau de statistiques avec option de rafraîchissement manuel -->
         <div class="stats-footer">
+            <!-- Message indiquant l'actualisation automatique toutes les 30 secondes -->
             <span id="stats-refresh-text">🔄 Actualisation auto: 30s</span>
+            <!-- Bouton pour forcer un rafraîchissement immédiat des données -->
             <button id="btnRefreshStats" class="btn-refresh-stats" onclick="forceRefreshStats()">
                 <i class="fa-solid fa-sync"></i>
             </button>
         </div>
     </div>
 
+    <!-- MODAL : Sélecteur de thème visuel -->
+    <!-- Permet de basculer entre différents schémas de couleurs pour personnaliser l'interface -->
     <div id="themeSelectorPanel">
+        <!-- Option thème par défaut : vert écologique (tons verts et naturels) -->
         <div class="theme-option theme-default" onclick="applyTheme('default')">Eco-Vert</div>
+        <!-- Option thème océan : tons bleus et aquéens -->
         <div class="theme-option theme-ocean" onclick="applyTheme('ocean')">Océan</div>
     </div>
 
+    <!-- MODAL : Panneau d'informations écologiques avancées -->
+    <!-- Affiche des données environnementales complémentaires pour une gare sélectionnée -->
     <div id="ecoPanelModal">
+        <!-- Contenu du panneau -->
         <div class="eco-panel-content">
+            <!-- Bouton de fermeture flottant en haut à droite -->
             <button onclick="toggleEcoPanel()" style="float:right; background:transparent; border:none; color:white; font-size:1.5rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            <!-- Titre du panneau avec icône feuille -->
             <h2 style="color:var(--primary); margin-top:0;">
                 <i class="fa-solid fa-leaf"></i> Informations écologiques avancées
             </h2>
+            <!-- Conteneur dynamique rempli par JavaScript avec les données écologiques de la gare -->
+            <!-- Affichera : qualité de l'air, observations de biodiversité, arbres urbains, etc. -->
             <div id="ecoDataContainer">
+                <!-- Message d'invite par défaut avant sélection d'une gare -->
                 <p style="color:#94a3b8;">Sélectionnez une gare sur la carte pour voir ses données écologiques détaillées (qualité de l'air, biodiversité, arbres urbains).</p>
             </div>
         </div>
