@@ -444,6 +444,23 @@ const escapeHTML = (str) => {
 // 3. CHARGEMENT
 // ============================================================
 
+const FETCH_TIMEOUT_MS = 12000;
+
+async function fetchJsonWithTimeout(url, fallback, label) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    try {
+        const r = await fetch(url, { signal: controller.signal });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return await r.json();
+    } catch (e) {
+        console.warn(`⚠️ ${label || 'fetch'} KO:`, e.message);
+        return fallback;
+    } finally {
+        clearTimeout(timeoutId);
+    }
+}
+
 /**
  * Charge toutes les donn�es initiales de l'application (Gares, Rails, IRVE, etc.).
  * G�re les promesses parall�les et l'initialisation de la carte.
@@ -455,7 +472,7 @@ async function loadEverything() {
     console.log("D�but du chargement...");
     const loaderText = document.getElementById('loader-msg');
     const startTime = Date.now();
-    const MIN_LOADING_TIME = 5000; // Temps de chargement minimum : 5 secondes
+    const MIN_LOADING_TIME = 2000; // Temps de chargement minimum réduit pour éviter l'attente
 
     // Phase 1 : Afficher "Démarrage du serveur..." pendant 1 seconde
     if (loaderText) {
@@ -475,37 +492,21 @@ async function loadEverything() {
         // === DÉBUT DU CHARGEMENT DES DONNÉES ===
         // Gestion d'erreurs robuste
         const promises = [
-            fetch(`${API_BASE_URL}/api/wfs-rails`).then(r => r.json()).catch(e => {
-                console.error("?? Rails:", e);
-                return null;
-            }),
-            fetch(`${API_BASE_URL}/api/gares`).then(r => r.json()).catch(e => {
-                console.error("?? Gares:", e);
-                showToast("Erreur chargement Gares", true);
-                return [];
-            }),
-            fetch(`${API_BASE_URL}/api/irve`).then(r => r.json()).catch(e => {
-                console.error("?? IRVE:", e);
-                return { features: [] };
-            }),
-            fetch(`${API_BASE_URL}/api/covoiturage`).then(r => r.json()).catch(e => {
-                console.error("?? Covoit:", e);
-                return { features: [] };
-            }),
-            fetch(`${API_BASE_URL}/api/parking-velo?minLat=41&maxLat=52&minLon=-5&maxLon=10`).then(r => r.json()).catch(e => {
-                console.error("🚲 Vélos:", e);
-                return { features: [] };
-            }),
-            fetch(`${API_BASE_URL}/api/proprete-gares`).then(r => r.json()).catch(e => {
-                console.error("🧹 Propreté:", e);
-                return [];
-            }),
-            fetch(`${API_BASE_URL}/api/defibrillateurs-gares`).then(r => r.json()).catch(e => {
-                console.error("❤️ Défibrillateurs:", e);
-                return [];
-            })
+            fetchJsonWithTimeout(`${API_BASE_URL}/api/wfs-rails`, { type: 'FeatureCollection', features: [] }, 'Rails'),
+            fetchJsonWithTimeout(`${API_BASE_URL}/api/gares`, [], 'Gares'),
+            fetchJsonWithTimeout(`${API_BASE_URL}/api/irve`, { features: [] }, 'IRVE'),
+            fetchJsonWithTimeout(`${API_BASE_URL}/api/covoiturage`, { features: [] }, 'Covoit'),
+            fetchJsonWithTimeout(`${API_BASE_URL}/api/parking-velo?minLat=41&maxLat=52&minLon=-5&maxLon=10`, { features: [] }, 'Vélos'),
+            fetchJsonWithTimeout(`${API_BASE_URL}/api/proprete-gares`, [], 'Propreté'),
+            fetchJsonWithTimeout(`${API_BASE_URL}/api/defibrillateurs-gares`, [], 'Défibrillateurs')
         ];
-        const [rails, gares, irve, covoit, velos, proprete, defibrillateurs] = await Promise.all(promises);
+
+        // Sécurité : timeout global pour débloquer le loader
+        const globalTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('global-timeout')), 15000));
+        const [rails, gares, irve, covoit, velos, proprete, defibrillateurs] = await Promise.race([
+            Promise.all(promises),
+            globalTimeout
+        ]);
 
         if (rails) railsLayer.addData(rails);
 
@@ -581,7 +582,7 @@ async function loadEverything() {
     } catch (error) {
         console.error("Erreur critique chargement:", error);
         showToast("Erreur critique de chargement", true);
-        // Arr�t rotation en cas d'erreur
+        // Arrêt rotation en cas d'erreur
         clearInterval(msgInterval);
         if (loaderText) {
             loaderText.innerText = 'Erreur de chargement...';
