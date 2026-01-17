@@ -1667,11 +1667,11 @@ window.lancerAnalyseComplete = function(id) {
 };
 
 const overlays = {
-    "?? Gares": markersLayer,
-    "??? Rails": railsLayer,
-    "? Bornes": irveLayer,
-    "?? Covoit": covoitLayer,
-    "?? V�los": veloParkingLayer
+    "🚂 Gares": markersLayer,
+    "🛤️ Rails": railsLayer,
+    "🔌 Bornes": irveLayer,
+    "🚗 Covoit": covoitLayer,
+    "🚴 Vélos": veloParkingLayer
 };
 L.control.layers(null, overlays, {
     position: 'bottomright'
