@@ -145,40 +145,60 @@ margin: 20px auto;">Scanner la carte</a>
                     </div>
                 </div>
                 
+                <!-- Carte 2 : EXPLORER LES VILLES -->
+                <!-- Couleur bleue (#3b82f6) pour l'encyclopédie Wikipedia -->
+                <!-- Permet de visualiser des galeries d'images des villes desservies -->
                 <div style="display: flex; gap: 15px; padding: 16px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05)); border-radius: 12px; border-left: 4px solid #3b82f6; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateX(5px)'; this.style.boxShadow='0 6px 12px rgba(59, 130, 246, 0.2)';" onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.1)';">
+                    <!-- Icône Wikipedia (W) dans un carré bleu -->
                     <div style="background: #3b82f6; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                         <i class="fa-brands fa-wikipedia-w" style="color: white; font-size: 1.4rem;"></i>
                     </div>
+                    <!-- Titre et description (traduits dynamiquement) -->
                     <div>
                         <strong id="onb-item2-title" style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Explorez les villes</strong>
                         <span id="onb-item2-desc" style="color: #94a3b8; font-size: 0.95rem;">Accédez aux images Wikipedia pour découvrir chaque destination</span>
                     </div>
                 </div>
                 
+                <!-- Carte 3 : GÉNÉRER UN QR CODE -->
+                <!-- Couleur orange (#f59e0b) pour le partage/export -->
+                <!-- Crée un code scannable pour partager une gare via Google Maps -->
                 <div style="display: flex; gap: 15px; padding: 16px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05)); border-radius: 12px; border-left: 4px solid #f59e0b; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateX(5px)'; this.style.boxShadow='0 6px 12px rgba(245, 158, 11, 0.2)';" onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.1)';">
+                    <!-- Icône QR Code dans un carré orange -->
                     <div style="background: #f59e0b; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                         <i class="fa-solid fa-qrcode" style="color: white; font-size: 1.4rem;"></i>
                     </div>
+                    <!-- Titre et description (traduits dynamiquement) -->
                     <div>
                         <strong id="onb-item3-title" style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Générez un QR Code</strong>
                         <span id="onb-item3-desc" style="color: #94a3b8; font-size: 0.95rem;">Partagez facilement vos gares préférées via code scannable</span>
                     </div>
                 </div>
                 
+                <!-- Carte 4 : VISUALISER LA CARTE -->
+                <!-- Couleur verte (#10b981) pour la géolocalisation -->
+                <!-- Mini heatmap Leaflet affichée en haut du tableau de bord -->
                 <div style="display: flex; gap: 15px; padding: 16px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); border-radius: 12px; border-left: 4px solid #10b981; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateX(5px)'; this.style.boxShadow='0 6px 12px rgba(16, 185, 129, 0.2)';" onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.1)';">
+                    <!-- Icône carte avec épingle dans un carré vert -->
                     <div style="background: #10b981; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                         <i class="fa-solid fa-map-location-dot" style="color: white; font-size: 1.4rem;"></i>
                     </div>
+                    <!-- Titre et description (traduits dynamiquement) -->
                     <div>
                         <strong id="onb-item4-title" style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Visualisez la carte</strong>
                         <span id="onb-item4-desc" style="color: #94a3b8; font-size: 0.95rem;">Voyez tous vos favoris en temps réel sur la mini-carte heatmap</span>
                     </div>
                 </div>
                 
+                <!-- Carte 5 : GÉRER VOS FAVORIS -->
+                <!-- Couleur rouge (#ef4444) pour les actions destructives -->
+                <!-- Suppression individuelle via clic sur carte OU autodestruction totale -->
                 <div style="display: flex; gap: 15px; padding: 16px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05)); border-radius: 12px; border-left: 4px solid #ef4444; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateX(5px)'; this.style.boxShadow='0 6px 12px rgba(239, 68, 68, 0.2)';" onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.1)';">
+                    <!-- Icône poubelle dans un carré rouge -->
                     <div style="background: #ef4444; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                         <i class="fa-solid fa-trash-alt" style="color: white; font-size: 1.4rem;"></i>
                     </div>
+                    <!-- Titre traduit, description fixe (pas d'ID car texte unique) -->
                     <div>
                         <strong id="onb-item5-title" style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Gérez vos favoris</strong>
                         <span style="color: #94a3b8; font-size: 0.95rem;">Supprimez individuellement ou lancez une séquence d'autodestruction complète</span>
@@ -186,21 +206,32 @@ margin: 20px auto;">Scanner la carte</a>
                 </div>
             </div>
             
+            <!-- Bouton principal pour fermer le tutoriel et commencer -->
+            <!-- Design élaboré avec dégradé, ombre, transition smooth -->
+            <!-- onclick="closeAll()" : ferme toutes les modales -->
             <button id="onb-btn" class="btn-main" onclick="closeAll()" style="margin-top: 10px; width: 100%; background: linear-gradient(135deg, var(--primary), #059669); color: white; font-weight: 900; border: none; padding: 16px 24px; border-radius: 12px; cursor: pointer; font-size: 1.1rem; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1); transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px; position: relative; overflow: hidden;">
+                <!-- Contenu du bouton avec icône fusée et texte -->
+                <!-- position: relative; z-index: 1 : assure que le texte reste au-dessus de l'ombre -->
                 <span style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 10px;">
                     <i class="fa-solid fa-rocket"></i>
                     Commencer l'exploration !
                 </span>
             </button>
             
+            <!-- Styles CSS pour le bouton d'onboarding -->
+            <!-- Animation de soulèvement au survol + effet lumineux balayé -->
             <style>
+                /* Animation au survol : bouton monté de 2px + ombre élargie */
                 #onb-btn:hover {
                     transform: translateY(-2px);
                     box-shadow: 0 15px 35px rgba(16, 185, 129, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.2);
                 }
+                /* Retour à la position normale quand le bouton est cliqué */
                 #onb-btn:active {
                     transform: translateY(0);
                 }
+                /* Pseudo-élément pour l'effet de lumière qui traverse le bouton */
+                /* Bande blanche semi-transparente positionnée hors du bouton */
                 #onb-btn::before {
                     content: '';
                     position: absolute;
@@ -211,38 +242,66 @@ margin: 20px auto;">Scanner la carte</a>
                     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
                     transition: left 0.5s ease;
                 }
+                /* Au survol : la bande traverse de gauche à droite en 0.5s */
                 #onb-btn:hover::before {
                     left: 100%;
                 }
             </style>
         </div>
     </div>
+    <!-- Modale pour afficher la galerie d'images Wikipedia d'une ville -->
+    <!-- S'ouvre quand l'utilisateur clique sur une carte de favori -->
+    <!-- Récupère les images via l'API Wikimedia Commons -->
     <div id="googlePhotosModal" class="modal-overlay">
         <div class="modal-box">
+            <!-- Bouton de fermeture en haut à droite -->
             <button class="close-modal" onclick="closeAll()"><i class="fa-solid fa-xmark"></i></button>
+            <!-- Titre avec icône Wikipedia (W) en couleur primaire -->
+            <!-- id="google-title" pour le ciblage CSS -->
             <h3 class="google-title" id="google-title" style="margin-bottom:10px; font-size:1.6rem; color:var(--primary); display:flex; align-items:center; gap:12px;"><i class="fa-brands fa-wikipedia-w"></i> <span id="google-title-text">Images de la ville</span></h3>
+            <!-- Affiche le nom de la ville recherchée (injecté par JavaScript) -->
             <p id="googleQuery" style="color:#94a3b8; margin-bottom:20px; font-style:italic; font-size:0.95rem;"></p>
+            <!-- Grille d'images remplie dynamiquement par fetchWikimediaImage() -->
+            <!-- Par défaut : spinner de chargement -->
             <div class="google-grid" id="googleGrid"><div style="color:#94a3b8; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i></div></div>
         </div>
     </div>
+    <!-- Modale pour afficher le QR Code d'une gare -->
+    <!-- Génère un code scannable pour ouvrir Google Maps avec les coordonnées de la gare -->
     <div id="qrModal" class="modal-overlay">
         <div class="modal-box">
+            <!-- Bouton de fermeture -->
             <button class="close-modal" onclick="closeAll()"><i class="fa-solid fa-xmark"></i></button>
+            <!-- Titre avec icône QR Code centré -->
             <h3 id="qr-title" style="margin-bottom:20px; font-size:1.6rem; color:var(--primary); display:flex; align-items:center; justify-content:center; gap:10px;"><i class="fa-solid fa-qrcode"></i> <span>Partager</span></h3>
+            <!-- Conteneur du QR Code : fond blanc pour meilleure lisibilité du code -->
+            <!-- Dimensions : 160x160px + padding 15px = carré de 190px total -->
+            <!-- animation: slideUp : apparition animée depuis le bas -->
             <div id="qrcode" style="margin: 30px auto; width: 160px; height: 160px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); animation: slideUp 0.5s ease-out;"></div>
+            <!-- Instruction de scan avec flèche montante -->
             <p id="qr-text" style="font-size:0.95rem; color:#94a3b8; margin-top: 20px; font-style: italic;">
                 <i class="fa-solid fa-arrow-up" style="margin-right: 8px;"></i>
                 Scannez pour ouvrir Google Maps
             </p>
         </div>
     </div>
+    <!-- Modale de confirmation pour l'autodestruction -->
+    <!-- Demande confirmation avant d'effacer TOUS les favoris -->
+    <!-- Design alarmant avec bordure rouge et ombres rouges -->
     <div id="nukeModal" class="modal-overlay">
+        <!-- Boîte modale avec bordure rouge épaisse et éclat rouge -->
         <div class="modal-box" style="border: 2px solid #ef4444; box-shadow: 0 0 60px rgba(239,68,68,0.3), 0 20px 60px rgba(0,0,0,0.4);">
+            <!-- Icône triangle d'avertissement pulsante (animation pulse) -->
             <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: #ef4444; margin-bottom: 20px; animation: pulse 2s ease-in-out infinite;"></i>
+            <!-- Titre "ATTENTION" en rouge vif -->
             <h3 id="nuke-title" style="color: #ef4444; font-size: 1.6rem; margin-bottom: 15px;">ATTENTION</h3>
+            <!-- Texte de confirmation (traduit dynamiquement) -->
             <p id="nuke-text" style="color: #cbd5e1; margin-bottom: 25px;">Voulez-vous vraiment détruire tout le carnet ?</p>
+            <!-- Deux boutons : Annuler (gris) et OUI, DÉTRUIRE (rouge) -->
             <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <!-- Bouton Annuler : fond semi-transparent, bordure blanche -->
                 <button id="nuke-no" onclick="closeAll()" style="padding: 12px 28px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Annuler</button>
+                <!-- Bouton Détruire : rouge vif avec ombre rouge, déclenche startSelfDestruct() -->
                 <button id="nuke-yes" onclick="startSelfDestruct()" style="padding: 12px 28px; background: #ef4444; border: none; color: white; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);">OUI, DÉTRUIRE</button>
             </div>
         </div>
