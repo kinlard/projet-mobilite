@@ -1,41 +1,59 @@
-﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿<!-- Déclaration du type de document HTML5 pour garantir la compatibilité navigateur -->
+<!DOCTYPE html>
+<!-- Définition de la langue principale du site en français pour l'accessibilité et le référencement -->
 <html lang="fr">
 <head>
+    <!-- Encodage des caractères en UTF-8 pour afficher correctement les accents et emojis -->
     <meta charset="UTF-8">
+    <!-- Configuration responsive : adaptation automatique mobile, désactivation du zoom pour une expérience contrôlée -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- Page principale contenant la carte interactive avec toutes les gares et les données écologiques -->
+    <!-- Titre affiché dans l'onglet du navigateur -->
     <title>Eco-Escapade | Carte Interactive</title>
+    <!-- Icône du site (favicon) affichée dans l'onglet, utilise un emoji feuille encodé en SVG -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%8C%BF</text></svg>">
     
-    <!-- Bibliothèque Leaflet pour afficher la carte interactive -->
+    <!-- Chargement des styles de Leaflet : bibliothèque JavaScript open-source pour créer des cartes interactives -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Extensions pour regrouper les marqueurs en clusters -->
+    <!-- Styles pour le regroupement automatique des marqueurs : évite la surcharge visuelle quand il y a beaucoup de gares -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <!-- Thème visuel par défaut des clusters de marqueurs -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-    <!-- Mini-carte de navigation en bas à droite -->
+    <!-- Styles pour la mini-carte de navigation qui apparaît en coin d'écran -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-minimap/3.6.1/Control.MiniMap.css" />
+    <!-- Bibliothèque Font Awesome : fournit des milliers d'icônes vectorielles pour les boutons et l'interface -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Police Inter de Google : typographie moderne et lisible pour tout le texte du site -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <!-- Bibliothèque pour les confettis lors d'ajout de favoris -->
+    <!-- Bibliothèque Canvas Confetti : génère une animation de confettis quand on ajoute une gare en favori -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     
+    <!-- Feuille de style principale contenant tous les designs visuels -->
     <link rel="stylesheet" href="style.css">
+    <!-- Feuille de style responsive : adapte l'affichage pour mobile et tablette -->
     <link rel="stylesheet" href="responsive.css">
 </head>
+<!-- Début du corps de la page HTML -->
 <body>
 
-    <!-- Écran de chargement affiché pendant le téléchargement des données -->
+    <!-- Écran de chargement visible au démarrage : masque la page pendant la récupération des données de l'API -->
     <div id="map-loader">
+        <!-- Icône de vélo animée pour indiquer le chargement en cours -->
         <i class="fa-solid fa-bicycle bike-loader"></i>
+        <!-- Barre de progression visuelle qui se remplit progressivement -->
         <div class="loading-bar-container"><div class="loading-bar" id="loadBar" style="width: 100%;"></div></div>
+        <!-- Message textuel indiquant ce qui est en cours de chargement -->
         <p class="loading-text" id="loader-msg">Chargement de la carte...</p>
     </div>
 
-    <!-- Boîte de tutoriel qui guide les nouveaux utilisateurs -->
+    <!-- Fenêtre de tutoriel interactif : explique le fonctionnement du site aux nouveaux visiteurs en 4 étapes -->
     <div id="tutoBox" class="tuto-box">
+        <!-- Titre de l'étape actuelle du tutoriel -->
         <div id="tutoTitle" class="tuto-title">TUTORIEL</div>
+        <!-- Zone de texte contenant l'explication de l'étape en cours -->
         <div id="tutoText" class="tuto-text"></div>
+        <!-- Bouton pour passer à l'étape suivante, déclenche la fonction nextTutoStep -->
         <button id="tutoBtn" class="tuto-btn" onclick="nextTutoStep()">SUIVANT ➡️</button>
+        <!-- Bouton pour ignorer le tutoriel et accéder directement à la carte -->
         <button class="tuto-skip-btn" onclick="skipTuto()">Passer le tuto</button>
     </div>
 
