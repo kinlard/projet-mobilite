@@ -123,20 +123,73 @@
     <div id="map"></div>
 
     <div id="discoverModal" class="discover-modal">
+        <div class="discover-particles"></div>
         <div class="discover-content">
-            <button onclick="closeDiscover()" style="position:absolute; top:20px; right:20px; background:none; border:none; color:white; font-size:2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
-            <h2 id="discoverTitle" style="color:white; font-size:2.5rem; margin-bottom:10px;">Envie de partir quelque part ?</h2>
-            <p id="discoverSubtitle" style="color:#94a3b8;">Choisissez un environnement, le site trouve pour vous les gares les plus écologiques.</p>
-            <button id="btnBackCat" onclick="resetDiscover()" style="display:none; background:transparent; color:var(--primary); border:1px solid var(--primary); padding:8px 15px; border-radius:20px; cursor:pointer; margin-bottom:20px;">← Choisir un autre environnement</button>
+            <button onclick="closeDiscover()" class="discover-close-btn"><i class="fa-solid fa-xmark"></i></button>
+            <div class="discover-header">
+                <div class="discover-icon-main"><i class="fa-solid fa-compass"></i></div>
+                <h2 id="discoverTitle" class="discover-title">Envie de partir quelque part ?</h2>
+                <p id="discoverSubtitle" class="discover-subtitle">Choisissez un environnement, le site trouve pour vous les gares les plus écologiques.</p>
+            </div>
+            <button id="btnBackCat" onclick="resetDiscover()" class="discover-back-btn"><i class="fa-solid fa-arrow-left"></i> Choisir un autre environnement</button>
             
             <div id="catGrid" class="cat-grid">
-                <div class="cat-card" onclick="showCategory('mer', 'Mer & Plages')"><h3 id="cat-mer">Mer Méditerranée</h3></div>
-                <div class="cat-card" onclick="showCategory('ocean', 'Océan & Vagues')"><h3 id="cat-ocean">Océan Atlantique</h3></div>
-                <div class="cat-card" onclick="showCategory('montagne', 'Montagne & Neige')"><h3 id="cat-montagne">Montagne</h3></div>
-                <div class="cat-card" onclick="showCategory('ville', 'Grandes Métropoles')"><h3 id="cat-ville">Grandes Villes</h3></div>
-                <div class="cat-card" onclick="showCategory('paris', 'Capitale')"><h3 id="cat-paris">Paris</h3></div>
-                <div class="cat-card" onclick="showCategory('sud', 'Le Sud')"><h3 id="cat-sud">Le Sud</h3></div>
-                <div class="cat-card" onclick="showCategory('nord', 'Le Nord')"><h3 id="cat-nord">Le Nord</h3></div>
+                <div class="cat-card cat-mer" onclick="showCategory('mer', 'Mer & Plages')">
+                    <div class="cat-card-bg"></div>
+                    <div class="cat-card-content">
+                        <i class="fa-solid fa-umbrella-beach cat-icon"></i>
+                        <h3 id="cat-mer">Mer Méditerranée</h3>
+                        <div class="cat-shine"></div>
+                    </div>
+                </div>
+                <div class="cat-card cat-ocean" onclick="showCategory('ocean', 'Océan & Vagues')">
+                    <div class="cat-card-bg"></div>
+                    <div class="cat-card-content">
+                        <i class="fa-solid fa-water cat-icon"></i>
+                        <h3 id="cat-ocean">Océan Atlantique</h3>
+                        <div class="cat-shine"></div>
+                    </div>
+                </div>
+                <div class="cat-card cat-montagne" onclick="showCategory('montagne', 'Montagne & Neige')">
+                    <div class="cat-card-bg"></div>
+                    <div class="cat-card-content">
+                        <i class="fa-solid fa-mountain-sun cat-icon"></i>
+                        <h3 id="cat-montagne">Montagne</h3>
+                        <div class="cat-shine"></div>
+                    </div>
+                </div>
+                <div class="cat-card cat-ville" onclick="showCategory('ville', 'Grandes Métropoles')">
+                    <div class="cat-card-bg"></div>
+                    <div class="cat-card-content">
+                        <i class="fa-solid fa-city cat-icon"></i>
+                        <h3 id="cat-ville">Grandes Villes</h3>
+                        <div class="cat-shine"></div>
+                    </div>
+                </div>
+                <div class="cat-card cat-paris" onclick="showCategory('paris', 'Capitale')">
+                    <div class="cat-card-bg"></div>
+                    <div class="cat-card-content">
+                        <i class="fa-solid fa-tower-broadcast cat-icon"></i>
+                        <h3 id="cat-paris">Paris</h3>
+                        <div class="cat-shine"></div>
+                    </div>
+                </div>
+                <div class="cat-card cat-sud" onclick="showCategory('sud', 'Le Sud')">
+                    <div class="cat-card-bg"></div>
+                    <div class="cat-card-content">
+                        <i class="fa-solid fa-sun cat-icon"></i>
+                        <h3 id="cat-sud">Le Sud</h3>
+                        <div class="cat-shine"></div>
+                    </div>
+                </div>
+                <div class="cat-card cat-nord" onclick="showCategory('nord', 'Le Nord')">
+                    <div class="cat-card-bg"></div>
+                    <div class="cat-card-content">
+                        <i class="fa-solid fa-snowflake cat-icon"></i>
+                        <h3 id="cat-nord">Le Nord</h3>
+                        <div class="cat-shine"></div>
+                    </div>
+                </div>
             </div>
 
             <div id="resultsContainer" class="results-container"></div>
