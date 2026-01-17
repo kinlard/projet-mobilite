@@ -685,11 +685,23 @@ app.get('/api/biodiversity', async (req, res) => {
     }
 });
 
-//Récupération des statistiques météo enrichies : recherche des gares les plus chaudes et les plus froides de France en temps réel
+// ===================================================================================================
+// ROUTE : /api/enriched-stats - Statistiques météo enrichies (gares extrêmes)
+// ===================================================================================================
+// Algorithme complexe qui scanne stratégiquement les gares françaises pour identifier :
+// - La gare la plus CHAUDE de France en temps réel
+// - La gare la plus FROIDE de France en temps réel
+// Optimisé pour capturer la diversité climatique sans scanner les 3000+ gares (trop lent)
+// Stratégie : échantillonnage géographique intelligent (Sud, Nord, Altitude, Répartition)
+
 app.get('/api/enriched-stats', async (req, res) => {
+    // Paramètres optionnels (non utilisés actuellement mais conservés pour évolutions futures)
     const { centerLat, centerLon } = req.query;
     
+    // Clé de cache globale (v3 = version 3 de l'algorithme)
     const cacheKey = `enriched_stats_v3`;
+    
+    // Vérification du cache (5 minutes seulement car données météo volatiles)
     const cached = apiCache.get(cacheKey);
     if (cached) {
         console.log('📦 Cache enriched-stats utilisé');
@@ -697,21 +709,25 @@ app.get('/api/enriched-stats', async (req, res) => {
     }
     
     try {
-        //Récupération de toutes les gares françaises pour analyse météorologique
+        // =================================================================================
+        // ÉTAPE 1 : Récupération de TOUTES les gares françaises pour sélection stratégique
+        // =================================================================================
         console.log('🔄 Récupération de TOUTES les gares pour météo extrême...');
         const garesRes = await axios.get(
             'https://ressources.data.sncf.com/api/explore/v2.1/catalog/datasets/gares-de-voyageurs/exports/json',
-            { timeout: 15000 }
+            { timeout: 15000 }  // Timeout élevé (15s) car dataset volumineux
         );
         
+        // Validation de la réponse
         if (!Array.isArray(garesRes.data) || garesRes.data.length === 0) {
             throw new Error('Aucune gare récupérée');
         }
         
-        //Conservation uniquement des gares avec coordonnées GPS valides
+        // Filtrage : conservation uniquement des gares avec coordonnées GPS valides et nom
         const garesAvecCoords = garesRes.data
             .filter(g => g.position_geographique && g.position_geographique.lat && g.position_geographique.lon && g.nom)
             .map(g => ({
+                // Nettoyage du nom : suppression des préfixes "Gare de" / "Gare d'"
                 name: g.nom.replace(/^Gare de /i, '').replace(/^Gare d'/i, '').trim(),
                 lat: g.position_geographique.lat,
                 lon: g.position_geographique.lon
@@ -719,92 +735,158 @@ app.get('/api/enriched-stats', async (req, res) => {
         
         console.log(`📍 ${garesAvecCoords.length} gares avec coordonnées`);
         
-        //Sélection stratégique des gares pour capturer la diversité climatique française
+        // =================================================================================
+        // ÉTAPE 2 : Sélection stratégique des gares pour capturer la diversité climatique
+        // =================================================================================
+        // Objectif : échantillonner ~60-80 gares représentatives au lieu de 3000+
+        // Critères : latitude (Nord/Sud), altitude (montagne), répartition géographique
+        
+        // Tri des gares par latitude (Sud → Nord)
         const garesSortedByLat = [...garesAvecCoords].sort((a, b) => a.lat - b.lat);
         
+        // Tableau pour stocker les gares sélectionnées
         const garesExtremes = [];
         
-        //Gares du Sud (climats méditerranéens chauds)
+        // CRITÈRE 1 : Gares du Sud (climats méditerranéens chauds)
+        // Les 10 gares les plus au sud (Provence, Côte d'Azur, Corse)
         garesExtremes.push(...garesSortedByLat.slice(0, 10));
         
-        //Gares du Nord (climats continentaux froids)
+        // CRITÈRE 2 : Gares du Nord (climats continentaux froids)
+        // Les 10 gares les plus au nord (Nord-Pas-de-Calais, Normandie, etc.)
         garesExtremes.push(...garesSortedByLat.slice(-10));
         
-        //Gares en altitude (Alpes, Pyrénées, Massif Central : températures basses)
+        // CRITÈRE 3 : Gares en altitude (Alpes, Pyrénées, Massif Central : températures basses)
         const garesAltitude = garesAvecCoords.filter(g =>
+            // Alpes : latitude 44-46.5°N, longitude 5-8°E
             (g.lat >= 44 && g.lat <= 46.5 && g.lon >= 5 && g.lon <= 8) ||
-            // Pyrénées: lat 42-43.5, lon -2 à 3
+            // Pyrénées : latitude 42-43.5°N, longitude -2 à 3°E
             (g.lat >= 42 && g.lat <= 43.5 && g.lon >= -2 && g.lon <= 3) ||
-            // Massif Central: lat 44-46, lon 2-4
+            // Massif Central : latitude 44-46°N, longitude 2-4°E
             (g.lat >= 44 && g.lat <= 46 && g.lon >= 2 && g.lon <= 4)
         );
+        // Ajout des 15 premières gares d'altitude trouvées
         garesExtremes.push(...garesAltitude.slice(0, 15));
         
-        //Échantillon de gares intermédiaires pour couverture nationale
-        const step = Math.floor(garesSortedByLat.length / 15);
+        // CRITÈRE 4 : Échantillon de gares intermédiaires pour couverture nationale complète
+        // Répartition uniforme sur tout le territoire (Ouest, Centre, Est)
+        const step = Math.floor(garesSortedByLat.length / 15);  // Calcul du pas d'échantillonnage
         for (let i = 0; i < 15; i++) {
-            const g = garesSortedByLat[i * step];
+            const g = garesSortedByLat[i * step];  // Sélection tous les N-ième élément
+            // Vérification que la gare n'est pas déjà dans la liste (pas de doublon)
             if (!garesExtremes.find(e => e.name === g.name)) {
                 garesExtremes.push(g);
             }
         }
         
-        //Élimination des doublons
+        // Élimination des doublons éventuels via Map (clé = nom de gare)
         const garesUniques = [...new Map(garesExtremes.map(g => [g.name, g])).values()];
         
         console.log(`🌡️ Météo pour ${garesUniques.length} gares stratégiques`);
         
-        // Récupération des températures par lots de 20 pour ne pas saturer l'API météo
+        // =================================================================================
+        // ÉTAPE 3 : Récupération des températures par lots pour éviter la surcharge API
+        // =================================================================================
+        // Limitation : max 20 requêtes parallèles simultanées (rate limiting)
         const batchSize = 20;
-        let allWeatherResults = [];
+        let allWeatherResults = [];  // Tableau pour accumuler tous les résultats
         
+        // Boucle sur les lots de 20 gares
         for (let i = 0; i < garesUniques.length; i += batchSize) {
+            // Extraction du lot actuel (20 gares maximum)
             const batch = garesUniques.slice(i, i + batchSize);
+            
+            // Création d'un tableau de promesses pour exécution parallèle
             const weatherPromises = batch.map(async (gare) => {
                 try {
+                    // Construction de l'URL de l'API Open-Meteo pour cette gare
                     const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${gare.lat}&longitude=${gare.lon}&current_weather=true`;
+                    
+                    // Requête météo avec timeout de 5 secondes
                     const weatherRes = await axios.get(weatherUrl, { timeout: 5000 });
+                    
+                    // Extraction de la température actuelle depuis la réponse
                     const temp = weatherRes.data?.current_weather?.temperature;
+                    
+                    // Retour de l'objet gare enrichi avec la température
                     return { ...gare, temp: temp !== undefined ? temp : null };
                 } catch (e) {
+                    // En cas d'erreur (timeout, API indisponible), temp = null
                     return { ...gare, temp: null };
                 }
             });
+            
+            // Attente de la fin de toutes les requêtes du lot actuel
             const batchResults = await Promise.all(weatherPromises);
+            
+            // Ajout des résultats du lot au tableau global
             allWeatherResults.push(...batchResults);
         }
         
-            // Conservation uniquement des gares avec température valide
+        // =================================================================================
+        // ÉTAPE 4 : Filtrage et identification des records de température
+        // =================================================================================
+        
+        // Conservation uniquement des gares avec température valide (non null)
         const validWeather = allWeatherResults.filter(w => w.temp !== null);
         
         console.log(`✅ ${validWeather.length} gares avec température valide`);
         
-        // Identification des records de température
-        let hottest = null;
-        let coldest = null;
+        // Variables pour stocker les records
+        let hottest = null;   // Gare la plus chaude
+        let coldest = null;   // Gare la plus froide
         
         if (validWeather.length > 0) {
-            hottest = validWeather.reduce((max, gare) => gare.temp > max.temp ? gare : max, validWeather[0]);
-            coldest = validWeather.reduce((min, gare) => gare.temp < min.temp ? gare : min, validWeather[0]);
+            // Recherche de la température MAXIMALE (reduce avec comparaison)
+            hottest = validWeather.reduce((max, gare) => 
+                gare.temp > max.temp ? gare : max,  // Si temp actuelle > max, on la garde
+                validWeather[0]  // Valeur initiale = première gare
+            );
+            
+            // Recherche de la température MINIMALE (reduce avec comparaison)
+            coldest = validWeather.reduce((min, gare) => 
+                gare.temp < min.temp ? gare : min,  // Si temp actuelle < min, on la garde
+                validWeather[0]  // Valeur initiale = première gare
+            );
         }
         
+        // Construction de l'objet résultat final avec les statistiques
         const result = {
             success: true,
             weather: {
-                hottest: hottest ? { name: hottest.name, temp: hottest.temp, lat: hottest.lat, lon: hottest.lon } : null,
-                coldest: coldest ? { name: coldest.name, temp: coldest.temp, lat: coldest.lat, lon: coldest.lon } : null,
+                // Gare la plus chaude avec toutes ses infos (ou null si aucune donnée)
+                hottest: hottest ? { 
+                    name: hottest.name, 
+                    temp: hottest.temp, 
+                    lat: hottest.lat, 
+                    lon: hottest.lon 
+                } : null,
+                // Gare la plus froide avec toutes ses infos (ou null si aucune donnée)
+                coldest: coldest ? { 
+                    name: coldest.name, 
+                    temp: coldest.temp, 
+                    lat: coldest.lat, 
+                    lon: coldest.lon 
+                } : null,
+                // Nombre de gares scannées avec succès (pour info utilisateur)
                 scannedCount: validWeather.length
             },
+            // Timestamp de création des statistiques
             timestamp: Date.now()
         };
         
-        //Mise en cache des statistiques pour 5 minutes (données évolutives)
+        // Mise en cache pour 5 minutes SEULEMENT (300 secondes)
+        // Cache court car les températures changent rapidement
         apiCache.set(cacheKey, result, 300);
+        
+        // Log des résultats pour suivi console
         console.log(`🌡️ Enriched stats - Plus chaud: ${hottest?.name} (${hottest?.temp}°C), Plus froid: ${coldest?.name} (${coldest?.temp}°C)`);
         res.json(result);
         
     } catch (error) {
+        // Gestion globale des erreurs de la route
         console.error('❌ Enriched stats error:', error.message);
+        
+        // Renvoi d'une réponse d'échec avec structure vide pour éviter crash frontend
         res.json({ 
             success: false, 
             error: error.message,
@@ -813,16 +895,32 @@ app.get('/api/enriched-stats', async (req, res) => {
     }
 });
 
-//Mise à disposition des fichiers du site web (pages HTML, CSS, JavaScript)
+// ===================================================================================================
+// ROUTES DE SERVICE - Hébergement du frontend et démarrage du serveur
+// ===================================================================================================
+
+// Middleware pour servir les fichiers statiques du frontend (HTML, CSS, JS, images)
+// Tous les fichiers du dossier '../frontend' sont accessibles publiquement
+// Exemple : http://localhost:3000/style.css pointe vers frontend/style.css
 app.use(express.static(path.join(__dirname, '../frontend')));
 
+// Route racine : renvoi de la page d'accueil index.html
+// Permet d'accéder au site via http://localhost:3000/
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-//Démarrage du serveur sur le port configuré
+// ===================================================================================================
+// DÉMARRAGE DU SERVEUR HTTP
+// ===================================================================================================
+
+// Lancement de l'écoute sur le port configuré (par défaut 3000)
 app.listen(port, () => {
+    // Affichage des informations de démarrage dans la console
     console.log(`🚀 Serveur démarré sur le port ${port}`);
     console.log(`📍 Frontend : http://localhost:${port}`);
 });
 
+// ===================================================================================================
+// FIN DU FICHIER server.js - Serveur Backend Tourisme Vert
+// ===================================================================================================
