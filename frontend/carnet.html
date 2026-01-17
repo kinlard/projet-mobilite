@@ -1,52 +1,100 @@
-﻿<!DOCTYPE html>
+﻿<!-- Déclaration HTML5 : version moderne du langage web -->
+<!DOCTYPE html>
+<!-- Balise racine avec langue française pour l'accessibilité -->
 <html lang="fr">
 <head>
+    <!-- Encodage UTF-8 : permet d'afficher tous les caractères accentués correctement -->
     <meta charset="UTF-8">
+    <!-- Configuration responsive : adaptation automatique aux smartphones et tablettes -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Commentaire explicatif du rôle de cette page -->
     <!-- Page de gestion des gares favorites enregistrées par l'utilisateur -->
+    <!-- Titre de l'onglet du navigateur -->
     <title>Eco-Escapade |
 Tableau de Bord</title>
+    <!-- Police Google Fonts Inter : police moderne et lisible pour tout le texte du tableau de bord -->
+    <!-- Plusieurs graisses importées (300=light, 400=normal, 600=semi-bold, 800=extra-bold, 900=black) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <!-- Bibliothèque Font Awesome : fournit toutes les icônes (poubelle, marteau, QR code, vélo...) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Bibliothèque Leaflet pour afficher la mini-carte des favoris -->
+    <!-- CSS de Leaflet pour le style de la carte interactive -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- JavaScript de Leaflet pour la logique de la carte -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Bibliothèque pour générer des QR codes partageables -->
+    <!-- Permet de créer des codes QR pour partager les gares favorites -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Feuille de style principale partagée avec les autres pages -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <!-- Alerte rouge affichée lors de la séquence d'autodestruction -->
+    <!-- Fond rouge clignotant qui envahit l'écran quand l'utilisateur lance la suppression totale -->
     <div class="red-alert" id="redAlert"></div>
     <!-- Écran de compte à rebours pour l'autodestruction -->
+    <!-- Affiche le décompte de 5 à 0 avant la suppression définitive de toutes les données -->
     <div id="countdown-screen"></div>
     <!-- Barre de navigation du haut de page -->
+    <!-- Identique aux autres pages pour cohérence de navigation -->
     <div class="dashboard-header">
+        <!-- Logo du site -->
         <div class="brand"><h1>Eco-Escapade</h1></div>
+        <!-- Liens de navigation vers les autres pages -->
         <div class="nav-links">
+            <!-- Lien vers la page d'accueil -->
             <a href="index.html">Accueil</a>
+            <!-- Lien vers la carte interactive (élément traduit dynamiquement) -->
             <a href="map.html" id="nav-carte">Carte</a>
+            <!-- Lien vers la page à propos -->
             <a href="apropos.html" id="nav-about">À propos</a>
+            <!-- Lien aide : ouvre la modale de présentation des fonctionnalités -->
+            <!-- return false empêche le comportement par défaut du lien -->
             <a href="#" id="nav-aide" onclick="openOnboarding(); return false;">Aide</a>
         </div>
+        <!-- Bouton de changement de langue FR/EN -->
         <button class="lang-switch" onclick="switchLangCarnet()">FR / EN</button>
     </div>
+    <!-- Conteneur principal du tableau de bord -->
+    <!-- margin-top: 120px : espace pour ne pas être masqué par la barre de navigation fixe -->
     <div class="container" style="margin-top: 120px;">
         <!-- Section supérieure avec titre et mini-carte de chaleur des favoris -->
+        <!-- Affiche le titre de la page + une carte géographique montrant où sont les gares favorites -->
         <div class="top-section">
-            <div class="titles"><h2 id="main-title" style="font-size: 
-2.5rem; margin: 0;">Tableau de Bord</h2><p id="main-subtitle" style="color:#94a3b8; margin-top: 5px;">Gérez vos futures aventures bas carbone.</p></div>
+            <!-- Zone de titres -->
+            <div class="titles">
+                <!-- Titre principal du tableau de bord (traduit dynamiquement) -->
+                <h2 id="main-title" style="font-size: 
+2.5rem; margin: 0;">Tableau de Bord</h2>
+                <!-- Sous-titre explicatif (traduit dynamiquement) -->
+                <p id="main-subtitle" style="color:#94a3b8; margin-top: 5px;">Gérez vos futures aventures bas carbone.</p>
+            </div>
             <!-- Mini-carte montrant la répartition géographique des favoris -->
+            <!-- Affiche une carte Leaflet miniature avec des points rouges pour chaque gare favorite -->
             <div class="heatmap-container"><div id="miniMap"></div></div>
         </div>
         <!-- Grille contenant toutes les cartes de gares favorites -->
+        <!-- Remplie dynamiquement par JavaScript avec les gares enregistrées dans localStorage -->
         <div id="grid" class="card-grid"></div>
         <!-- Message affiché si aucune gare n'est enregistrée -->
+        <!-- Apparaît uniquement quand le localStorage est vide (aucun favori) -->
+        <!-- display: none par défaut, devient visible si favoris.length === 0 -->
         <div id="empty" style="text-align: center;
-color: #64748b; margin-top: 100px; display: none;"><i class="fa-solid fa-ghost" style="font-size: 3rem; margin-bottom: 20px;"></i><p id="empty-text">Aucune donnée.</p><a href="map.html" id="btn-scan" class="btn-main" style="width:200px;
-margin: 20px auto;">Scanner la carte</a></div>
+color: #64748b; margin-top: 100px; display: none;">
+            <!-- Icône fantôme pour illustrer le vide -->
+            <i class="fa-solid fa-ghost" style="font-size: 3rem; margin-bottom: 20px;"></i>
+            <!-- Message "Aucune donnée" (traduit dynamiquement) -->
+            <p id="empty-text">Aucune donnée.</p>
+            <!-- Bouton pour retourner à la carte et ajouter des favoris -->
+            <a href="map.html" id="btn-scan" class="btn-main" style="width:200px;
+margin: 20px auto;">Scanner la carte</a>
+        </div>
         <!-- Bouton pour supprimer toutes les données enregistrées -->
-        <div class="danger-zone"><button id="btn-nuke" class="btn-nuke" onclick="openNukeModal()">💥 SÉQUENCE D'AUTODESTRUCTION</button></div>
+        <!-- Zone de danger : action irréversible qui efface tout le localStorage -->
+        <div class="danger-zone">
+            <!-- Bouton rouge avec emoji explosion : déclenche la séquence d'autodestruction -->
+            <button id="btn-nuke" class="btn-nuke" onclick="openNukeModal()">💥 SÉQUENCE D'AUTODESTRUCTION</button>
+        </div>
     </div>
     <!-- Bouton flottant pour comparer deux gares côte à côte -->
     <button id="vs-btn" onclick="openVsModal()"><i class="fa-solid fa-gavel"></i> <span id="btn-compare">COMPARER</span></button>
