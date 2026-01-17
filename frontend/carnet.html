@@ -917,16 +917,23 @@ count--; screen.innerHTML = count;
         // FONCTION : Change la langue de l'interface (FR ⇄ EN)
         // Met à jour tous les textes de la page en temps réel
         function switchLangCarnet() {
+            // Inverse la langue actuelle
             isFrCarnet = !isFrCarnet;
+            // Récupère les textes traduits
             const t = window.DASHBOARD_TEXTS;
+            // Met à jour tous les éléments de navigation
             document.getElementById('nav-carte').innerText = isFrCarnet ? t.navCarte.fr : t.navCarte.en;
             document.getElementById('nav-aide').innerText = isFrCarnet ? t.navAide.fr : t.navAide.en;
+            // Met à jour le titre principal et sous-titre
             document.getElementById('main-title').innerText = isFrCarnet ? t.mainTitle.fr : t.mainTitle.en;
             document.getElementById('main-subtitle').innerText = isFrCarnet ? t.mainSub.fr : t.mainSub.en;
+            // Met à jour le message d'état vide
             document.getElementById('empty-text').innerText = isFrCarnet ? t.emptyText.fr : t.emptyText.en;
             document.getElementById('btn-scan').innerText = isFrCarnet ? t.btnScan.fr : t.btnScan.en;
+            // Met à jour le bouton d'autodestruction
             document.getElementById('btn-nuke').innerText = isFrCarnet ? t.btnNuke.fr : t.btnNuke.en;
             document.getElementById('btn-compare').innerText = isFrCarnet ? t.btnCompare.fr : t.btnCompare.en;
+            // Met à jour tous les textes de la modale onboarding
             document.getElementById('onb-title').innerText = isFrCarnet ? t.onbTitle.fr : t.onbTitle.en;
             document.getElementById('onb-subtitle').innerText = isFrCarnet ? t.onbSubtitle.fr : t.onbSubtitle.en;
             document.getElementById('onb-item1-title').innerText = isFrCarnet ? t.onbItem1Title.fr : t.onbItem1Title.en;
@@ -940,6 +947,7 @@ count--; screen.innerHTML = count;
             document.getElementById('onb-item5-title').innerText = isFrCarnet ? t.onbItem5Title.fr : t.onbItem5Title.en;
             document.getElementById('onb-item5-desc').innerText = isFrCarnet ? t.onbItem5Desc.fr : t.onbItem5Desc.en;
             document.getElementById('onb-btn').innerText = isFrCarnet ? t.onbBtn.fr : t.onbBtn.en;
+            // Met à jour les modales de galerie, QR, autodestruction et suppression
             document.getElementById('google-title').innerHTML = '<i class="fa-brands fa-wikipedia-w"></i> ' + (isFrCarnet ? t.googleTitle.fr : t.googleTitle.en);
             document.getElementById('qr-title').innerText = isFrCarnet ? t.qrTitle.fr : t.qrTitle.en;
             document.getElementById('qr-text').innerText = isFrCarnet ? t.qrText.fr : t.qrText.en;
@@ -952,16 +960,14 @@ count--; screen.innerHTML = count;
             document.getElementById('del-no').innerText = isFrCarnet ? t.delNo.fr : t.delNo.en;
             document.getElementById('confirmDeleteBtn').innerText = isFrCarnet ? t.delYes.fr : t.delYes.en;
             document.getElementById('vs-title').innerText = isFrCarnet ? t.vsTitle.fr : t.vsTitle.en;
-            // Re-render cards with new language
+            // Réaffiche les cartes avec la nouvelle langue
             render();
         }
         
+        // Expose la fonction globalement pour qu'elle soit accessible depuis le HTML
         window.switchLangCarnet = switchLangCarnet;
     </script>
 
-
-
-
-
-
-
+<!-- Fin du fichier HTML -->
+</body>
+</html>
