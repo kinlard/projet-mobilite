@@ -250,15 +250,26 @@ app.get('/api/parking-velo', async (req, res) => {
     }
 });
 
-//Récupération de la qualité de l'air à proximité d'une position donnée avec notation sur 10
+// ===================================================================================================
+// ROUTE : /api/air-quality - Qualité de l'air à proximité d'une position GPS
+// ===================================================================================================
+// Interroge l'API OpenAQ pour obtenir les données de pollution atmosphérique
+// Renvoie une note sur 10 basée sur l'intensité de la surveillance (indicateur indirect de pollution)
+// Paramètres : lat (latitude), lon (longitude)
+
 app.get('/api/air-quality', async (req, res) => {
+    // Extraction des coordonnées GPS depuis les paramètres de requête
     const { lat, lon } = req.query;
     
+    // Validation : latitude et longitude obligatoires
     if (!lat || !lon) {
         return res.json({ success: false, error: 'Missing lat/lon' });
     }
     
+    // Création d'une clé unique pour le cache basée sur les coordonnées
     const cacheKey = `air_${lat}_${lon}`;
+    
+    // Vérification du cache : si les données existent déjà, les renvoyer immédiatement
     const cached = apiCache.get(cacheKey);
     if (cached) {
         console.log('📦 Cache air-quality utilisé');
@@ -266,33 +277,46 @@ app.get('/api/air-quality', async (req, res) => {
     }
     
     try {
-        //Recherche de stations de mesure dans un rayon de 25 km
+        // Rayon de recherche : 25 km autour de la position (25000 mètres)
         const radius = 25000;
         let response;
+        
         try {
+            // Interrogation de l'API OpenAQ v3 pour trouver les stations de mesure à proximité
             response = await axios.get(
                 `https://api.openaq.org/v3/locations?coordinates=${lat},${lon}&radius=${radius}&limit=5`,
                 {
                     headers: {
+                        // Clé API depuis les variables d'environnement (ou chaîne vide si absente)
                         'X-API-Key': process.env.OPENAQ_API_KEY || ''
                     },
-                    timeout: 10000
+                    timeout: 10000  // Timeout de 10 secondes pour éviter les blocages
                 }
             );
         } catch (apiErr) {
+            // Si l'API OpenAQ est indisponible, renvoyer une estimation par défaut optimiste
             console.log('⚠️ OpenAQ API non disponible, estimation par défaut');
             const fallback = {
                 success: true,
-                data: { note: 7, quality: 'Bon', color: '#10b981', station: 'Estimation', parameter: 'fallback' }
+                data: { 
+                    note: 7,                    // Note moyenne positive (zones rurales/vertes)
+                    quality: 'Bon', 
+                    color: '#10b981',           // Couleur verte pour affichage visuel
+                    station: 'Estimation',      // Indique qu'il s'agit d'une valeur estimée
+                    parameter: 'fallback' 
+                }
             };
+            // Mise en cache de l'estimation pour 1 heure
             apiCache.set(cacheKey, fallback, 3600);
             return res.json(fallback);
         }
         
+        // Extraction des données de la réponse API
         const data = response.data || {};
         
+        // Si des stations de mesure ont été trouvées à proximité
         if (data.results && data.results.length > 0) {
-            //Recherche d'une station avec des capteurs actifs
+            // Variables pour stocker la meilleure station trouvée
             let bestStation = null;
             let bestSensor = null;
             
@@ -323,71 +347,91 @@ app.get('/api/air-quality', async (req, res) => {
                 }
             }
             
-            //Calcul d'une note de qualité de l'air sur 10 basée sur la surveillance de la zone
-            let note = 7;
-            let quality = 'Bon';
-            let color = '#10b981';
+            // ===============================================================================
+            // ALGORITHME DE NOTATION DE LA QUALITÉ DE L'AIR
+            // ===============================================================================
+            // Stratégie : plus une zone est surveillée (nombreux capteurs), plus elle est
+            // probablement polluée (zones urbaines, industrielles). Inversement, peu de
+            // capteurs suggère une zone rurale/verte avec meilleure qualité de l'air.
+            
+            // Initialisation des variables de notation
+            let note = 7;           // Note par défaut (bonne qualité)
+            let quality = 'Bon';    // Label textuel de la qualité
+            let color = '#10b981';  // Couleur d'affichage (vert par défaut)
+            
+            // Récupération du type de paramètre mesuré (pm25, pm10, o3, no2, etc.)
             let paramType = (bestSensor && bestSensor.parameter && bestSensor.parameter.name) || 'estimated';
             
             if (!bestSensor) {
-                //Les zones rurales et vertes ont généralement une meilleure qualité d'air
+                // CAS 1 : Aucun capteur prioritaire trouvé dans les stations proches
+                // Les zones rurales et vertes ont généralement une meilleure qualité d'air
                 note = 7;
                 quality = 'Bon';
-                color = '#10b981';
+                color = '#10b981';  // Vert émeraude
                 console.log(`⚠️ Pas de capteur trouvé, estimation: ${note}/10`);
             } else {
-                //Estimation basée sur l'intensité de la surveillance : plus une zone est surveillée, plus elle est potentiellement polluée
+                // CAS 2 : Capteur trouvé, notation basée sur l'intensité de surveillance
+                // Comptage du nombre total de capteurs dans la meilleure station
                 const sensorCount = bestStation.sensors?.length || 0;
                 
                 if (sensorCount <= 2) {
+                    // Peu de capteurs = zone peu surveillée = probablement peu polluée
                     note = 8;
                     quality = 'Très bon';
-                    color = '#10b981';
+                    color = '#10b981';  // Vert émeraude
                 } else if (sensorCount <= 4) {
+                    // Nombre modéré de capteurs = surveillance moyenne
                     note = 7;
                     quality = 'Bon';
-                    color = '#22c55e';
+                    color = '#22c55e';  // Vert plus clair
                 } else {
+                    // Nombreux capteurs = zone fortement surveillée = probablement plus polluée
                     note = 6;
                     quality = 'Correct';
-                    color = '#f59e0b';
+                    color = '#f59e0b';  // Orange (avertissement)
                 }
             }
             
+            // Construction de l'objet résultat avec toutes les informations
             const result = {
                 success: true,
                 data: {
-                    note: note,
-                    quality: quality,
-                    color: color,
-                    station: bestStation?.name || 'Estimation locale',
-                    parameter: paramType
+                    note: note,                                      // Note sur 10
+                    quality: quality,                                // Label qualité
+                    color: color,                                    // Couleur d'affichage
+                    station: bestStation?.name || 'Estimation locale', // Nom de la station
+                    parameter: paramType                             // Type de polluant mesuré
                 }
             };
             
+            // Mise en cache du résultat pour 1 heure (3600 secondes)
             apiCache.set(cacheKey, result, 3600);
             console.log(`✅ Air quality récupérée : ${note}/10 (${quality})`);
             res.json(result);
         } else {
-            //Absence de station proche : estimation optimiste pour les zones peu urbanisées
+            // CAS 3 : Aucune station de mesure trouvée dans le rayon de 25 km
+            // Estimation optimiste pour les zones peu urbanisées et naturelles
             const result = {
                 success: true,
                 data: {
                     note: 7,
                     quality: 'Bon',
                     color: '#10b981',
-                    station: 'Estimation',
+                    station: 'Estimation',        // Indique qu'aucune station réelle n'a été trouvée
                     parameter: 'estimated'
                 }
             };
+            // Cache de l'estimation pour 1 heure
             apiCache.set(cacheKey, result, 3600);
             console.log(`✅ Air quality estimée : 7/10 (pas de station proche)`);
             res.json(result);
         }
         
     } catch (error) {
+        // Gestion globale des erreurs non anticipées
         console.error('❌ OpenAQ error:', error.message);
-        // En cas d'erreur, retourner une estimation
+        
+        // En cas d'erreur critique, toujours renvoyer une estimation pour éviter les crashs frontend
         res.json({ 
             success: true, 
             data: {
@@ -401,9 +445,17 @@ app.get('/api/air-quality', async (req, res) => {
     }
 });
 
-//Récupération des notes de propreté mesurées dans les gares françaises (sur 5)
+// ===================================================================================================
+// ROUTE : /api/proprete-gares - Notes de propreté des gares françaises
+// ===================================================================================================
+// Récupère les taux de conformité de propreté mesurés par la SNCF et les convertit en notes sur 5
+// Ces notes sont utilisées pour enrichir l'évaluation globale de la qualité des gares
+
 app.get('/api/proprete-gares', async (req, res) => {
+    // Clé de cache unique pour toutes les données de propreté
     const cacheKey = 'proprete_gares';
+    
+    // Vérification du cache avant interrogation de l'API
     const cached = apiCache.get(cacheKey);
     if (cached) {
         console.log('📦 Cache propreté-gares utilisé');
@@ -411,50 +463,74 @@ app.get('/api/proprete-gares', async (req, res) => {
     }
     
     try {
+        // Requête vers l'API SNCF avec limit de 1000 gares (suffisant pour couverture nationale)
         const r = await axios.get(
             'https://ressources.data.sncf.com/api/records/1.0/search/?dataset=proprete-en-gare&q=&rows=1000'
         );
         
-        //Conversion du taux de conformité (pourcentage) en note sur 5 étoiles
+        // Transformation et nettoyage des données brutes
         const data = r.data.records
             .map(record => {
                 const fields = record.fields || {};
+                
+                // Extraction du taux de conformité (pourcentage entre 0 et 100)
                 const tauxConformite = fields.taux_de_conformite;
+                
+                // Conversion du taux en note sur 5 étoiles
+                // Formule : (taux / 20) arrondi à 1 décimale
+                // Exemple : 85% → (85/20) = 4.25 → 4.3/5
                 const noteProprete = tauxConformite ? Math.round((tauxConformite / 20) * 10) / 10 : null;
                 
                 return {
+                    // Nom de la gare avec fallback sur noms alternatifs
                     nom_gare: fields.nom_gare || fields.libellecourt || fields.libellelong,
-                    note_proprete: noteProprete,
-                    taux_conformite: tauxConformite,
-                    date_mesure: fields.mois || fields.periode,
-                    nom_exploitant: fields.nomexploitant || 'SNCF'
+                    note_proprete: noteProprete,           // Note finale sur 5
+                    taux_conformite: tauxConformite,       // Taux original (pour référence)
+                    date_mesure: fields.mois || fields.periode,  // Date de la mesure
+                    nom_exploitant: fields.nomexploitant || 'SNCF'  // Exploitant de la gare
                 };
             })
+            // Filtrage : conservation uniquement des gares avec nom et note valides
             .filter(g => g.nom_gare && g.note_proprete !== null);
         
-        //Conservation uniquement de la mesure la plus récente pour chaque gare
+        // Déduplication : conservation uniquement de la mesure la plus récente pour chaque gare
         const garesMap = {};
         data.forEach(g => {
+            // Normalisation du nom en minuscules pour la comparaison
             const key = g.nom_gare.toLowerCase();
+            
+            // Si la gare n'existe pas encore, ou si la mesure est plus récente, on la conserve
             if (!garesMap[key] || (g.date_mesure > garesMap[key].date_mesure)) {
                 garesMap[key] = g;
             }
         });
+        
+        // Conversion de l'objet map en tableau de valeurs uniques
         const uniqueData = Object.values(garesMap);
         
-        apiCache.set(cacheKey, uniqueData, 86400); // Cache 24h
+        // Mise en cache pour 24 heures (86400 secondes) - données peu volatiles
+        apiCache.set(cacheKey, uniqueData, 86400);
         console.log(`✅ Propreté gares récupérée : ${uniqueData.length} gares`);
         res.json(uniqueData);
         
     } catch (e) {
+        // En cas d'échec, renvoyer un tableau vide pour éviter les erreurs frontend
         console.error('❌ Erreur API Propreté:', e.message);
         res.json([]);
     }
 });
 
-//Récupération de la localisation et du nombre de défibrillateurs disponibles dans les gares
+// ===================================================================================================
+// ROUTE : /api/defibrillateurs-gares - Localisation des défibrillateurs dans les gares
+// ===================================================================================================
+// Récupère et regroupe les défibrillateurs par gare pour afficher le nombre total d'appareils
+// et les emplacements précis (important pour la sécurité des usagers)
+
 app.get('/api/defibrillateurs-gares', async (req, res) => {
+    // Clé de cache pour les données de défibrillateurs
     const cacheKey = 'defibrillateurs_gares';
+    
+    // Vérification du cache (24h)
     const cached = apiCache.get(cacheKey);
     if (cached) {
         console.log('📦 Cache défibrillateurs utilisé');
@@ -462,69 +538,95 @@ app.get('/api/defibrillateurs-gares', async (req, res) => {
     }
     
     try {
+        // Requête vers l'API SNCF avec limit de 2000 appareils
         const r = await axios.get(
             'https://ressources.data.sncf.com/api/records/1.0/search/?dataset=equipements-defibrillateurs&q=&rows=2000'
         );
         
-        //Regroupement des défibrillateurs par gare pour compter le nombre total d'appareils disponibles
+        // Regroupement des défibrillateurs par gare pour compter le nombre total d'appareils
         const garesMap = {};
+        
         r.data.records.forEach(record => {
             const fields = record.fields || {};
-            const gareid = fields.gareid;
+            const gareid = fields.gareid;  // Identifiant unique de la gare
+            
+            // Si pas d'ID de gare, on ignore cet enregistrement
             if (!gareid) return;
             
-            //Extraction des coordonnées géographiques depuis le format texte
+            // Extraction des coordonnées géographiques depuis le format texte "lat, lon"
             let lat = null, lon = null;
             if (fields.position_geographique) {
+                // Parsing du format "48.8566, 2.3522" en tableau [48.8566, 2.3522]
                 const coords = fields.position_geographique.split(',').map(c => parseFloat(c.trim()));
                 if (coords.length === 2) {
-                    lat = coords[0];
-                    lon = coords[1];
+                    lat = coords[0];  // Latitude
+                    lon = coords[1];  // Longitude
                 }
             }
             
+            // Si la gare n'existe pas encore dans la map, on l'initialise
             if (!garesMap[gareid]) {
                 garesMap[gareid] = {
                     gareid: gareid,
                     lat: lat,
                     lon: lon,
-                    nb_appareils: 0,
-                    emplacements: []
+                    nb_appareils: 0,        // Compteur d'appareils
+                    emplacements: []        // Liste des emplacements détaillés
                 };
             }
             
+            // Incrémentation du compteur d'appareils pour cette gare
             garesMap[gareid].nb_appareils++;
+            
+            // Ajout de l'emplacement descriptif (ex: "Hall 1", "Quai A", etc.)
             if (fields.localisationdescriptive) {
                 garesMap[gareid].emplacements.push(fields.localisationdescriptive);
             }
         });
         
-        //Création d'un résumé avec les 3 emplacements principaux pour chaque gare
+        // Création du tableau final avec résumé des emplacements (3 maximum)
         const data = Object.values(garesMap).map(g => ({
-            ...g,
-            emplacement: [...new Set(g.emplacements)].slice(0, 3).join(', ') || 'Hall principal'
+            ...g,  // Copie de toutes les propriétés existantes (gareid, lat, lon, nb_appareils, emplacements)
+            // Création d'une chaîne d'emplacement : dédoublonnage + limit 3 + concaténation
+            emplacement: [...new Set(g.emplacements)]  // Dédoublonnage avec Set
+                .slice(0, 3)                          // Garder les 3 premiers
+                .join(', ')                           // Joindre par virgules
+                || 'Hall principal'                   // Fallback si aucun emplacement renseigné
         }));
         
-        apiCache.set(cacheKey, data, 86400); // Cache 24h
+        // Mise en cache pour 24 heures (données statiques)
+        apiCache.set(cacheKey, data, 86400);
         console.log(`✅ Défibrillateurs récupérés : ${data.length} gares équipées`);
         res.json(data);
         
     } catch (e) {
+        // Renvoi d'un tableau vide en cas d'erreur
         console.error('❌ Erreur API Défibrillateurs:', e.message);
         res.json([]);
     }
 });
 
 
-//Récupération des observations d'espèces vivantes à proximité d'un point géographique
+// ===================================================================================================
+// ROUTE : /api/biodiversity - Observations d'espèces vivantes à proximité
+// ===================================================================================================
+// Interroge iNaturalist pour obtenir les observations scientifiques d'espèces animales et végétales
+// Permet d'évaluer la richesse écologique autour d'une gare (indicateur de biodiversité)
+// Paramètres : lat, lon, radius (en km, défaut 5 km)
+
 app.get('/api/biodiversity', async (req, res) => {
+    // Extraction des paramètres avec valeur par défaut pour le rayon
     const { lat, lon, radius = 5 } = req.query;
     
+    // Validation des coordonnées obligatoires
     if (!lat || !lon) {
         return res.json({ success: false, error: 'Missing lat/lon' });
     }
     
+    // Clé de cache incluant tous les paramètres pour différencier les recherches
     const cacheKey = `bio_${lat}_${lon}_${radius}`;
+    
+    // Vérification du cache (24h)
     const cached = apiCache.get(cacheKey);
     if (cached) {
         console.log('📦 Cache biodiversity utilisé');
@@ -532,38 +634,52 @@ app.get('/api/biodiversity', async (req, res) => {
     }
     
     try {
+        // Interrogation de l'API iNaturalist v1 avec filtres de qualité
         const response = await axios.get(
             `https://api.inaturalist.org/v1/observations?` +
-            `lat=${lat}&lng=${lon}&radius=${radius}&` +
-            `verifiable=true&quality_grade=research&per_page=10&order=desc&order_by=created_at`
+            `lat=${lat}&lng=${lon}&radius=${radius}&` +              // Zone de recherche
+            `verifiable=true&` +                                      // Observations vérifiables uniquement
+            `quality_grade=research&` +                               // Grade "recherche" (haute qualité)
+            `per_page=10&` +                                          // Limit 10 observations
+            `order=desc&order_by=created_at`                         // Plus récentes en premier
         );
         
+        // Extraction du tableau d'observations depuis la réponse
         const observations = response.data.results;
         
-        //Extraction des informations essentielles pour chaque espèce observée
+        // Transformation des observations en objets espèces simplifiés
         const species = observations
+            // Filtrage : garder uniquement les observations avec taxon identifié
             .filter(obs => obs.taxon)
             .map(obs => ({
+                // Nom commun préféré (en français si disponible) ou nom scientifique
                 name: obs.taxon.preferred_common_name || obs.taxon.name,
+                // Nom scientifique latin complet (genre + espèce)
                 scientificName: obs.taxon.name,
+                // URL de la photo de l'espèce (taille moyenne)
                 photo: obs.taxon.default_photo?.medium_url || null,
+                // Catégorie iconique : Mammifère, Oiseau, Plante, Insecte, etc.
                 category: obs.taxon.iconic_taxon_name,
+                // Statut de conservation : espèce menacée ou commune
                 rarity: obs.taxon.threatened ? '🔴 Menacée' : '🟢 Commune'
             }));
         
+        // Construction de l'objet résultat avec comptage et limit 5 espèces
         const result = {
             success: true,
             data: {
-                count: species.length,
-                species: species.slice(0, 5)
+                count: species.length,           // Nombre total d'espèces trouvées
+                species: species.slice(0, 5)     // Les 5 premières espèces pour affichage
             }
         };
         
-        apiCache.set(cacheKey, result, 86400); // Cache 24h
+        // Mise en cache pour 24 heures (données peu volatiles)
+        apiCache.set(cacheKey, result, 86400);
         console.log(`✅ Biodiversité récupérée : ${species.length} espèces`);
         res.json(result);
         
     } catch (error) {
+        // Gestion des erreurs (API indisponible, timeout, etc.)
         console.error('❌ iNaturalist error:', error.message);
         res.json({ success: false, error: error.message });
     }
