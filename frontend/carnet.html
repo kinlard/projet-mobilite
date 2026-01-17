@@ -754,7 +754,6 @@ margin: 20px auto;">Scanner la carte</a>
             // Grille 3 colonnes : Gare 1 | VS | Gare 2
             document.getElementById('vsContent').innerHTML = `
                 <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 35px; align-items: start;">
-                    <!-- COLONNE GARE 1 : Carte avec score circulaire + statistiques -->
                     <div>
                         <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 24px;">
                             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
@@ -804,14 +803,12 @@ margin: 20px auto;">Scanner la carte</a>
                         </div>
                     </div>
                     
-                    <!-- VS Divider -->
                     <div style="display: flex; align-items: center; justify-content: center; padding-top: 80px;">
                         <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(255, 255, 255, 0.04); border: 2px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);">
                             <span style="font-size: 1.1rem; font-weight: 800; color: #94a3b8; letter-spacing: 1px;">VS</span>
                         </div>
                     </div>
                     
-                    <!-- Gare 2 -->
                     <div>
                         <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 24px;">
                             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
@@ -864,20 +861,23 @@ margin: 20px auto;">Scanner la carte</a>
             `;
             openModal('vsModal');
         };
-
+        // FONCTION : Ouvre la modale de confirmation d'autodestruction
         window.openNukeModal = () => document.getElementById('nukeModal').classList.add('active');
+        // FONCTION : Lance la séquence d'autodestruction (compte à rebours + suppression totale)
         window.startSelfDestruct = () => {
-      
-      closeAll();
+            closeAll();
+            // Active les effets visuels : tremblement + alerte rouge
             document.body.classList.add('shaking'); document.getElementById('redAlert').classList.add('active'); 
+            // Affiche l'écran de compte à rebours
             const screen = document.getElementById('countdown-screen');
             screen.style.display = 'flex';
+            // Initialise le compteur à 5
             let count = 5; screen.innerHTML = count;
+            // Démarre le timer : décrémente chaque seconde
             const timer = setInterval(() => {
-                
-count--; screen.innerHTML = count;
-                // MODIFIɉ : Traduction PURGE COMPLETE
-                if(count <= 0) { clearInterval(timer); screen.innerHTML = isFrCarnet ? "PURGE TERMIN�E" : "PURGE COMPLETE"; localStorage.removeItem('eco_favoris'); setTimeout(() => location.reload(), 2000); } // FIX: Changed French text for better localization.
+                count--; screen.innerHTML = count;
+                // Quand le compte atteint 0 : supprime tout et recharge la page
+                if(count <= 0) { clearInterval(timer); screen.innerHTML = isFrCarnet ? "PURGE TERMINÉE" : "PURGE COMPLETE"; localStorage.removeItem('eco_favoris'); setTimeout(() => location.reload(), 2000); }
             }, 1000);
         };
         // FONCTION : Ouvre la modale d'onboarding (tutoriel de bienvenue)
