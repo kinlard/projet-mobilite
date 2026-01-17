@@ -40,32 +40,98 @@ margin: 20px auto;">Scanner la carte</a></div>
     <button id="vs-btn" onclick="openVsModal()"><i class="fa-solid fa-gavel"></i> <span id="btn-compare">COMPARER</span></button>
     <div id="toast" class="toast"><i class="fa-solid fa-circle-info" style="color:var(--primary)"></i><span id="toast-msg">Message</span></div>
     <div id="onboardingModal" class="modal-overlay">
-        <div class="modal-box">
+        <div class="modal-box" style="max-width: 600px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 1px solid rgba(16, 185, 129, 0.2); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.1);">
             <button class="close-modal" onclick="closeAll()"><i class="fa-solid fa-xmark"></i></button>
-            <h3 id="onb-title" style="color:var(--primary); font-size:1.8rem; margin-bottom:20px;">Bienvenue dans votre carnet de voyage !</h3>
-            <div id="onb-text" style="text-align:left; line-height:1.8; color:#cbd5e1; display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px;">
-                <div style="display: flex; gap: 12px; padding: 12px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border-left: 3px solid var(--primary);">
-                    <i class="fa-solid fa-gavel" style="color: var(--primary); font-size: 1.3rem; flex-shrink: 0; margin-top: 2px;"></i>
-                    <span><strong style="color: white;">Comparez 2 gares</strong> — Sélectionnez deux favoris pour voir leurs scores côte à côte</span>
+            
+            <div style="text-align: center; margin-bottom: 30px;">
+                <div style="display: inline-block; background: linear-gradient(135deg, var(--primary), #059669); padding: 20px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);">
+                    <i class="fa-solid fa-map-marked-alt" style="color: #022c22; font-size: 3rem;"></i>
                 </div>
-                <div style="display: flex; gap: 12px; padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 3px solid #3b82f6;">
-                    <i class="fa-brands fa-wikipedia-w" style="color: #3b82f6; font-size: 1.3rem; flex-shrink: 0; margin-top: 2px;"></i>
-                    <span><strong style="color: white;">Explorez les villes</strong> — Accédez aux images Wikipedia pour découvrir chaque destination</span>
+                <h3 id="onb-title" style="color: white; font-size: 2rem; margin-bottom: 10px; font-weight: 900; text-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);">Bienvenue dans votre carnet de voyage !</h3>
+                <p style="color: #94a3b8; font-size: 1rem;">Découvrez toutes les fonctionnalités de votre tableau de bord</p>
+            </div>
+            
+            <div id="onb-text" style="text-align: left; line-height: 1.8; color: #cbd5e1; display: flex; flex-direction: column; gap: 16px; margin-bottom: 30px;">
+                <div style="display: flex; gap: 15px; padding: 16px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); border-radius: 12px; border-left: 4px solid var(--primary); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateX(5px)'; this.style.boxShadow='0 6px 12px rgba(16, 185, 129, 0.2)';" onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.1)';">
+                    <div style="background: var(--primary); width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fa-solid fa-gavel" style="color: #022c22; font-size: 1.4rem;"></i>
+                    </div>
+                    <div>
+                        <strong style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Comparez 2 gares</strong>
+                        <span style="color: #94a3b8; font-size: 0.95rem;">Sélectionnez deux favoris pour voir leurs scores côte à côte</span>
+                    </div>
                 </div>
-                <div style="display: flex; gap: 12px; padding: 12px; background: rgba(245, 158, 11, 0.1); border-radius: 8px; border-left: 3px solid #f59e0b;">
-                    <i class="fa-solid fa-qrcode" style="color: #f59e0b; font-size: 1.3rem; flex-shrink: 0; margin-top: 2px;"></i>
-                    <span><strong style="color: white;">Générez un QR Code</strong> — Partagez facilement vos gares préférées via code scannable</span>
+                
+                <div style="display: flex; gap: 15px; padding: 16px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05)); border-radius: 12px; border-left: 4px solid #3b82f6; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateX(5px)'; this.style.boxShadow='0 6px 12px rgba(59, 130, 246, 0.2)';" onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.1)';">
+                    <div style="background: #3b82f6; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fa-brands fa-wikipedia-w" style="color: white; font-size: 1.4rem;"></i>
+                    </div>
+                    <div>
+                        <strong style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Explorez les villes</strong>
+                        <span style="color: #94a3b8; font-size: 0.95rem;">Accédez aux images Wikipedia pour découvrir chaque destination</span>
+                    </div>
                 </div>
-                <div style="display: flex; gap: 12px; padding: 12px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border-left: 3px solid #10b981;">
-                    <i class="fa-solid fa-map-location-dot" style="color: #10b981; font-size: 1.3rem; flex-shrink: 0; margin-top: 2px;"></i>
-                    <span><strong style="color: white;">Visualisez la carte</strong> — Voyez tous vos favoris en temps réel sur la mini-carte heatmap</span>
+                
+                <div style="display: flex; gap: 15px; padding: 16px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05)); border-radius: 12px; border-left: 4px solid #f59e0b; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateX(5px)'; this.style.boxShadow='0 6px 12px rgba(245, 158, 11, 0.2)';" onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.1)';">
+                    <div style="background: #f59e0b; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fa-solid fa-qrcode" style="color: white; font-size: 1.4rem;"></i>
+                    </div>
+                    <div>
+                        <strong style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Générez un QR Code</strong>
+                        <span style="color: #94a3b8; font-size: 0.95rem;">Partagez facilement vos gares préférées via code scannable</span>
+                    </div>
                 </div>
-                <div style="display: flex; gap: 12px; padding: 12px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border-left: 3px solid #ef4444;">
-                    <i class="fa-solid fa-trash-alt" style="color: #ef4444; font-size: 1.3rem; flex-shrink: 0; margin-top: 2px;"></i>
-                    <span><strong style="color: white;">Gérez vos favoris</strong> — Supprimez individuellement ou lancez une séquence d'autodestruction complète</span>
+                
+                <div style="display: flex; gap: 15px; padding: 16px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); border-radius: 12px; border-left: 4px solid #10b981; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateX(5px)'; this.style.boxShadow='0 6px 12px rgba(16, 185, 129, 0.2)';" onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.1)';">
+                    <div style="background: #10b981; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fa-solid fa-map-location-dot" style="color: white; font-size: 1.4rem;"></i>
+                    </div>
+                    <div>
+                        <strong style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Visualisez la carte</strong>
+                        <span style="color: #94a3b8; font-size: 0.95rem;">Voyez tous vos favoris en temps réel sur la mini-carte heatmap</span>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 15px; padding: 16px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05)); border-radius: 12px; border-left: 4px solid #ef4444; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateX(5px)'; this.style.boxShadow='0 6px 12px rgba(239, 68, 68, 0.2)';" onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.1)';">
+                    <div style="background: #ef4444; width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fa-solid fa-trash-alt" style="color: white; font-size: 1.4rem;"></i>
+                    </div>
+                    <div>
+                        <strong style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Gérez vos favoris</strong>
+                        <span style="color: #94a3b8; font-size: 0.95rem;">Supprimez individuellement ou lancez une séquence d'autodestruction complète</span>
+                    </div>
                 </div>
             </div>
-            <button id="onb-btn" class="btn-main" onclick="closeAll()" style="margin-top:30px; width: 100%; background: var(--primary); color: #022c22; font-weight: 800; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1rem;">Commencer l'exploration !</button>
+            
+            <button id="onb-btn" class="btn-main" onclick="closeAll()" style="margin-top: 10px; width: 100%; background: linear-gradient(135deg, var(--primary), #059669); color: white; font-weight: 900; border: none; padding: 16px 24px; border-radius: 12px; cursor: pointer; font-size: 1.1rem; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1); transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px; position: relative; overflow: hidden;">
+                <span style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <i class="fa-solid fa-rocket"></i>
+                    Commencer l'exploration !
+                </span>
+            </button>
+            
+            <style>
+                #onb-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 15px 35px rgba(16, 185, 129, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.2);
+                }
+                #onb-btn:active {
+                    transform: translateY(0);
+                }
+                #onb-btn::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -100%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                    transition: left 0.5s ease;
+                }
+                #onb-btn:hover::before {
+                    left: 100%;
+                }
+            </style>
         </div>
     </div>
     <div id="googlePhotosModal" class="modal-overlay">
