@@ -155,6 +155,9 @@ font-style:italic; font-size:2rem; margin-bottom:10px;">COMPARATEUR</h2>
         
         // Placeholder for DASHBOARD_TEXTS - will be imported by module script
         let DASHBOARD_TEXTS = {};
+        
+        // Cache pour les images preloadées
+        let wikiImageCache = {};
 
         let favoris = JSON.parse(localStorage.getItem('eco_favoris')) || [];
         favoris = favoris.map(f => {
@@ -185,17 +188,9 @@ grid.innerHTML = '';
        const deg = (score !== '?' ? score : 0) * 36;
                 const gradient = `conic-gradient(${color} ${deg}deg, #334155 0deg)`;
                 const safeName = escapeHTML(fav.nom);
-                
-                // Générer une image background lazy par ville
-                const cityName = fav.nom.split(' - ')[0].replace(/Gare de\s?/gi, '').trim();
-                const bgImage = `https://images.unsplash.com/photo-${['1488646953014-85cb44e25828', '1555881286-65ee0487213f', '1508062a4a20-7c4a6e6e0f5e'][index % 3]}?w=500&q=40`;
 
                 const div = document.createElement('div');
                 div.className = 'card';
-                div.style.backgroundImage = `url('${bgImage}')`;
-                div.style.backgroundSize = 'cover';
-                div.style.backgroundPosition = 'center';
-                div.style.backgroundAttachment = 'fixed';
      
            div.innerHTML = `
                     <input type="checkbox" id="chk-${index}" class="vs-checkbox-input" onchange="toggleVs(${index}, this)">
@@ -223,27 +218,56 @@ width:20px;"></i> ${details.covoit} ${isFrCarnet ? 'Covoit' : 'Carpool'}</div>
            <button class="tool-btn del" title="${isFrCarnet?'Supprimer':'Delete'}" onclick="askDelete(${index})"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 `;
-                
-                // Lazy load intersection observer
-                if ('IntersectionObserver' in window) {
-                    const observer = new IntersectionObserver((entries) => {
-                        entries.forEach(entry => {
-                            if (entry.isIntersecting) {
-                                const img = new Image();
-                                img.onload = () => {
-                                    entry.target.style.backgroundImage = `url('${bgImage}')`;
-                                    observer.unobserve(entry.target);
-                                };
-                                img.src = bgImage;
-                            }
-                        });
-                    });
-                    observer.observe(div);
-                }
-                
 grid.appendChild(div);
             });
+            
+            // Preload images en arrière-plan après le rendu
+            preloadWikipediaImages();
         }
+        
+        // Fonction pour preloader les images Wikipedia en arrière-plan
+        async function preloadWikipediaImages() {
+            favoris.forEach((fav) => {
+                // Charger silencieusement les images sans afficher
+                fetchWikimediaImage(fav.nom).catch(() => {
+                    // Erreur silencieuse - ça n'affecte pas l'UX
+                });
+            });
+        }
+        
+        // Fonction pour chercher une image Wikimedia (utilisée aussi en preload)
+        async function fetchWikimediaImage(nom) {
+            const cleanName = nom.split(' - ')[0].replace(/Gare de\s?/gi, '').replace(/TGV/gi, '').replace(/Centre/gi, '').trim();
+            const villeName = cleanName.split(/[-\s]/)[0];
+            
+            const searchTerms = [
+                `${villeName} gare SNCF`,
+                `Gare de ${cleanName}`,
+                `${villeName} train station`,
+                villeName
+            ];
+            
+            for (const term of searchTerms) {
+                try {
+                    const url = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(term)}&srnamespace=6&srlimit=5&format=json&origin=*`;
+                    const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
+                    const d = await r.json();
+                    
+                    if (d.query?.search?.length > 0) {
+                        for (const result of d.query.search) {
+                            if (/\.(jpg|jpeg|png|gif|webp)$/i.test(result.title)) {
+                                const fileName = result.title.replace(/^File:/i, '');
+                                return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}?width=500`;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    continue;
+                }
+            }
+            throw new Error('Pas d\'image trouvée');
+        }
+        
         render();
 if(favoris.length > 0) {
             setTimeout(() => {
@@ -271,44 +295,45 @@ document.getElementById('toast-msg').innerText = msg;
 
         async function openGooglePhotos(nom) {
             let cleanCity = nom.split(' - ')[0].replace(/Gare de\s?/gi, '').replace(/TGV/gi, '').replace(/Centre/gi, '').trim();
+            const villeName = cleanCity.split(/[-\s]/)[0];
             document.getElementById('googleQuery').innerText = `${isFrCarnet ? 'Recherche pour :' : 'Search for:'} "${cleanCity}"`;
             openModal('googlePhotosModal');
             const grid = document.getElementById('googleGrid');
+            
+            // Vérifier le cache d'abord
+            if (wikiImageCache[villeName]) {
+                console.log('✅ Image en cache:', villeName);
+                grid.innerHTML = `<img src="${wikiImageCache[villeName]}" class="google-pic" alt="${cleanCity}" onerror="this.src='https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80'">`;
+                return;
+            }
+            
             grid.innerHTML = `<div style="color:#94a3b8; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> ${isFrCarnet ? DASHBOARD_TEXTS.imgLoad.fr : DASHBOARD_TEXTS.imgLoad.en}</div>`;
             
             try {
-                // Essayer d'abord en français
-                let url = `https://fr.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanCity)}&prop=pageimages&format=json&pithumbsize=600&origin=*`;
-                let r = await fetch(url);
-                let d = await r.json();
-                let pages = d.query.pages;
-                let pid = Object.keys(pages)[0];
-                let imgSrc = null;
-                
-                if (pid !== "-1" && pages[pid].thumbnail) {
-                    imgSrc = pages[pid].thumbnail.source;
-                } else {
-                    // Fallback: essayer en anglais
-                    url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanCity)}&prop=pageimages&format=json&pithumbsize=600&origin=*`;
-                    r = await fetch(url);
-                    d = await r.json();
-                    pages = d.query.pages;
-                    pid = Object.keys(pages)[0];
+                // Utiliser la fonction fetchWikimediaImage
+                const imgSrc = await fetchWikimediaImage(nom);
+                // Mettre en cache
+                wikiImageCache[villeName] = imgSrc;
+                grid.innerHTML = `<img src="${imgSrc}" class="google-pic" alt="${cleanCity}" onerror="this.src='https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80'">`;
+            } catch(e) {
+                console.log('Fallback: No Wikimedia image, trying Wikipedia');
+                try {
+                    const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(villeName)}&prop=pageimages&format=json&pithumbsize=600&origin=*`;
+                    const wr = await fetch(wikiUrl);
+                    const wd = await wr.json();
+                    const wpages = wd.query.pages;
+                    const wpid = Object.keys(wpages)[0];
                     
-                    if (pid !== "-1" && pages[pid].thumbnail) {
-                        imgSrc = pages[pid].thumbnail.source;
+                    if (wpid !== "-1" && wpages[wpid].thumbnail) {
+                        const imgSrc = wpages[wpid].thumbnail.source;
+                        wikiImageCache[villeName] = imgSrc;
+                        grid.innerHTML = `<img src="${imgSrc}" class="google-pic" alt="${cleanCity}" onerror="this.src='https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80'">`;
+                    } else {
+                        grid.innerHTML = `<img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80" class="google-pic" alt="${cleanCity}">`;
                     }
-                }
-                
-                if (imgSrc) {
-                    grid.innerHTML = `<img src="${imgSrc}" class="google-pic" alt="${cleanCity}" onerror="this.src='https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80'">`;
-                } else {
-                    // Fallback: image par défaut
+                } catch(e2) {
                     grid.innerHTML = `<img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80" class="google-pic" alt="${cleanCity}">`;
                 }
-            } catch(e) {
-                console.error('Erreur lors du chargement des images:', e);
-                grid.innerHTML = `<img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80" class="google-pic" alt="${cleanCity}">`;
             }
         }
 
