@@ -120,12 +120,16 @@
     </div>
 
     <!-- HEADER MOBILE : 2 ÉTAGES (visible uniquement <768px) -->
+    <!-- Barre de navigation spécifique pour les smartphones : se déploie sur 2 lignes pour optimiser l'espace -->
     <div class="mobile-header" id="mobileHeader">
         <!-- ÉTAGE 1 : Logo + Recherche -->
+        <!-- Première ligne : logo et barre de recherche, les éléments prioritaires -->
         <div class="mobile-header-top">
+            <!-- Logo réduit du site -->
             <div class="mobile-logo">
                 <h1>Eco-Escapade</h1>
             </div>
+            <!-- Barre de recherche adaptée au tactile, plus large sur mobile -->
             <div class="mobile-search">
                 <i class="fa-solid fa-search search-icon"></i>
                 <input type="text" id="mobile-search-input" list="mobile-gares-list" placeholder="Rechercher..." autocomplete="off">
@@ -134,31 +138,39 @@
         </div>
         
         <!-- ÉTAGE 2 : Barre d'outils avec scroll horizontal -->
+        <!-- Deuxième ligne : rangée de boutons défilable horizontalement pour accéder à tous les outils -->
         <div class="mobile-header-bottom">
+            <!-- Bouton découvrir : ouvre l'assistant de recommandation de destinations -->
             <button class="mobile-tool-btn" onclick="openDiscoverModal()" title="Découvrir">
                 <i class="fa-solid fa-compass"></i>
                 <span>Découvrir</span>
             </button>
+            <!-- Bouton statistiques : affiche le tableau de bord national -->
             <button class="mobile-tool-btn" onclick="document.getElementById('btnStats').click()" title="Stats">
                 <i class="fa-solid fa-chart-column"></i>
                 <span>Stats</span>
             </button>
+            <!-- Bouton de géolocalisation : centre la carte sur ma position GPS -->
             <button class="mobile-tool-btn" onclick="locateUser()" title="Ma position">
                 <i class="fa-solid fa-location-arrow"></i>
                 <span>Position</span>
             </button>
+            <!-- Bouton gare aléatoire : propose une destination surprise -->
             <button class="mobile-tool-btn" onclick="randomGare()" title="Aléatoire">
                 <i class="fa-solid fa-dice"></i>
                 <span>Random</span>
             </button>
+            <!-- Bouton carte IGN : bascule vers la vue topographique -->
             <button class="mobile-tool-btn" onclick="toggleIgnLayer()" title="Carte IGN">
                 <i class="fa-solid fa-mountain"></i>
                 <span>IGN</span>
             </button>
+            <!-- Bouton sélecteur de thème : personnalise les couleurs du site -->
             <button class="mobile-tool-btn" onclick="openThemeSelector()" title="Thème">
                 <i class="fa-solid fa-palette"></i>
                 <span>Thème</span>
             </button>
+            <!-- Bouton de changement de langue : bascule entre français et anglais -->
             <button class="mobile-tool-btn" onclick="switchLangMap()" title="Langue">
                 <i class="fa-solid fa-language"></i>
                 <span id="mobile-lang-text">FR</span>
@@ -166,28 +178,47 @@
         </div>
     </div>
 
+    <!-- Conteneur principal de la carte interactive Leaflet -->
+    <!-- Zone plein écran où s'afficheront la carte, les marqueurs de gares, les clusters et toutes les interactions -->
     <div id="map"></div>
 
+    <!-- MODAL : Fenêtre de découverte personnalisée -->
+    <!-- Permet de filtrer les gares par type d'environnement (mer, montagne, ville, campagne) -->
     <div id="discoverModal" class="discover-modal">
+        <!-- Effet visuel de particules flottantes en arrière-plan pour dynamiser l'interface -->
         <div class="discover-particles"></div>
+        <!-- Contenu principal de la fenêtre -->
         <div class="discover-content">
+            <!-- Bouton de fermeture en haut à droite (icône croix) -->
             <button onclick="closeDiscover()" class="discover-close-btn"><i class="fa-solid fa-xmark"></i></button>
+            <!-- En-tête avec icône, titre et description -->
             <div class="discover-header">
+                <!-- Grande icône de boussole pour représenter la découverte -->
                 <div class="discover-icon-main"><i class="fa-solid fa-compass"></i></div>
+                <!-- Titre accrocheur de la fenêtre -->
                 <h2 id="discoverTitle" class="discover-title">Envie de partir quelque part ?</h2>
+                <!-- Sous-titre explicatif du fonctionnement -->
                 <p id="discoverSubtitle" class="discover-subtitle">Choisissez un environnement, le site trouve pour vous les gares les plus écologiques.</p>
             </div>
+            <!-- Bouton retour : permet de revenir au choix d'environnement si on a déjà sélectionné une catégorie -->
             <button id="btnBackCat" onclick="resetDiscover()" class="discover-back-btn"><i class="fa-solid fa-arrow-left"></i> Choisir un autre environnement</button>
             
+            <!-- Grille de cartes interactives pour sélectionner un type d'environnement -->
+            <!-- Chaque carte au clic filtre les gares correspondant à la catégorie choisie -->
             <div id="catGrid" class="cat-grid">
+                <!-- Carte MER MÉDITERRANÉE : gares côtières méditerranéennes -->
                 <div class="cat-card cat-mer" onclick="showCategory('mer', 'Mer & Plages')">
+                    <!-- Fond coloré avec dégradé bleu océan -->
                     <div class="cat-card-bg"></div>
+                    <!-- Contenu : icône + texte -->
                     <div class="cat-card-content">
                         <i class="fa-solid fa-umbrella-beach cat-icon"></i>
                         <h3 id="cat-mer">Mer Méditerranée</h3>
+                        <!-- Effet de brillance au survol -->
                         <div class="cat-shine"></div>
                     </div>
                 </div>
+                <!-- Carte OCÉAN ATLANTIQUE : gares côtières atlantiques -->
                 <div class="cat-card cat-ocean" onclick="showCategory('ocean', 'Océan & Vagues')">
                     <div class="cat-card-bg"></div>
                     <div class="cat-card-content">
@@ -196,6 +227,7 @@
                         <div class="cat-shine"></div>
                     </div>
                 </div>
+                <!-- Carte MONTAGNE : gares en altitude, stations de ski, zones montagneuses -->
                 <div class="cat-card cat-montagne" onclick="showCategory('montagne', 'Montagne & Neige')">
                     <div class="cat-card-bg"></div>
                     <div class="cat-card-content">
@@ -204,6 +236,7 @@
                         <div class="cat-shine"></div>
                     </div>
                 </div>
+                <!-- Carte GRANDES VILLES : métropoles urbaines (Lyon, Marseille, Lille...) -->
                 <div class="cat-card cat-ville" onclick="showCategory('ville', 'Grandes Métropoles')">
                     <div class="cat-card-bg"></div>
                     <div class="cat-card-content">
@@ -212,6 +245,7 @@
                         <div class="cat-shine"></div>
                     </div>
                 </div>
+                <!-- Carte PARIS : spécifique à la région parisienne -->
                 <div class="cat-card cat-paris" onclick="showCategory('paris', 'Capitale')">
                     <div class="cat-card-bg"></div>
                     <div class="cat-card-content">
@@ -220,6 +254,7 @@
                         <div class="cat-shine"></div>
                     </div>
                 </div>
+                <!-- Carte LE SUD : régions du sud de la France (climat ensoleillé) -->
                 <div class="cat-card cat-sud" onclick="showCategory('sud', 'Le Sud')">
                     <div class="cat-card-bg"></div>
                     <div class="cat-card-content">
@@ -228,6 +263,7 @@
                         <div class="cat-shine"></div>
                     </div>
                 </div>
+                <!-- Carte LE NORD : régions du nord de la France (climat plus frais) -->
                 <div class="cat-card cat-nord" onclick="showCategory('nord', 'Le Nord')">
                     <div class="cat-card-bg"></div>
                     <div class="cat-card-content">
