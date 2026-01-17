@@ -1,33 +1,72 @@
-﻿﻿<!DOCTYPE html>
+﻿﻿<!-- Déclaration HTML5 : version moderne du langage web -->
+<!DOCTYPE html>
+<!-- Balise racine avec langue française pour l'accessibilité et les moteurs de recherche -->
 <html lang="fr">
 <head>
+    <!-- Encodage UTF-8 : permet d'afficher tous les caractères accentués correctement -->
     <meta charset="UTF-8">
+    <!-- Configuration responsive : adaptation automatique aux smartphones et tablettes, zoom désactivé -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Titre de l'onglet du navigateur -->
     <title>Eco-Escapade | L'Aventure Bas Carbone</title>
+    <!-- Feuille de style principale pour l'adaptation mobile et tablette -->
     <link rel="stylesheet" href="responsive.css">
+    <!-- Icône du site (favicon) : affiche un emoji feuille 🌿 dans l'onglet du navigateur -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%8C%BF</text></svg>">
+    <!-- Polices Google Fonts : Inter pour le texte général, Space Grotesk pour les titres -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+    <!-- Bibliothèque Font Awesome : fournit toutes les icônes (flèches, vélo, train...) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- STYLES CSS INTÉGRÉS : Design de la page d'accueil -->
     <style>
-        /* Définition des couleurs principales du site */
+        /* Variables CSS globales : couleurs réutilisables dans tout le style */
+        /* --primary : vert écologique principal (boutons, accents) */
+        /* --dark : bleu-noir pour les fonds sombres */
+        /* --glass : effet de verre semi-transparent pour les éléments flottants */
         :root { --primary: #10b981; --dark: #0f172a; --glass: rgba(255, 255, 255, 0.1); }
-        /* Réinitialisation des marges et application du modèle de boîte standard */
+        /* Réinitialisation CSS : supprime les marges et espacements par défaut des navigateurs */
+        /* box-sizing: border-box : facilite le calcul des dimensions en incluant padding et bordure */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        /* Configuration de base de la page avec fond noir et texte blanc */
+        /* Style de base du corps de la page */
+        /* Police Inter pour une lecture moderne et agréable */
+        /* Fond noir pour contraste avec vidéo d'arrière-plan */
+        /* overflow: hidden : empêche le défilement de page */
+        /* height: 100vh : hauteur plein écran pour effet immersif */
         body { font-family: 'Inter', sans-serif; background: #000; color: white; overflow: hidden; height: 100vh; position: relative; }
-        /* Écran de chargement affiché au démarrage du site */
+        /* Écran de chargement initial : masque le contenu pendant le téléchargement des données */
+        /* position: fixed : reste visible même si on scrolle */
+        /* z-index: 9999 : s'affiche au-dessus de tout */
+        /* display: flex : centre le contenu verticalement et horizontalement */
+        /* transition: opacity : disparaît en fondu progressif une fois le chargement terminé */
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #020617; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.8s ease; }
-        /* Icône de vélo animée pendant le chargement */
+        /* Icône de vélo avec animation de mouvement : feedback visuel ludique pendant l'attente */
+        /* font-size: 3rem : grande taille pour visibilité */
+        /* animation: ride : oscille de haut en bas pour simuler un pédalage */
         .bike-loader { font-size: 3rem; color: var(--primary); animation: ride 1s infinite alternate; }
-        /* Conteneur de la barre de progression */
+        /* Conteneur de la barre de progression horizontale */
+        /* width: 200px : longueur fixe de la barre */
+        /* background: #333 : fond gris foncé pour contraste avec la barre verte */
+        /* overflow: hidden : cache la partie de la barre qui dépasse pendant l'animation */
         .loading-bar-container { width: 200px; height: 4px; background: #333; margin-top: 20px; border-radius: 2px; overflow: hidden; }
-        /* Barre de progression qui se remplit progressivement */
+        /* Barre de progression animée : se remplit de 0% à 100% pendant le chargement */
+        /* width: 0 : commence vide, sera modifiée par JavaScript */
+        /* transition: width : animation fluide lors de l'augmentation de la largeur */
         .loading-bar { height: 100%; width: 0; background: var(--primary); transition: width 0.2s; }
-        /* Animation de mouvement pour l'icône de vélo */
+        /* Animation CSS du vélo : mouvement vertical et rotation légère */
+        /* alternate : fait l'aller-retour entre les deux états */
+        /* infinite : boucle sans fin jusqu'à la fin du chargement */
         @keyframes ride { from { transform: translateY(0) rotate(0deg); } to { transform: translateY(-10px) rotate(5deg); } }
-        /* Vidéo de fond avec effet de luminosité réduite */
+        /* Vidéo d'arrière-plan : diffuse en boucle pour ambiance visuelle immersive */
+        /* position: fixed : reste en place même si on scrolle */
+        /* object-fit: cover : remplit tout l'écran sans déformation */
+        /* z-index: -2 : placée derrière tout le contenu */
+        /* opacity: 0.6 : légèrement transparente pour ne pas gêner la lecture */
+        /* filter: brightness(0.5) : assombrie pour améliorer le contraste avec le texte blanc */
         .video-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; opacity: 0.6; filter: brightness(0.5); }
-        /* Barre de navigation en haut de la page */        /* Barre de navigation en haut de la page */
+        /* Barre de navigation fixe en haut de la page */
+        /* position: fixed : reste visible en haut même lors du scroll */
+        /* display: flex + justify-content: space-between : logo à gauche, bouton langue à droite */
+        /* z-index: 100 : au-dessus du contenu mais sous l'écran de chargement */
         .nav { position: fixed; top: 40px; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 5%; z-index: 100; }
         /* Logo du site avec police spéciale */
         .logo { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 900; color: white; cursor: pointer; }
