@@ -1312,16 +1312,18 @@ window.findNearbyStation = (lat, lon) => {
 
 // Fonction pour cacher la zone pi�tonne
 function hideWalkZone() {
-    if (!walkCircle) return; // PERF: Early exit si rien � faire
-    try { map.removeLayer(walkCircle); } catch (e) {}
+    // Supprime le cercle si présent, mais ferme toujours la notif même s'il n'existe plus
+    if (walkCircle) {
+        try { map.removeLayer(walkCircle); } catch (e) {}
+    }
     walkCircle = null;
-    // Reset des variables de navigation v�los
+    // Reset des variables de navigation vélos
     velosInZone = [];
     velosZoneIndex = 0;
-    // Cacher la notification persistante des v�los
+    // Cacher la notification persistante des vélos
     const veloNotif = document.getElementById('velo-zone-notif');
     if (veloNotif) veloNotif.classList.remove('active');
-    // Cacher les fl�ches de navigation
+    // Cacher les flèches de navigation
     updateVeloNavArrows(0);
 }
 

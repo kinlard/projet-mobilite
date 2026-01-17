@@ -224,9 +224,11 @@
         import './app.js';
         
         let isFrMap = true;
+        window.isFrMap = isFrMap;
         
         function switchLangMap() {
             isFrMap = !isFrMap;
+            window.isFrMap = isFrMap;
             console.log('🔄 switchLangMap() appelé - isFrMap maintenant:', isFrMap);
             const t = NAV_TEXTS;
             document.getElementById('nav-home').innerText = isFrMap ? t.navHome.fr : t.navHome.en;
