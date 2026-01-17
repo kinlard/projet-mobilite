@@ -97,27 +97,48 @@ margin: 20px auto;">Scanner la carte</a>
         </div>
     </div>
     <!-- Bouton flottant pour comparer deux gares côte à côte -->
+    <!-- Visible uniquement quand exactement 2 gares sont cochées dans la grille -->
+    <!-- Icône marteau : symbole de comparaison/jugement -->
     <button id="vs-btn" onclick="openVsModal()"><i class="fa-solid fa-gavel"></i> <span id="btn-compare">COMPARER</span></button>
     <!-- Notification temporaire pour informer l'utilisateur -->
+    <!-- Apparaît en bas de l'écran pendant 3 secondes pour confirmer les actions -->
+    <!-- Exemples : "Favori supprimé", "Max 2 sélections" -->
     <div id="toast" class="toast"><i class="fa-solid fa-circle-info" style="color:var(--primary)"></i><span id="toast-msg">Message</span></div>
     <!-- Fenêtre modale de présentation des fonctionnalités -->
+    <!-- S'affiche automatiquement à la première visite pour expliquer comment utiliser le tableau de bord -->
+    <!-- Peut être réouverte via le lien "Aide" dans la navigation -->
     <div id="onboardingModal" class="modal-overlay">
+        <!-- Boîte de la modale avec design sombre et bordure verte -->
+        <!-- max-width: 600px : largeur maximale pour lisibilité -->
+        <!-- background: linear-gradient : dégradé bleu-noir pour élégance -->
         <div class="modal-box" style="max-width: 600px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 1px solid rgba(16, 185, 129, 0.2); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.1);">
+            <!-- Bouton de fermeture en haut à droite (croix) -->
             <button class="close-modal" onclick="closeAll()"><i class="fa-solid fa-xmark"></i></button>
             
+            <!-- En-tête de la modale avec icône et titres -->
             <div style="text-align: center; margin-bottom: 30px;">
+                <!-- Icône de carte dans un cercle vert avec ombre -->
                 <div style="display: inline-block; background: linear-gradient(135deg, var(--primary), #059669); padding: 20px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);">
                     <i class="fa-solid fa-map-marked-alt" style="color: #022c22; font-size: 3rem;"></i>
                 </div>
+                <!-- Titre principal de bienvenue (traduit dynamiquement) -->
                 <h3 id="onb-title" style="color: white; font-size: 2rem; margin-bottom: 10px; font-weight: 900; text-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);">Bienvenue dans votre carnet de voyage !</h3>
+                <!-- Sous-titre explicatif (traduit dynamiquement) -->
                 <p id="onb-subtitle" style="color: #94a3b8; font-size: 1rem;">Découvrez toutes les fonctionnalités de votre tableau de bord</p>
             </div>
             
+            <!-- Liste des fonctionnalités sous forme de cartes colorées -->
+            <!-- Chaque carte a une couleur différente et une animation au survol -->
             <div id="onb-text" style="text-align: left; line-height: 1.8; color: #cbd5e1; display: flex; flex-direction: column; gap: 16px; margin-bottom: 30px;">
+                <!-- Carte 1 : COMPARER 2 GARES -->
+                <!-- Couleur verte (primary) pour la fonctionnalité principale -->
+                <!-- onmouseover/onmouseout : animation de déplacement horizontal au survol -->
                 <div style="display: flex; gap: 15px; padding: 16px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); border-radius: 12px; border-left: 4px solid var(--primary); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateX(5px)'; this.style.boxShadow='0 6px 12px rgba(16, 185, 129, 0.2)';" onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 4px 6px rgba(0, 0, 0, 0.1)';">
+                    <!-- Icône marteau dans un carré vert -->
                     <div style="background: var(--primary); width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                         <i class="fa-solid fa-gavel" style="color: #022c22; font-size: 1.4rem;"></i>
                     </div>
+                    <!-- Titre et description de la fonctionnalité (traduits dynamiquement) -->
                     <div>
                         <strong id="onb-item1-title" style="color: white; font-size: 1.05rem; display: block; margin-bottom: 4px;">Comparez 2 gares</strong>
                         <span id="onb-item1-desc" style="color: #94a3b8; font-size: 0.95rem;">Sélectionnez deux favoris pour voir leurs scores côte à côte</span>
