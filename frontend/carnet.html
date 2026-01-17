@@ -71,55 +71,72 @@ margin: 20px auto;">Scanner la carte</a></div>
     <div id="googlePhotosModal" class="modal-overlay">
         <div class="modal-box">
             <button class="close-modal" onclick="closeAll()"><i class="fa-solid fa-xmark"></i></button>
-            <h3 class="google-title" id="google-title" style="margin-bottom:20px;
-font-size:1.5rem; color:white;"><i class="fa-brands fa-wikipedia-w"></i> Images de la ville</h3>
-            <p id="googleQuery" style="color:#94a3b8;
-margin-bottom:15px; font-style:italic;"></p>
-            <div class="google-grid" id="googleGrid"><div style="color:#94a3b8;
-padding:20px;">Chargement des images...</div></div>
+            <h3 class="google-title" id="google-title" style="margin-bottom:10px; font-size:1.6rem; color:var(--primary); display:flex; align-items:center; gap:12px;"><i class="fa-brands fa-wikipedia-w"></i> <span id="google-title-text">Images de la ville</span></h3>
+            <p id="googleQuery" style="color:#94a3b8; margin-bottom:20px; font-style:italic; font-size:0.95rem;"></p>
+            <div class="google-grid" id="googleGrid"><div style="color:#94a3b8; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i></div></div>
         </div>
     </div>
     <div id="qrModal" class="modal-overlay">
         <div class="modal-box">
             <button class="close-modal" onclick="closeAll()"><i class="fa-solid fa-xmark"></i></button>
-            <h3 id="qr-title">Partager</h3>
-            <div id="qrcode" style="margin: 20px auto;
-width: 128px; background:white; padding:10px;"></div>
-            <p id="qr-text" style="font-size:0.9rem;
-color:#94a3b8;">Scannez pour ouvrir Google Maps</p>
+            <h3 id="qr-title" style="margin-bottom:20px; font-size:1.6rem; color:var(--primary); display:flex; align-items:center; justify-content:center; gap:10px;"><i class="fa-solid fa-qrcode"></i> <span>Partager</span></h3>
+            <div id="qrcode" style="margin: 30px auto; width: 160px; height: 160px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); animation: slideUp 0.5s ease-out;"></div>
+            <p id="qr-text" style="font-size:0.95rem; color:#94a3b8; margin-top: 20px; font-style: italic;">
+                <i class="fa-solid fa-arrow-up" style="margin-right: 8px;"></i>
+                Scannez pour ouvrir Google Maps
+            </p>
         </div>
     </div>
     <div id="nukeModal" class="modal-overlay">
-        <div class="modal-box" style="border: 2px solid #ef4444;
-box-shadow: 0 0 50px rgba(239,68,68,0.3);">
-            <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem;
-color: #ef4444; margin-bottom: 20px;"></i>
-            <h3 id="nuke-title" style="color: #ef4444;
-font-size: 1.5rem;">ATTENTION</h3>
-            <p id="nuke-text">Voulez-vous vraiment détruire tout le carnet ?</p>
-            <div style="display: flex;
-gap: 10px; justify-content: center; margin-top: 20px;">
-                <button id="nuke-no" onclick="closeAll()" style="padding: 10px 20px;
-background: #334155; border:none; color:white; border-radius:8px; cursor:pointer;">Non</button>
-                <button id="nuke-yes" onclick="startSelfDestruct()" style="padding: 10px 20px;
-background: #ef4444; border:none; color:white; border-radius:8px; font-weight:bold; cursor:pointer;">OUI, DETRUIRE</button>
+        <div class="modal-box" style="border: 2px solid #ef4444; box-shadow: 0 0 60px rgba(239,68,68,0.3), 0 20px 60px rgba(0,0,0,0.4);">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: #ef4444; margin-bottom: 20px; animation: pulse 2s ease-in-out infinite;"></i>
+            <h3 id="nuke-title" style="color: #ef4444; font-size: 1.6rem; margin-bottom: 15px;">ATTENTION</h3>
+            <p id="nuke-text" style="color: #cbd5e1; margin-bottom: 25px;">Voulez-vous vraiment détruire tout le carnet ?</p>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <button id="nuke-no" onclick="closeAll()" style="padding: 12px 28px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Annuler</button>
+                <button id="nuke-yes" onclick="startSelfDestruct()" style="padding: 12px 28px; background: #ef4444; border: none; color: white; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);">OUI, DÉTRUIRE</button>
             </div>
         </div>
     </div>
+    
+    <style>
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        #nuke-no:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.05);
+        }
+        #nuke-yes:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.5);
+        }
+    </style>
     <div id="deleteSingleModal" class="modal-overlay">
         <div class="modal-box">
-            <h3 id="del-title" style="margin-bottom:15px;">Supprimer ce favori ?</h3>
-            <p id="del-text" style="color:#94a3b8;
-margin-bottom:20px;">Cette action est irr�versible.</p>
-            <div style="display: flex; gap: 10px;
-justify-content: center;">
-                <button id="del-no" onclick="closeAll()" style="padding: 10px 20px;
-background: #334155; border:none; color:white; border-radius:8px; cursor:pointer;">Annuler</button>
-                <button id="confirmDeleteBtn" style="padding: 10px 20px;
-background: #ef4444; border:none; color:white; border-radius:8px; font-weight:bold; cursor:pointer;">Supprimer</button>
+            <button class="close-modal" onclick="closeAll()"><i class="fa-solid fa-xmark"></i></button>
+            <h3 id="del-title" style="margin-bottom: 15px; font-size: 1.6rem; color: #ef4444;"><i class="fa-solid fa-trash-alt" style="margin-right: 10px;"></i>Supprimer ce favori ?</h3>
+            <p id="del-text" style="color: #94a3b8; margin-bottom: 25px; font-size: 0.95rem;">Cette action est <strong style="color: #ef4444;">irréversible</strong></p>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <button id="del-no" onclick="closeAll()" style="padding: 12px 28px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Annuler</button>
+                <button id="confirmDeleteBtn" style="padding: 12px 28px; background: #ef4444; border: none; color: white; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);">Supprimer</button>
             </div>
         </div>
     </div>
+    
+    <style>
+        #del-no:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.05);
+        }
+        #confirmDeleteBtn:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.5);
+        }
+    </style>
     <div id="vsModal" class="modal-overlay">
         <div class="modal-box" style="max-width: 700px;
 background: linear-gradient(145deg, #1e293b, #0f172a);">
@@ -228,26 +245,45 @@ document.getElementById('toast-msg').innerText = msg;
 
         async function openGooglePhotos(nom) {
             let cleanCity = nom.split(' - ')[0].replace(/Gare de\s?/gi, '').replace(/TGV/gi, '').replace(/Centre/gi, '').trim();
-document.getElementById('googleQuery').innerText = `${isFrCarnet ? 'Recherche pour :' : 'Search for:'} "${cleanCity}"`;
+            document.getElementById('googleQuery').innerText = `${isFrCarnet ? 'Recherche pour :' : 'Search for:'} "${cleanCity}"`;
             openModal('googlePhotosModal');
             const grid = document.getElementById('googleGrid');
-            // MODIFIɉ : Utilisation de DASHBOARD_TEXTS
-            grid.innerHTML = `<div style="color:#94a3b8; padding:20px;">${isFrCarnet ? DASHBOARD_TEXTS.imgLoad.fr : DASHBOARD_TEXTS.imgLoad.en}</div>`;
-try {
-                const url = `https://fr.wikipedia.org/w/api.php?action=query&titles=${cleanCity}&prop=pageimages&format=json&pithumbsize=600&origin=*`;
-const r = await fetch(url);
-                const d = await r.json();
-                const pages = d.query.pages;
-                const pid = Object.keys(pages)[0];
-if (pid !== "-1" && pages[pid].thumbnail) {
-                    const imgSrc = pages[pid].thumbnail.source;
-grid.innerHTML = `<img src="${imgSrc}" class="google-pic">`;
+            grid.innerHTML = `<div style="color:#94a3b8; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> ${isFrCarnet ? DASHBOARD_TEXTS.imgLoad.fr : DASHBOARD_TEXTS.imgLoad.en}</div>`;
+            
+            try {
+                // Essayer d'abord en français
+                let url = `https://fr.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanCity)}&prop=pageimages&format=json&pithumbsize=600&origin=*`;
+                let r = await fetch(url);
+                let d = await r.json();
+                let pages = d.query.pages;
+                let pid = Object.keys(pages)[0];
+                let imgSrc = null;
+                
+                if (pid !== "-1" && pages[pid].thumbnail) {
+                    imgSrc = pages[pid].thumbnail.source;
                 } else {
-                    grid.innerHTML = `<div style="color:#ef4444; padding:20px;">${isFrCarnet ? DASHBOARD_TEXTS.imgError.fr : DASHBOARD_TEXTS.imgError.en}</div>`;
-}
+                    // Fallback: essayer en anglais
+                    url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(cleanCity)}&prop=pageimages&format=json&pithumbsize=600&origin=*`;
+                    r = await fetch(url);
+                    d = await r.json();
+                    pages = d.query.pages;
+                    pid = Object.keys(pages)[0];
+                    
+                    if (pid !== "-1" && pages[pid].thumbnail) {
+                        imgSrc = pages[pid].thumbnail.source;
+                    }
+                }
+                
+                if (imgSrc) {
+                    grid.innerHTML = `<img src="${imgSrc}" class="google-pic" alt="${cleanCity}" onerror="this.src='https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80'">`;
+                } else {
+                    // Fallback: image par défaut
+                    grid.innerHTML = `<img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80" class="google-pic" alt="${cleanCity}">`;
+                }
             } catch(e) {
-                grid.innerHTML = `<div style="color:#ef4444; padding:20px;">${isFrCarnet ? DASHBOARD_TEXTS.conError.fr : DASHBOARD_TEXTS.conError.en}</div>`;
-}
+                console.error('Erreur lors du chargement des images:', e);
+                grid.innerHTML = `<img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80" class="google-pic" alt="${cleanCity}">`;
+            }
         }
 
         // FIX: Removed extra "$" before template interpolation which produced malformed URLs
