@@ -1,16 +1,17 @@
 /**
  * ============================================================
- * MOBILE.JS - Gestion Responsive & Touch Optimization
- * Standard: Zero Bug, Zero Regression, 60fps performance
+ * MOBILE.JS - Gestion Responsive & Mobile PWA
+ * Fusion de mobile.js + mobile-logic.js
+ * Features: Touch Optimization, Full-Screen Views, Responsive UI
  * ============================================================
  */
 
 (function() {
     'use strict';
     
-    // ============================================================
-    // DETECTION MOBILE & STATE MANAGEMENT
-    // ============================================================
+    /* ============================================================
+       DÉTECTION & STATE MANAGEMENT
+       ============================================================ */
     
     const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
     const isTablet = () => window.matchMedia('(min-width: 769px) and (max-width: 1024px)').matches;
@@ -19,6 +20,7 @@
         isMobile: isMobile(),
         isTablet: isTablet(),
         menuOpen: false,
+        currentView: null, // 'discover', 'stats', null
         lastResize: Date.now()
     };
     
