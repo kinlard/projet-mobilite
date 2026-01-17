@@ -647,84 +647,114 @@ margin: 20px auto;">Scanner la carte</a>
                 return;
             }
             
+            // Affiche un spinner de chargement pendant la requête
             grid.innerHTML = `<div style="color:#94a3b8; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> ${isFrCarnet ? 'Chargement des images...' : 'Loading images...'}</div>`;
             
             try {
-                // Utiliser la fonction fetchWikimediaImage
+                // Utilise la fonction fetchWikimediaImage pour chercher sur Wikimedia Commons
                 const imgSrc = await fetchWikimediaImage(nom);
-                // Mettre en cache
+                // Met l'image en cache pour les prochaines utilisations
                 wikiImageCache[villeName] = imgSrc;
+                // Affiche l'image trouvée, avec fallback Unsplash si chargement échoue
                 grid.innerHTML = `<img src="${imgSrc}" class="google-pic" alt="${cleanCity}" onerror="this.src='https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80'">`;
             } catch(e) {
+                // Si Wikimedia Commons échoue : tente l'API Wikipedia
                 console.log('Fallback: No Wikimedia image, trying Wikipedia');
                 try {
+                    // API Wikipedia : recherche de l'image principale de la page
                     const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(villeName)}&prop=pageimages&format=json&pithumbsize=600&origin=*`;
                     const wr = await fetch(wikiUrl);
                     const wd = await wr.json();
                     const wpages = wd.query.pages;
                     const wpid = Object.keys(wpages)[0];
                     
+                    // Vérifie si une page et une miniature existent
                     if (wpid !== "-1" && wpages[wpid].thumbnail) {
                         const imgSrc = wpages[wpid].thumbnail.source;
+                        // Met en cache
                         wikiImageCache[villeName] = imgSrc;
                         grid.innerHTML = `<img src="${imgSrc}" class="google-pic" alt="${cleanCity}" onerror="this.src='https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80'">`;
                     } else {
+                        // Aucune image Wikipedia : fallback final sur Unsplash (photo de train)
                         grid.innerHTML = `<img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80" class="google-pic" alt="${cleanCity}">`;
                     }
                 } catch(e2) {
+                    // Échec total : affiche l'image Unsplash par défaut
                     grid.innerHTML = `<img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80" class="google-pic" alt="${cleanCity}">`;
                 }
             }
         }
 
-        // FIX: Removed extra "$" before template interpolation which produced malformed URLs
+        // FONCTION : Ouvre Google Maps avec la recherche de la gare
+        // Exposée globalement via window pour être accessible depuis le HTML généré dynamiquement
         window.openGoogleMaps = (nom) => { window.open(`https://www.google.com/maps/search/?api=1&query=Gare+${encodeURIComponent(nom.replace(/Gare de\s?/gi, ''))}`);
-    };
+        };
+        // FONCTION : Génère et affiche un QR Code pour partager la gare
+        // Le QR Code contient un lien Google Maps direct
         window.openQr = (nom) => {
             const container = document.getElementById('qrcode');
-container.innerHTML = '';
-            // FIX: QR Code URL must not contain stray "$" before interpolation
+            // Vide le conteneur avant de générer un nouveau QR Code
+            container.innerHTML = '';
+            // Génère le QR Code (128x128px) avec la bibliothèque QRCode.js
             new QRCode(container, { text: `https://www.google.com/maps/search/?api=1&query=Gare+${encodeURIComponent(nom)}`, width: 128, height: 128 });
+            // Ouvre la modale QR Code
             openModal('qrModal');
         };
-window.askDelete = (index) => { itemToDeleteIndex = index; openModal('deleteSingleModal'); };
-document.getElementById('confirmDeleteBtn').onclick = () => {
+        // FONCTION : Demande confirmation avant de supprimer un favori
+        window.askDelete = (index) => { itemToDeleteIndex = index; openModal('deleteSingleModal'); };
+        // Événement : Confirmation de suppression d'un favori
+        document.getElementById('confirmDeleteBtn').onclick = () => {
             if(itemToDeleteIndex !== null) {
+                // Supprime le favori du tableau
                 favoris.splice(itemToDeleteIndex, 1);
-localStorage.setItem('eco_favoris', JSON.stringify(favoris));
-                // MODIFIɉ : Toast traduit
+                // Sauvegarde dans localStorage
+                localStorage.setItem('eco_favoris', JSON.stringify(favoris));
+                // Réaffiche la grille, ferme modales, affiche confirmation
                 render(); closeAll(); showToast(isFrCarnet ? '✅ Favori supprimé' : '✅ Favorite removed');
             }
         };
-window.toggleVs = (index, checkbox) => {
+        // FONCTION : Gère la sélection/désélection des gares pour comparaison
+        // Maximum 2 gares sélectionnées simultanément
+        window.toggleVs = (index, checkbox) => {
             if (checkbox.checked) {
+                // Vérifie la limite de 2 sélections
                 if (selectedVs.length >= 2) { checkbox.checked = false;
-// MODIFI : Toast traduit
-showToast(isFrCarnet ? '⚠️ Max 2 sélections' : '⚠️ Max 2 selections'); return; }
+                    // Affiche un avertissement si l'utilisateur essaie de sélectionner une 3ème gare
+                    showToast(isFrCarnet ? '⚠️ Max 2 sélections' : '⚠️ Max 2 selections'); return; }
+                // Ajoute l'index au tableau des sélections
                 selectedVs.push(index);
-} else {
+            } else {
+                // Retire l'index du tableau des sélections
                 selectedVs = selectedVs.filter(i => i !== index);
-}
+            }
+            // Référence au bouton flottant "COMPARER"
             const btn = document.getElementById('vs-btn');
-if (selectedVs.length === 2) btn.classList.add('visible');
+            // Affiche le bouton uniquement quand exactement 2 gares sont sélectionnées
+            if (selectedVs.length === 2) btn.classList.add('visible');
             else btn.classList.remove('visible');
         };
 
+        // FONCTION : Ouvre la modale de comparaison côte à côte de 2 gares
+        // Affiche scores et équipements avec mise en surbrillance du meilleur
         window.openVsModal = () => {
+            // Récupère les 2 gares sélectionnées
             const f1 = favoris[selectedVs[0]];
-const f2 = favoris[selectedVs[1]];
-            const winner = (v1, v2) => v1 > v2 ?
-'val-win' : (v1 < v2 ? 'val-lose' : '');
+            const f2 = favoris[selectedVs[1]];
+            // Fonction pour déterminer le gagnant : retourne une classe CSS
+            // 'val-win' si v1 > v2, 'val-lose' si v1 < v2, '' si égalité
+            const winner = (v1, v2) => v1 > v2 ? 'val-win' : (v1 < v2 ? 'val-lose' : '');
             
-            // Labels dynamiques pour la modale VS
+            // Labels traduits pour la modale de comparaison
             const lblScore = isFrCarnet ? "Score global" : "Global score";
             const lblVelos = isFrCarnet ? "Vélos" : "Bikes";
             const lblBornes = isFrCarnet ? "Bornes électriques" : "Charging stations";
             const lblCovoit = isFrCarnet ? "Covoiturage" : "Carpool";
 
+            // Génère le HTML de la modale de comparaison
+            // Grille 3 colonnes : Gare 1 | VS | Gare 2
             document.getElementById('vsContent').innerHTML = `
                 <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 35px; align-items: start;">
-                    <!-- Gare 1 -->
+                    <!-- COLONNE GARE 1 : Carte avec score circulaire + statistiques -->
                     <div>
                         <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 24px;">
                             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
@@ -850,14 +880,17 @@ count--; screen.innerHTML = count;
                 if(count <= 0) { clearInterval(timer); screen.innerHTML = isFrCarnet ? "PURGE TERMIN�E" : "PURGE COMPLETE"; localStorage.removeItem('eco_favoris'); setTimeout(() => location.reload(), 2000); } // FIX: Changed French text for better localization.
             }, 1000);
         };
-window.openOnboarding = () => document.getElementById('onboardingModal').classList.add('active');
+        // FONCTION : Ouvre la modale d'onboarding (tutoriel de bienvenue)
+        window.openOnboarding = () => document.getElementById('onboardingModal').classList.add('active');
+        // Si première visite : affiche automatiquement le tutoriel après 1 seconde
         if(!localStorage.getItem('visited_carnet_final')) { setTimeout(openOnboarding, 1000); localStorage.setItem('visited_carnet_final', 'true');
-}
+        }
         
-        // Initialiser les traductions au chargement
+        // Initialise les traductions au chargement de la page
+        // Double toggle pour s'assurer que tous les textes sont correctement chargés
         document.addEventListener('DOMContentLoaded', () => {
             if (window.switchLangCarnet) {
-                // Forcer une mise à jour pour initialiser les textes corrects
+                // Bascule vers français puis anglais pour forcer le chargement des textes
                 isFrCarnet = true;
                 switchLangCarnet();
                 isFrCarnet = false;
@@ -866,17 +899,23 @@ window.openOnboarding = () => document.getElementById('onboardingModal').classLi
         });
     </script>
     
+    <!-- Script placeholder : définit switchLangCarnet vide pour éviter les erreurs -->
+    <!-- Sera redéfini par le script module ci-dessous -->
     <script>
-        // Définir la fonction globalement pour éviter les erreurs
+        // Définit la fonction globalement pour éviter les erreurs avant le chargement du module
         window.switchLangCarnet = function() {};
     </script>
     
+    <!-- Script module ES6 : importe les traductions et gère le changement de langue -->
     <script type="module">
+        // Importe les textes traduits depuis textes.js
         import { DASHBOARD_TEXTS as DT } from './js/textes.js';
         
-        // Make DASHBOARD_TEXTS available globally for the non-module script
+        // Rend DASHBOARD_TEXTS accessible globalement pour le script non-module
         window.DASHBOARD_TEXTS = DT;
 
+        // FONCTION : Change la langue de l'interface (FR ⇄ EN)
+        // Met à jour tous les textes de la page en temps réel
         function switchLangCarnet() {
             isFrCarnet = !isFrCarnet;
             const t = window.DASHBOARD_TEXTS;
