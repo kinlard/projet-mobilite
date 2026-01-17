@@ -97,7 +97,7 @@ border: 2px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
     .cluster-velo { background: linear-gradient(135deg, #06b6d4, #0891b2); }
 
     .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0;
-overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
     .leaflet-popup-content { margin: 0; width: 300px !important;
 }
     
@@ -144,7 +144,7 @@ backdrop-filter: blur(5px); padding: 8px 15px; border-radius: 20px; border: 1px 
 font-size: 0.85rem; display: flex; align-items: center; gap: 8px; pointer-events: none;
 }
     
-    .fav-btn { cursor: pointer; transition: 0.2s; font-size: 1.3rem;
+    .fav-btn { cursor: pointer; transition: 0.2s; font-size: 1.3rem; pointer-events: auto; z-index: 1000; position: relative;
 }
     .fav-active { color: #ef4444; } .fav-inactive { color: #cbd5e1;
 }
