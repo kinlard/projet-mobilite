@@ -1,5 +1,6 @@
 ﻿﻿:root { --primary: #10b981; --secondary: #3b82f6; --dark: #0f172a; --bg: #0b0b0b; --card-bg: #1e293b; }
 body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: white; overflow-x: hidden; }
+body.page-apropos { overflow-y: auto; }
 
 .lang-switch {
     background: rgba(255,255,255,0.1);
