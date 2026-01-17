@@ -204,11 +204,17 @@ margin: 20px auto;">Scanner la carte</a></div>
         }
     </style>
     <div id="vsModal" class="modal-overlay">
-        <div class="modal-box" style="max-width: 700px;
-background: linear-gradient(145deg, #1e293b, #0f172a);">
+        <div class="modal-box" style="max-width: 800px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); border: 1px solid rgba(245, 158, 11, 0.3); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(245, 158, 11, 0.1);">
             <button class="close-modal" onclick="closeAll()"><i class="fa-solid fa-xmark"></i></button>
-            <h2 id="vs-title" style="color:#f59e0b;
-font-style:italic; font-size:2rem; margin-bottom:10px;">COMPARATEUR</h2>
+            
+            <div style="text-align: center; margin-bottom: 35px;">
+                <div style="display: inline-block; background: linear-gradient(135deg, #f59e0b, #d97706); padding: 18px; border-radius: 18px; margin-bottom: 15px; box-shadow: 0 10px 30px rgba(245, 158, 11, 0.4);">
+                    <i class="fa-solid fa-gavel" style="color: white; font-size: 2.5rem;"></i>
+                </div>
+                <h2 id="vs-title" style="color: #f59e0b; font-style: italic; font-size: 2.2rem; margin: 0; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(245, 158, 11, 0.3);">COMPARATEUR</h2>
+                <p style="color: #94a3b8; font-size: 0.95rem; margin-top: 8px;">Analyse détaillée de vos favoris</p>
+            </div>
+            
             <div id="vsContent"></div>
         </div>
     </div>
@@ -337,14 +343,31 @@ grid.appendChild(div);
         render();
 if(favoris.length > 0) {
             setTimeout(() => {
-                const miniMap = L.map('miniMap', { zoomControl:false, attributionControl:false }).setView([46.5, 2.5], 4);
+                const miniMap = L.map('miniMap', { zoomControl:false, attributionControl:false }).setView([46.5, 2.5], 5);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(miniMap);
+                
+                // Utiliser les vraies coordonnées des gares
+                const bounds = [];
                 favoris.forEach(f => {
-                    const lat = 46 
-+ (Math.random()-0.5)*5; 
-                    const lon = 2 + (Math.random()-0.5)*5;
-                    L.circleMarker([lat, lon], { radius:4, color:'#ef4444', fillOpacity:1, stroke:false }).addTo(miniMap);
+                    // Utiliser les coordonnées réelles de la gare si disponibles
+                    const lat = f.lat || 46.5;
+                    const lon = f.lon || 2.5;
+                    
+                    bounds.push([lat, lon]);
+                    L.circleMarker([lat, lon], { 
+                        radius: 5, 
+                        color: '#ef4444', 
+                        fillColor: '#ef4444',
+                        fillOpacity: 0.8, 
+                        weight: 2,
+                        stroke: true
+                    }).addTo(miniMap);
                 });
+                
+                // Ajuster la vue pour afficher tous les points
+                if (bounds.length > 0) {
+                    miniMap.fitBounds(bounds, { padding: [30, 30] });
+                }
             }, 500);
 }
 
@@ -442,25 +465,64 @@ const f2 = favoris[selectedVs[1]];
             const winner = (v1, v2) => v1 > v2 ?
 'val-win' : (v1 < v2 ? 'val-lose' : '');
             
-            // MODIFIɉ : Labels dynamiques pour la modale VS
+            // Labels dynamiques pour la modale VS
             const lblScore = isFrCarnet ? "SCORE GLOBAL" : "GLOBAL SCORE";
-            const lblVelos = isFrCarnet ? "V�LOS" : "BIKES";
+            const lblVelos = isFrCarnet ? "VÉLOS" : "BIKES";
             const lblBornes = isFrCarnet ? "BORNES" : "TERMINALS";
             const lblCovoit = isFrCarnet ? "COVOIT'" : "CARPOOL";
 
             document.getElementById('vsContent').innerHTML = `
-                <table class="vs-table">
-                    <thead><tr><th style="width:40%; font-size:1.1rem; color:white;">${escapeHTML(f1.nom)}</th><th style="width:20%;">VS</th><th style="width:40%; font-size:1.1rem; color:white;">${escapeHTML(f2.nom)}</th></tr></thead>
-                    <tbody>
-                        <tr><td 
-class="${winner(f1.score, f2.score)}" style="font-size:1.5rem;">${f1.score}</td><td style="color:#94a3b8; font-size:0.8rem;">${lblScore}</td><td class="${winner(f2.score, f1.score)}" style="font-size:1.5rem;">${f2.score}</td></tr>
-                        <tr><td class="${winner(f1.details.velos, f2.details.velos)}">${f1.details.velos}</td><td style="color:#94a3b8; font-size:0.8rem;">${lblVelos}</td><td class="${winner(f2.details.velos, f1.details.velos)}">${f2.details.velos}</td></tr>
-                        <tr><td class="${winner(f1.details.bornes, f2.details.bornes)}">${f1.details.bornes}</td><td style="color:#94a3b8;
-font-size:0.8rem;">${lblBornes}</td><td class="${winner(f2.details.bornes, f1.details.bornes)}">${f2.details.bornes}</td></tr>
-                        <tr><td class="${winner(f1.details.covoit, f2.details.covoit)}">${f1.details.covoit}</td><td style="color:#94a3b8;
-font-size:0.8rem;">${lblCovoit}</td><td class="${winner(f2.details.covoit, f1.details.covoit)}">${f2.details.covoit}</td></tr>
-                    </tbody>
-                </table>
+                <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1)); border-radius: 16px; padding: 25px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <table class="vs-table" style="width: 100%; border-collapse: separate; border-spacing: 0 12px;">
+                        <thead>
+                            <tr style="background: rgba(0, 0, 0, 0.3); border-radius: 12px;">
+                                <th style="width: 40%; padding: 16px; font-size: 1.1rem; color: white; text-align: center; border-radius: 12px 0 0 12px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), transparent);">
+                                    <i class="fa-solid fa-location-dot" style="color: var(--primary); margin-right: 8px;"></i>
+                                    ${escapeHTML(f1.nom)}
+                                </th>
+                                <th style="width: 20%; padding: 16px; color: #f59e0b; font-weight: 900; font-size: 1.4rem; text-align: center;">VS</th>
+                                <th style="width: 40%; padding: 16px; font-size: 1.1rem; color: white; text-align: center; border-radius: 0 12px 12px 0; background: linear-gradient(135deg, transparent, rgba(59, 130, 246, 0.2));">
+                                    <i class="fa-solid fa-location-dot" style="color: #3b82f6; margin-right: 8px;"></i>
+                                    ${escapeHTML(f2.nom)}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background: rgba(0, 0, 0, 0.2); border-radius: 12px;">
+                                <td class="${winner(f1.score, f2.score)}" style="font-size: 2rem; font-weight: 900; padding: 20px; text-align: center; border-radius: 12px 0 0 12px;">${f1.score}</td>
+                                <td style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-align: center; text-transform: uppercase; letter-spacing: 1px; padding: 20px;">
+                                    <i class="fa-solid fa-chart-line" style="display: block; font-size: 1.3rem; margin-bottom: 6px; color: var(--primary);"></i>
+                                    ${lblScore}
+                                </td>
+                                <td class="${winner(f2.score, f1.score)}" style="font-size: 2rem; font-weight: 900; padding: 20px; text-align: center; border-radius: 0 12px 12px 0;">${f2.score}</td>
+                            </tr>
+                            <tr style="background: rgba(0, 0, 0, 0.2); border-radius: 12px;">
+                                <td class="${winner(f1.details.velos, f2.details.velos)}" style="font-size: 1.5rem; font-weight: 700; padding: 16px; text-align: center; border-radius: 12px 0 0 12px;">${f1.details.velos}</td>
+                                <td style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-align: center; text-transform: uppercase; letter-spacing: 1px; padding: 16px;">
+                                    <i class="fa-solid fa-bicycle" style="display: block; font-size: 1.3rem; margin-bottom: 6px; color: #06b6d4;"></i>
+                                    ${lblVelos}
+                                </td>
+                                <td class="${winner(f2.details.velos, f1.details.velos)}" style="font-size: 1.5rem; font-weight: 700; padding: 16px; text-align: center; border-radius: 0 12px 12px 0;">${f2.details.velos}</td>
+                            </tr>
+                            <tr style="background: rgba(0, 0, 0, 0.2); border-radius: 12px;">
+                                <td class="${winner(f1.details.bornes, f2.details.bornes)}" style="font-size: 1.5rem; font-weight: 700; padding: 16px; text-align: center; border-radius: 12px 0 0 12px;">${f1.details.bornes}</td>
+                                <td style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-align: center; text-transform: uppercase; letter-spacing: 1px; padding: 16px;">
+                                    <i class="fa-solid fa-plug" style="display: block; font-size: 1.3rem; margin-bottom: 6px; color: #f59e0b;"></i>
+                                    ${lblBornes}
+                                </td>
+                                <td class="${winner(f2.details.bornes, f1.details.bornes)}" style="font-size: 1.5rem; font-weight: 700; padding: 16px; text-align: center; border-radius: 0 12px 12px 0;">${f2.details.bornes}</td>
+                            </tr>
+                            <tr style="background: rgba(0, 0, 0, 0.2); border-radius: 12px;">
+                                <td class="${winner(f1.details.covoit, f2.details.covoit)}" style="font-size: 1.5rem; font-weight: 700; padding: 16px; text-align: center; border-radius: 12px 0 0 12px;">${f1.details.covoit}</td>
+                                <td style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-align: center; text-transform: uppercase; letter-spacing: 1px; padding: 16px;">
+                                    <i class="fa-solid fa-car" style="display: block; font-size: 1.3rem; margin-bottom: 6px; color: #a855f7;"></i>
+                                    ${lblCovoit}
+                                </td>
+                                <td class="${winner(f2.details.covoit, f1.details.covoit)}" style="font-size: 1.5rem; font-weight: 700; padding: 16px; text-align: center; border-radius: 0 12px 12px 0;">${f2.details.covoit}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             `;
             openModal('vsModal');
         };
