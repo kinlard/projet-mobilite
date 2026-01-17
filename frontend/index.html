@@ -68,39 +68,92 @@
         /* display: flex + justify-content: space-between : logo à gauche, bouton langue à droite */
         /* z-index: 100 : au-dessus du contenu mais sous l'écran de chargement */
         .nav { position: fixed; top: 40px; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 5%; z-index: 100; }
-        /* Logo du site avec police spéciale */
+        /* Logo du site avec typographie distinctive */
+        /* font-family: Space Grotesk : police moderne et impact visuel pour le branding */
+        /* font-size: 2rem : grande taille pour visibilité immédiate */
+        /* font-weight: 900 : graisse maximale pour un effet marque fort */
+        /* cursor: pointer : indique que le logo est cliquable (easter egg caché) */
         .logo { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 900; color: white; cursor: pointer; }
-        /* Tiret du logo en couleur principale */
+        /* Tiret du logo coloré en vert : point focal de la marque */
         .logo span { color: var(--primary); }
-        /* Bouton de changement de langue avec effet de verre */
+        /* Bouton de changement de langue FR/EN */
+        /* background: var(--glass) : effet de verre semi-transparent moderne */
+        /* border-radius: 30px : bords arrondis pour style pill (pilule) */
+        /* border: 1px solid rgba(...) : contour subtil pour délimiter le bouton */
+        /* transition: 0.3s : animation fluide des changements de couleur au survol */
         .lang-switch { background: var(--glass); padding: 8px 20px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; font-weight: bold; color: white; transition: 0.3s; font-family: 'Inter', sans-serif; }
-        /* Effet au survol du bouton de langue */
+        /* Effet au survol du bouton de langue : passe du transparent au vert avec texte noir */
+        /* transform pas utilisé ici mais hover donne un feedback visuel immédiat */
         .lang-switch:hover { background: var(--primary); color: #000; border-color: var(--primary); }
-        /* Section principale centrée verticalement et horizontalement */
+        /* Section hero centrale : contenu principal de la page d'accueil */
+        /* height: 100vh : occupe toute la hauteur de l'écran */
+        /* display: flex : permet le centrage vertical et horizontal parfait */
+        /* text-align: center : texte centré pour impact maximal */
+        /* padding: 0 20px : espacement latéral pour éviter que le texte touche les bords sur mobile */
         .hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 20px; }
-        /* Titre principal en très grand format */
+        /* Titre principal en très grand format : première chose vue par l'utilisateur */
+        /* font-size: 5rem : taille massive pour impact visuel fort */
+        /* font-weight: 900 : graisse maximale pour effet "cri" visuel */
+        /* line-height: 1.1 : espacement serré entre les lignes pour compacité */
+        /* text-shadow : ombre portée pour détacher le texte du fond vidéo */
         .hero-title { font-size: 5rem; font-weight: 900; margin-bottom: 10px; line-height: 1.1; text-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        /* Zone de texte qui s'écrit progressivement comme une machine à écrire */
+        /* Zone de texte avec effet machine à écrire : change de phrase toutes les 2 secondes */
+        /* font-family: Space Grotesk, monospace : police technique pour renforcer l'effet "type" */
+        /* color: var(--primary) : vert pour contraste avec le titre blanc */
+        /* min-height: 2.5rem : réserve de l'espace pour éviter les sauts de mise en page */
+        /* text-shadow: effet de lueur verte autour du texte pour effet néon */
         .hero-typewriter { font-size: 2rem; font-weight: 700; color: var(--primary); margin-bottom: 20px; font-family: 'Space Grotesk', monospace; min-height: 2.5rem; text-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
-        /* Curseur clignotant simulant une machine à écrire */
+        /* Curseur clignotant après le texte : simule une vraie machine à écrire */
+        /* animation: blink : clignotement infini */
+        /* border-right: 3px solid : barre verticale blanche comme curseur de terminal */
+        /* margin-left: 5px : léger espacement entre le texte et le curseur */
         .cursor-blink { animation: blink 1s infinite; border-right: 3px solid white; margin-left: 5px; }
-        /* Animation de clignotement du curseur */
+        /* Animation de clignotement du curseur : disparaît/réapparaît toutes les secondes */
+        /* 50% { opacity: 0 } : au milieu de l'animation, le curseur devient invisible */
         @keyframes blink { 50% { opacity: 0; } }
-        /* Sous-titre descriptif avec fond semi-transparent */
+        /* Sous-titre descriptif avec fond semi-transparent : explique le concept du site */
+        /* max-width: 700px : limite la largeur pour une lecture confortable */
+        /* line-height: 1.6 : espacement généreux entre les lignes pour lisibilité */
+        /* background: rgba(0,0,0,0.5) : fond noir semi-transparent pour détacher du fond vidéo */
+        /* backdrop-filter: blur(5px) : flou du fond pour effet verre dépoli moderne */
+        /* border: 1px solid rgba(...) : contour subtil pour délimiter la zone */
         .hero-subtitle { font-size: 1.1rem; color: #cbd5e1; margin-bottom: 40px; max-width: 700px; line-height: 1.6; font-family: 'Inter', sans-serif; font-weight: 400; background: rgba(0,0,0,0.5); padding: 15px 25px; border-radius: 12px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); }
-        /* Conteneur des boutons d'action */
+        /* Conteneur des boutons d'action : permet d'aligner plusieurs boutons horizontalement */
+        /* display: flex + gap: 20px : espacement automatique entre les boutons */
+        /* justify-content: center : centre les boutons horizontalement */
         .actions-row { display: flex; gap: 20px; margin-top: 10px; justify-content: center; }
-        /* Bouton principal d'appel à l'action */
+        /* Bouton principal d'appel à l'action (CTA = Call To Action) */
+        /* color: #000 : texte noir sur fond vert pour contraste maximal */
+        /* background: var(--primary) : vert écologique distinctif de la marque */
+        /* border-radius: 50px : bords ultra-arrondis pour style moderne "pill" */
+        /* box-shadow: effet de lueur verte autour du bouton pour attirer l'œil */
+        /* display: inline-flex + gap: 10px : aligne l'icône flèche avec le texte */
+        /* overflow: hidden : prépare pour d'éventuels effets d'animation au survol */
         .cta-btn { padding: 16px 45px; font-size: 1.2rem; font-weight: 800; color: #000; background: var(--primary); border: none; border-radius: 50px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; box-shadow: 0 0 30px rgba(16, 185, 129, 0.3); text-decoration: none; display: inline-flex; align-items: center; gap: 10px; }
-        /* Effet au survol du bouton principal */
+        /* Effet au survol du bouton : vert plus clair + lévitation */
+        /* transform: translateY(-2px) : lève le bouton de 2px pour effet 3D */
+        /* box-shadow intensifiée : renforce l'impression de profondeur */
         .cta-btn:hover { background: #34d399; box-shadow: 0 0 40px rgba(16, 185, 129, 0.5); transform: translateY(-2px); }
-        /* Calque de transition animé lors du changement de page */
+        /* Calque de transition animé entre les pages : masque le changement de page */
+        /* height: 0% : commence invisible en bas de l'écran */
+        /* z-index: 99999 : au-dessus de tout pour masquer complètement le contenu */
+        /* transition: height 0.8s cubic-bezier : animation fluide avec courbe de vitesse personnalisée */
+        /* background: var(--primary) : fond vert qui envahit l'écran */
         .transition-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 0%; background: var(--primary); z-index: 99999; transition: height 0.8s cubic-bezier(0.77, 0, 0.175, 1); bottom: 0; }
-        /* État actif de la transition */
+        /* État actif de la transition : le vert remplit tout l'écran */
+        /* height: 100% : monte depuis le bas jusqu'en haut */
         .transition-overlay.active { height: 100%; }
-        /* Train surprise qui traverse l'écran (fonctionnalité cachée) */
+        /* Easter egg surprise : train qui traverse l'écran */
+        /* Fonctionnalité cachée déclenchée après 5 clics sur le logo */
+        /* left: -200px : commence hors écran à gauche */
+        /* opacity: 0 : invisible par défaut */
+        /* font-size: 4rem : grande taille pour visibilité de la surprise */
+        /* z-index: 50 : au-dessus du contenu mais sous la navigation */
         .easter-train { position: fixed; bottom: 50px; left: -200px; font-size: 4rem; transition: left 3s linear; z-index: 50; opacity: 0; }
-        /* Animation du train en mouvement */
+        /* Animation du train en mouvement : traverse l'écran de gauche à droite */
+        /* left: 120vw : sort de l'écran par la droite */
+        /* opacity: 1 : devient visible pendant la traversée */
+        /* transition: left 3s linear : mouvement à vitesse constante sur 3 secondes */
         .easter-train.choo-choo { left: 120vw; opacity: 1; }
     </style>
 </head>
