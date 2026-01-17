@@ -839,7 +839,7 @@ function generatePopupContent(g) {
     const lang = currentLang;
     const safeNom = escapeHTML(g.nom);
 
-    // === PROPRETÉ & DÉFIBRILLATEURS (affichage compact sur une ligne) ===
+    // === PROPRETÉ & DÉFIBRILLATEURS ===
     const propreteData = getPropreteData(g.nom);
     const defibData = getDefibData(g.lat, g.lon);
     
@@ -847,7 +847,7 @@ function generatePopupContent(g) {
     const hasPropreteData = propreteData !== null;
     const hasDefibData = defibData && defibData.nb_appareils > 0;
     
-    // Icône SVG défibrillateur (cœur + éclair)
+    // Icône SVG défibrillateur
     const defibSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;">
         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="${hasDefibData ? '#ef4444' : '#cbd5e1'}"/>
         <path d="M13 7h-2l-1 4h2l-1 5 4-6h-3l1-3z" fill="#ffffff"/>
@@ -858,7 +858,7 @@ function generatePopupContent(g) {
             (propreteData.note_proprete >= 4 ? '#10b981' : propreteData.note_proprete >= 2 ? '#f59e0b' : '#ef4444') : '#94a3b8';
         
         servicesHtml = `
-            <div style="display:flex;gap:12px;margin:10px 0;padding:8px 10px;background:#f8fafc;border-radius:8px;align-items:center;font-size:0.8rem;">
+            <div style="display:flex;gap:12px;margin:10px 0;padding:10px;background:rgba(248,250,252,0.6);backdrop-filter:blur(10px);border-radius:10px;align-items:center;font-size:0.8rem;border:1px solid rgba(255,255,255,0.3);">
                 ${hasPropreteData ? `
                 <div style="display:flex;align-items:center;gap:4px;">
                     <span>🧹</span>
@@ -866,33 +866,44 @@ function generatePopupContent(g) {
                     <span style="font-weight:700;color:${propreteColor};">${propreteData.note_proprete}/5</span>
                 </div>` : ''}
                 <div style="display:flex;align-items:center;gap:4px;">
-                    <span style="color:#475569;">Défib.${defibSvg}:</span>
+                    <span style="color:#475569;">Défib:${defibSvg}</span>
                     <span style="font-weight:700;color:${hasDefibData ? '#10b981' : '#94a3b8'};">${hasDefibData ? 'Oui' : 'Non'}</span>
                 </div>
             </div>`;
     }
 
     return `
-        <div style="font-family:'Inter',sans-serif;">
-            <div class="photo-container"><img id="photo-${g.id}" class="city-photo" src="" alt="${safeNom}"></div>
-            <div id="weather-${g.id}" class="weather-box">
-                <span><i class="fa-solid fa-spinner fa-spin"></i> ${APP_TEXTS.weather.loading[lang]}</span>
+        <div style="font-family:'Inter',sans-serif;max-width:320px;animation:popupSlideIn 0.3s ease-out;">
+            <div class="photo-container" style="height:180px;overflow:hidden;border-radius:12px 12px 0 0;position:relative;">
+                <img id="photo-${g.id}" class="city-photo" src="" alt="${safeNom}" style="width:100%;height:100%;object-fit:cover;">
+                <div style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.7);padding:6px 12px;border-radius:20px;color:white;font-size:11px;font-weight:bold;backdrop-filter:blur(5px);">${isTGV?'🚄 TGV':'🚂 TER'}</div>
             </div>
-            <div style="padding:15px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <div><h3 style="margin:0; font-size:1.2rem; color:#0f172a;">${safeNom}</h3><span style="background:${isTGV?'#3b82f6':'#10b981'}; color:white; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold;">${g.type}</span></div>
-                    <i id="fav-${g.id}" onclick="toggleFavori(${g.id}, '${safeNom.replace(/'/g, "\\'")}', '${g.type}')" class="fa-solid fa-heart fav-btn ${isFavori(g.id)?'fav-active':'fav-inactive'}"></i>
+            <div id="weather-${g.id}" class="weather-box" style="background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(16,185,129,0.1));border-radius:0;padding:10px;text-align:center;font-size:0.85rem;">
+                <span style="color:#475569;"><i class="fa-solid fa-spinner fa-spin"></i> ${APP_TEXTS.weather.loading[lang]}</span>
+            </div>
+            <div style="padding:15px;background:rgba(255,255,255,0.95);border-radius:0 0 12px 12px;">
+                <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+                    <div style="flex:1;">
+                        <h3 style="margin:0 0 5px 0;font-size:1.1rem;color:#0f172a;font-weight:800;">${safeNom}</h3>
+                        <div style="display:inline-block;background:${isTGV?'linear-gradient(135deg,#3b82f6,#2563eb)':'linear-gradient(135deg,#10b981,#059669)'};color:white;padding:4px 10px;border-radius:6px;font-size:10px;font-weight:bold;">
+                            <i class="fa-solid fa-circle" style="margin-right:4px;"></i>${g.type}
+                        </div>
+                    </div>
+                    <i id="fav-${g.id}" onclick="toggleFavori(${g.id}, '${safeNom.replace(/'/g, "\\'")}', '${g.type}')" class="fa-solid fa-heart fav-btn ${isFavori(g.id)?'fav-active':'fav-inactive'}" style="font-size:1.4rem;cursor:pointer;transition:all 0.2s;"></i>
                 </div>
                 
-                <div style="background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:10px; font-style:italic; font-size:0.9rem; color:#475569; border-left: 3px solid ${colorScore};">" ${avis} "</div>
+                <div style="background:linear-gradient(135deg,rgba(248,250,252,0.8),rgba(241,245,249,0.8));padding:12px;border-radius:8px;margin-bottom:12px;font-style:italic;font-size:0.9rem;color:#475569;border-left:4px solid ${colorScore};backdrop-filter:blur(10px);">
+                    <i class="fa-solid fa-quote-left" style="margin-right:4px;opacity:0.5;"></i>${avis}
+                </div>
                 ${servicesHtml}
-                <div id="action-container-${g.id}">
-                    <button class="btn-analyse" onclick="event.stopPropagation(); lancerAnalyseComplete(${g.id})" style="width:100%; background:#0f172a; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; margin-bottom:5px;">${t.analyse[lang]}</button>
-                    <button class="btn-walk" onclick="event.stopPropagation(); showWalkZone(${g.lat}, ${g.lon})"><i class="fa-solid fa-person-walking"></i> ${t.zone[lang]}</button>
+                <div id="action-container-${g.id}" style="display:flex;flex-direction:column;gap:8px;">
+                    <button class="btn-analyse" onclick="event.stopPropagation(); lancerAnalyseComplete(${g.id})" style="width:100%;background:linear-gradient(135deg,#0f172a,#1e293b);color:white;border:none;padding:12px;border-radius:8px;cursor:pointer;font-weight:bold;transition:all 0.3s;box-shadow:0 4px 12px rgba(15,23,42,0.2);">${t.analyse[lang]}</button>
+                    <button class="btn-walk" onclick="event.stopPropagation(); showWalkZone(${g.lat}, ${g.lon})" style="width:100%;background:linear-gradient(135deg,rgba(16,185,129,0.2),rgba(5,150,105,0.2));color:#059669;border:1px solid rgba(16,185,129,0.3);padding:10px;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.3s;"><i class="fa-solid fa-person-walking"></i> ${t.zone[lang]}</button>
                 </div>
             </div>
         </div>`;
 }
+
 
 // Fonction pour charger une photo de la gare via Wikimedia Commons
 async function loadPhoto(nom, id) {
@@ -2037,6 +2048,14 @@ document.addEventListener('click', (e) => {
 });
 
 let tutoStep = 0;
+
+// ============================================================
+// FONCTION POUR OUVRIR LA PAGE D'AIDE (TUTORIEL)
+// ============================================================
+window.openOnboarding = function() {
+    console.log('🎓 Ouverture du tutoriel');
+    window.location.href = 'map.html?tuto=true';
+};
 let currentTutoTarget = null;
 
 function checkTutorialMode() {
