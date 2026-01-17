@@ -141,36 +141,33 @@ function showVeloPopup() {
     const lat = velo.lat;
     const lon = velo.lon;
     
-    // Créer le contenu de la popup
-    const popupContent = `
-        <div style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;padding:8px;min-width:180px;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                <div style="width:32px;height:32px;background:linear-gradient(135deg,#0A74D6,#0891b2);border-radius:50%;display:flex;align-items:center;justify-content:center;">
-                    <i class="fa-solid fa-bicycle" style="color:white;font-size:0.9rem;"></i>
-                </div>
-                <div>
-                    <div style="font-weight:700;color:#0A74D6;font-size:0.85rem;">Parking Vélo</div>
-                    <div style="font-size:0.7rem;color:#64748b;">${velosZoneIndex + 1} / ${velosInZone.length}</div>
-                </div>
-            </div>
-            <div style="font-size:0.8rem;color:#334155;">
-                ${velo.nom || velo.name || 'Station vélo'}
-            </div>
-            ${velo.capacite ? `<div style="font-size:0.75rem;color:#64748b;margin-top:4px;"><i class="fa-solid fa-parking" style="margin-right:4px;"></i>Capacité: ${velo.capacite} places</div>` : ''}
-        </div>
-    `;
+    // Fermer toutes les popups ouvertes
+    map.closePopup();
     
-    // Ouvrir la popup sur la carte
-    L.popup({
-        closeButton: true,
-        className: 'velo-zone-popup'
-    })
-        .setLatLng([lat, lon])
-        .setContent(popupContent)
-        .openOn(map);
+    // Trouver le marker correspondant dans le layer veloParkingLayer
+    let targetMarker = null;
+    veloParkingLayer.eachLayer(function(marker) {
+        const markerLatLng = marker.getLatLng();
+        // Comparer les coordonnées avec une tolérance pour les erreurs d'arrondi
+        if (Math.abs(markerLatLng.lat - lat) < 0.0001 && Math.abs(markerLatLng.lng - lon) < 0.0001) {
+            targetMarker = marker;
+        }
+    });
     
-    // Centrer la carte sur le vélo
-    map.setView([lat, lon], 17, { animate: true, duration: 0.5 });
+    // Si on a trouvé le marker, ouvrir sa popup
+    if (targetMarker) {
+        // Centrer d'abord la carte sur le vélo
+        map.setView([lat, lon], 17, { animate: true, duration: 0.5 });
+        
+        // Attendre que le zoom soit terminé avant d'ouvrir la popup
+        setTimeout(() => {
+            targetMarker.openPopup();
+        }, 600);
+    } else {
+        console.warn('Marker de vélo non trouvé pour:', velo);
+        // Fallback: juste centrer la carte
+        map.setView([lat, lon], 17, { animate: true, duration: 0.5 });
+    }
 }
 
 // Configuration des event listeners pour les flèches
@@ -1408,13 +1405,18 @@ window.showWalkZone = function(lat, lon) {
         velosInZone = []; // Reset du tableau global
         velosZoneIndex = 0; // Reset de l'index
         const bounds = walkCircle.getBounds();
+        const centerLat = lat;
+        const centerLon = lon;
+        
         DATA.velos.forEach(v => {
-            if (bounds.contains({
-                    lat: v.lat,
-                    lng: v.lon
-                })) {
-                count++;
-                velosInZone.push(v); // Stocker le v�lo pour navigation
+            // Vérifier d'abord si dans les bounds pour perf
+            if (bounds.contains({ lat: v.lat, lng: v.lon })) {
+                // Puis vérifier la distance réelle - 600m max pour vraiment 10 min de marche
+                const distKm = getDist(centerLat, centerLon, v.lat, v.lon);
+                if (distKm <= 0.6) { // 600m max = 10 min de marche réalistes
+                    count++;
+                    velosInZone.push(v); // Stocker le vélo pour navigation
+                }
             }
         });
 
