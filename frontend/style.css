@@ -13,10 +13,87 @@ body.page-apropos { overflow-y: auto; }
     transition: 0.3s;
     font-family: 'Inter', sans-serif;
     font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 .lang-switch:hover { background: var(--primary); color: #000; border-color: var(--primary); }
 
-/* HEADER IDENTIQUE A CARNET.HTML */
+/* NAVBAR MODERNE CONSISTENT */
+.navbar {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 96%;
+    max-width: 1200px;
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(14px);
+    padding: 14px 30px;
+    border-radius: 50px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid rgba(255,255,255,0.08);
+    animation: slideDown 0.5s ease-out;
+}
+@keyframes slideDown {
+    from { transform: translateX(-50%) translateY(-40px); opacity: 0; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    font-weight: 900;
+    font-size: 1.3rem;
+    color: white;
+    transition: 0.3s ease;
+}
+.navbar-brand:hover { color: var(--primary); }
+
+.logo-icon { font-size: 1.8rem; }
+
+.brand-text { 
+    background: linear-gradient(135deg, #fff, var(--primary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.navbar-links {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: #cbd5e1;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 8px 16px;
+    border-radius: 20px;
+    transition: 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.nav-link:hover, .nav-link.active {
+    color: white;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--primary);
+}
+
+.nav-link i { font-size: 0.9rem; }
+
+/* HEADER ANCIEN COMPATIBLE */
 .dashboard-header { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 96%; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); padding: 12px 30px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); z-index: 1000; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1); }
 .brand h1 { margin: 0; font-size: 1.4rem; font-weight: 800; color: var(--primary); }
 .nav-links a { text-decoration: none; color: #cbd5e1; font-weight: 600; margin-left: 20px; transition:0.3s; cursor: pointer; }

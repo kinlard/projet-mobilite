@@ -328,16 +328,17 @@ export const NAV_TEXTS = {
 // ===== DASHBOARD TEXTS (translationsCarnet from carnet.html) =====
 export const DASHBOARD_TEXTS = {
     navCarte: { fr: "Carte", en: "Map" }, 
-    navAide: { fr: "Aide", en: "Help" }, 
+    navAide: { fr: "Aide", en: "Help" },
+    navAbout: { fr: "À propos", en: "About" },
     mainTitle: { fr: "Tableau de Bord", en: "Dashboard" }, 
     mainSub: { fr: "Gérez vos futures aventures bas carbone.", en: "Manage your future low-carbon adventures." }, 
     emptyText: { fr: "Aucune donnée.", en: "No data." }, 
     btnScan: { fr: "Scanner la carte", en: "Scan map" }, 
-    btnNuke: { fr: "⚠️ SÉQUENCE D'AUTODESTRUCTION", en: "⚠️ SELF-DESTRUCT SEQUENCE" }, 
+    btnNuke: { fr: "💥 SÉQUENCE D'AUTODESTRUCTION", en: "💥 SELF-DESTRUCT SEQUENCE" }, 
     btnCompare: { fr: "COMPARER", en: "COMPARE" }, 
-    onbTitle: { fr: "Bienvenue !", en: "Welcome!" },
-    onbText: { fr: "Voici votre carnet de voyage intelligent. Comparez deux gares, trouvez des images de la ville, générez un QR Code pour partager. Carte de situation en haut à droite.", en: "Here is your smart travel notebook. Compare two stations, find city images, generate a QR Code to share. Location map at the top right." },
-    onbBtn: { fr: "C'est parti !", en: "Let's go!" },
+    onbTitle: { fr: "Bienvenue dans votre carnet de voyage !", en: "Welcome to your travel notebook!" },
+    onbText: { fr: "multi-item", en: "multi-item" }, // Multi-item handled in HTML
+    onbBtn: { fr: "Commencer l'exploration !", en: "Start exploring!" },
     googleTitle: { fr: "Images de la ville", en: "City Images" },
     qrTitle: { fr: "Partager", en: "Share" },
     qrText: { fr: "Scannez pour ouvrir Google Maps", en: "Scan to open Google Maps" },

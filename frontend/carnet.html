@@ -15,11 +15,24 @@ Tableau de Bord</title>
 <body>
     <div class="red-alert" id="redAlert"></div>
     <div id="countdown-screen"></div>
-    <div class="dashboard-header">
-        <div class="brand"><h1>Eco-Escapade <span style="font-size:0.5em; vertical-align:super; color:#f59e0b;">ULTIMATE</span></h1></div>
-        <div class="nav-links"><a href="map.html" id="nav-carte">Carte</a><a href="#" class="active" onclick="openOnboarding()" id="nav-aide">Aide</a></div>
-        <button class="lang-switch" onclick="switchLangCarnet()">FR / EN</button>
-    </div>
+    <nav class="navbar">
+        <a href="map.html" class="navbar-brand">
+            <span class="logo-icon">🌿</span>
+            <span class="brand-text">Eco-Escapade</span>
+        </a>
+        <div class="navbar-links">
+            <a href="map.html" class="nav-link">
+                <i class="fa-solid fa-map"></i> <span id="nav-carte">Carte</span>
+            </a>
+            <a href="apropos.html" class="nav-link">
+                <i class="fa-solid fa-circle-info"></i> <span id="nav-about">À propos</span>
+            </a>
+            <a href="#" class="nav-link" onclick="openOnboarding(); return false;">
+                <i class="fa-solid fa-circle-question"></i> <span id="nav-aide">Aide</span>
+            </a>
+            <button class="lang-switch" onclick="switchLangCarnet()"><i class="fa-solid fa-globe"></i> FR / EN</button>
+        </div>
+    </nav>
     <div class="container">
         <div class="top-section">
             <div class="titles"><h2 id="main-title" style="font-size: 
@@ -37,11 +50,30 @@ margin: 20px auto;">Scanner la carte</a></div>
     <div id="onboardingModal" class="modal-overlay">
         <div class="modal-box">
             <button class="close-modal" onclick="closeAll()"><i class="fa-solid fa-xmark"></i></button>
-            <h3 id="onb-title" style="color:var(--primary);
-font-size:1.8rem; margin-bottom:20px;">Bienvenue !</h3>
-            <p id="onb-text" style="text-align:left; line-height:1.6;
-color:#cbd5e1;">Voici votre carnet de voyage intelligent. Comparez deux gares, trouvez des images de la ville, générez un QR Code pour partager. Carte de situation en haut à droite.</p>
-            <button id="onb-btn" class="btn-main" onclick="closeAll()" style="margin-top:20px;">C'est parti !</button>
+            <h3 id="onb-title" style="color:var(--primary); font-size:1.8rem; margin-bottom:20px;">Bienvenue dans votre carnet de voyage !</h3>
+            <div id="onb-text" style="text-align:left; line-height:1.8; color:#cbd5e1; display: flex; flex-direction: column; gap: 15px;">
+                <div style="display: flex; gap: 12px;">
+                    <i class="fa-solid fa-gavel" style="color: var(--primary); font-size: 1.3rem; flex-shrink: 0; margin-top: 2px;"></i>
+                    <span><strong style="color: white;">Comparez 2 gares</strong> — Sélectionnez deux favoris pour voir leurs scores côte à côte</span>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <i class="fa-brands fa-wikipedia-w" style="color: #3b82f6; font-size: 1.3rem; flex-shrink: 0; margin-top: 2px;"></i>
+                    <span><strong style="color: white;">Explorez les villes</strong> — Accédez aux images Wikipedia pour découvrir chaque destination</span>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <i class="fa-solid fa-qrcode" style="color: #f59e0b; font-size: 1.3rem; flex-shrink: 0; margin-top: 2px;"></i>
+                    <span><strong style="color: white;">Générez un QR Code</strong> — Partagez facilement vos gares préférées via code scannable</span>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <i class="fa-solid fa-map-location-dot" style="color: #10b981; font-size: 1.3rem; flex-shrink: 0; margin-top: 2px;"></i>
+                    <span><strong style="color: white;">Visualisez la carte</strong> — Voyez tous vos favoris en temps réel sur la mini-carte heatmap</span>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <i class="fa-solid fa-trash-alt" style="color: #ef4444; font-size: 1.3rem; flex-shrink: 0; margin-top: 2px;"></i>
+                    <span><strong style="color: white;">Gérez vos favoris</strong> — Supprimez individuellement ou lancez une séquence d'autodestruction complète</span>
+                </div>
+            </div>
+            <button id="onb-btn" class="btn-main" onclick="closeAll()" style="margin-top:30px; width: 100%;">Commencer l'exploration !</button>
         </div>
     </div>
     <div id="googlePhotosModal" class="modal-overlay">
