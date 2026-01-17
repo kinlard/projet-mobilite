@@ -621,6 +621,11 @@ window.openOnboarding = () => document.getElementById('onboardingModal').classLi
         });
     </script>
     
+    <script>
+        // Définir la fonction globalement pour éviter les erreurs
+        window.switchLangCarnet = function() {};
+    </script>
+    
     <script type="module">
         import { DASHBOARD_TEXTS as DT } from './js/textes.js';
         
