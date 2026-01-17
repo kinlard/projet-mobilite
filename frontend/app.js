@@ -1000,7 +1000,7 @@ async function loadWeather(lat, lon, id) {
         if (w) {
             // Afficher d'abord la météo
             el.innerHTML = `
-                <div class="weather-item"><i class="fa-solid fa-temperature-half weather-icon"></i> ${w.temperature}°C</div>
+                <div class="weather-item"><i class="fa-solid fa-temperature-half weather-icon"></i> ${w.temperature}&deg;C</div>
                 <div class="weather-item"><i class="fa-solid fa-wind weather-icon"></i> ${w.windspeed} km/h</div>
                 <div class="weather-item air-quality-loading"><i class="fa-solid fa-lungs weather-icon"></i> <span style="color:#64748b">...</span></div>
             `;
@@ -1054,13 +1054,18 @@ function initSecondaryMarkers(irve, covoit, velos) {
             const acces = props.acces_recharge || tIrve.access[lang];
 
             let h = `
-            <div style="font-family:'Inter',sans-serif; width:250px;">
-                <div class="simple-popup-header header-irve"><i class="fa-solid fa-charging-station"></i> ${tIrve.title[lang]}</div>
-                <div class="simple-popup-body">
-                    <div style="font-weight:bold; color:#0f172a; margin-bottom:10px;">${nom}</div>
-                    <div><i class="fa-solid fa-plug" style="color:#f59e0b"></i> ${prise} ${puissance ? ' � ' + puissance : ''}</div>
-                    <div><i class="fa-solid fa-unlock" style="color:#64748b"></i> ${acces}</div>
-                    <a href="https://www.google.com/maps?q=${f.geometry.coordinates[1]},${f.geometry.coordinates[0]}" target="_blank" class="btn-maps"><i class="fa-solid fa-map-location-dot"></i> ${tIrve.maps[lang]}</a>
+            <div style="font-family:'Inter',sans-serif; overflow:hidden; border-radius:12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 16px; font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-charging-station" style="font-size: 1.1rem;"></i>
+                    </div>
+                    <span>${tIrve.title[lang]}</span>
+                </div>
+                <div style="padding: 16px; background: white;">
+                    <div style="font-weight:700; color:#0f172a; margin-bottom:12px; font-size:1rem;">${nom}</div>
+                    <div style="margin-bottom:8px; display:flex; align-items:center; gap:8px; color:#334155;"><i class="fa-solid fa-plug" style="color:#f59e0b; width:20px;"></i> ${prise} ${puissance ? ' � ' + puissance : ''}</div>
+                    <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px; color:#334155;"><i class="fa-solid fa-unlock" style="color:#64748b; width:20px;"></i> ${acces}</div>
+                    <a href="https://www.google.com/maps?q=${f.geometry.coordinates[1]},${f.geometry.coordinates[0]}" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; text-align:center; background:#e2e8f0; color:#1e293b; padding:10px; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.9rem; transition:all 0.2s ease;" onmouseover="this.style.background='#cbd5e1'" onmouseout="this.style.background='#e2e8f0'"><i class="fa-solid fa-map-location-dot"></i> ${tIrve.maps[lang]}</a>
                 </div>
             </div>`;
             iBuf.push(L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
@@ -1112,14 +1117,19 @@ function initSecondaryMarkers(irve, covoit, velos) {
             const couverture = props.couverture === "true" ? tVelo.covered[lang] : tVelo.uncovered[lang];
 
             let h = `
-            <div style="font-family:'Inter',sans-serif; width:250px;">
-                <div class="simple-popup-header header-velo"><i class="fa-solid fa-bicycle"></i> ${tVelo.title[lang]}</div>
-                <div class="simple-popup-body">
-                    <div style="font-weight:bold; color:#0f172a; margin-bottom:10px;">${commune}</div>
-                    <div><i class="fa-solid fa-square-parking" style="color:#10b981"></i> ${capacite}</div>
-                    ${mobilier ? `<div><i class="fa-solid fa-lock" style="color:#64748b"></i> ${mobilier}</div>` : ''}
-                    <div><i class="fa-solid fa-umbrella" style="color:#64748b"></i> ${couverture}</div>
-                    <a href="https://www.google.com/maps?q=${f.geometry.coordinates[1]},${f.geometry.coordinates[0]}" target="_blank" class="btn-maps"><i class="fa-solid fa-map-location-dot"></i> ${tVelo.maps[lang]}</a>
+            <div style="font-family:'Inter',sans-serif; overflow:hidden; border-radius:12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <div style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; padding: 16px; font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-bicycle" style="font-size: 1.1rem;"></i>
+                    </div>
+                    <span>${tVelo.title[lang]}</span>
+                </div>
+                <div style="padding: 16px; background: white;">
+                    <div style="font-weight:700; color:#0f172a; margin-bottom:12px; font-size:1rem;">${commune}</div>
+                    <div style="margin-bottom:8px; display:flex; align-items:center; gap:8px; color:#334155;"><i class="fa-solid fa-square-parking" style="color:#3b82f6; width:20px;"></i> ${capacite}</div>
+                    ${mobilier ? `<div style="margin-bottom:8px; display:flex; align-items:center; gap:8px; color:#334155;"><i class="fa-solid fa-lock" style="color:#64748b; width:20px;"></i> ${mobilier}</div>` : ''}
+                    <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px; color:#334155;"><i class="fa-solid fa-umbrella" style="color:#64748b; width:20px;"></i> ${couverture}</div>
+                    <a href="https://www.google.com/maps?q=${f.geometry.coordinates[1]},${f.geometry.coordinates[0]}" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; text-align:center; background:#e2e8f0; color:#1e293b; padding:10px; border-radius:8px; text-decoration:none; font-weight:600; font-size:0.9rem; transition:all 0.2s ease;" onmouseover="this.style.background='#cbd5e1'" onmouseout="this.style.background='#e2e8f0'"><i class="fa-solid fa-map-location-dot"></i> ${tVelo.maps[lang]}</a>
                 </div>
             </div>`;
             vBuf.push(L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
