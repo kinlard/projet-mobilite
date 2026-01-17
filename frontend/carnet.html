@@ -204,15 +204,15 @@ margin: 20px auto;">Scanner la carte</a></div>
         }
     </style>
     <div id="vsModal" class="modal-overlay">
-        <div class="modal-box" style="max-width: 800px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); border: 1px solid rgba(245, 158, 11, 0.3); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(245, 158, 11, 0.1);">
+        <div class="modal-box" style="max-width: 850px; background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);">
             <button class="close-modal" onclick="closeAll()"><i class="fa-solid fa-xmark"></i></button>
             
-            <div style="text-align: center; margin-bottom: 35px;">
-                <div style="display: inline-block; background: linear-gradient(135deg, #f59e0b, #d97706); padding: 18px; border-radius: 18px; margin-bottom: 15px; box-shadow: 0 10px 30px rgba(245, 158, 11, 0.4);">
-                    <i class="fa-solid fa-gavel" style="color: white; font-size: 2.5rem;"></i>
-                </div>
-                <h2 id="vs-title" style="color: #f59e0b; font-style: italic; font-size: 2.2rem; margin: 0; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(245, 158, 11, 0.3);">COMPARATEUR</h2>
-                <p style="color: #94a3b8; font-size: 0.95rem; margin-top: 8px;">Analyse détaillée de vos favoris</p>
+            <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 20px; margin-bottom: 30px;">
+                <h2 id="vs-title" style="color: white; font-size: 1.6rem; margin: 0; font-weight: 700; letter-spacing: 0.5px; display: flex; align-items: center; gap: 12px;">
+                    <i class="fa-solid fa-scale-balanced" style="color: var(--primary);"></i>
+                    Comparaison des gares
+                </h2>
+                <p style="color: #64748b; font-size: 0.9rem; margin-top: 8px; margin-left: 36px;">Analyse comparative des équipements</p>
             </div>
             
             <div id="vsContent"></div>
@@ -346,19 +346,26 @@ if(favoris.length > 0) {
                 const miniMap = L.map('miniMap', { zoomControl:false, attributionControl:false }).setView([46.5, 2.5], 5);
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(miniMap);
                 
-                // Utiliser les vraies coordonnées des gares
                 const bounds = [];
-                favoris.forEach(f => {
-                    // Utiliser les coordonnées réelles de la gare si disponibles
-                    const lat = f.lat || 46.5;
-                    const lon = f.lon || 2.5;
+                favoris.forEach((f, idx) => {
+                    // Utiliser les coordonnées réelles si disponibles, sinon générer des positions cohérentes
+                    let lat, lon;
+                    if (f.lat && f.lon) {
+                        lat = f.lat;
+                        lon = f.lon;
+                    } else {
+                        // Générer des coordonnées cohérentes basées sur un hash du nom
+                        const hash = f.nom.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                        lat = 43 + (hash % 10); // Entre 43 et 53
+                        lon = -2 + (hash % 8);  // Entre -2 et 6
+                    }
                     
                     bounds.push([lat, lon]);
                     L.circleMarker([lat, lon], { 
-                        radius: 5, 
+                        radius: 6, 
                         color: '#ef4444', 
                         fillColor: '#ef4444',
-                        fillOpacity: 0.8, 
+                        fillOpacity: 0.9, 
                         weight: 2,
                         stroke: true
                     }).addTo(miniMap);
@@ -366,7 +373,7 @@ if(favoris.length > 0) {
                 
                 // Ajuster la vue pour afficher tous les points
                 if (bounds.length > 0) {
-                    miniMap.fitBounds(bounds, { padding: [30, 30] });
+                    miniMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 6 });
                 }
             }, 500);
 }
@@ -466,62 +473,101 @@ const f2 = favoris[selectedVs[1]];
 'val-win' : (v1 < v2 ? 'val-lose' : '');
             
             // Labels dynamiques pour la modale VS
-            const lblScore = isFrCarnet ? "SCORE GLOBAL" : "GLOBAL SCORE";
-            const lblVelos = isFrCarnet ? "VÉLOS" : "BIKES";
-            const lblBornes = isFrCarnet ? "BORNES" : "TERMINALS";
-            const lblCovoit = isFrCarnet ? "COVOIT'" : "CARPOOL";
+            const lblScore = isFrCarnet ? "Score global" : "Global score";
+            const lblVelos = isFrCarnet ? "Vélos" : "Bikes";
+            const lblBornes = isFrCarnet ? "Bornes électriques" : "Charging stations";
+            const lblCovoit = isFrCarnet ? "Covoiturage" : "Carpool";
 
             document.getElementById('vsContent').innerHTML = `
-                <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1)); border-radius: 16px; padding: 25px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                    <table class="vs-table" style="width: 100%; border-collapse: separate; border-spacing: 0 12px;">
-                        <thead>
-                            <tr style="background: rgba(0, 0, 0, 0.3); border-radius: 12px;">
-                                <th style="width: 40%; padding: 16px; font-size: 1.1rem; color: white; text-align: center; border-radius: 12px 0 0 12px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), transparent);">
-                                    <i class="fa-solid fa-location-dot" style="color: var(--primary); margin-right: 8px;"></i>
-                                    ${escapeHTML(f1.nom)}
-                                </th>
-                                <th style="width: 20%; padding: 16px; color: #f59e0b; font-weight: 900; font-size: 1.4rem; text-align: center;">VS</th>
-                                <th style="width: 40%; padding: 16px; font-size: 1.1rem; color: white; text-align: center; border-radius: 0 12px 12px 0; background: linear-gradient(135deg, transparent, rgba(59, 130, 246, 0.2));">
-                                    <i class="fa-solid fa-location-dot" style="color: #3b82f6; margin-right: 8px;"></i>
-                                    ${escapeHTML(f2.nom)}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr style="background: rgba(0, 0, 0, 0.2); border-radius: 12px;">
-                                <td class="${winner(f1.score, f2.score)}" style="font-size: 2rem; font-weight: 900; padding: 20px; text-align: center; border-radius: 12px 0 0 12px;">${f1.score}</td>
-                                <td style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-align: center; text-transform: uppercase; letter-spacing: 1px; padding: 20px;">
-                                    <i class="fa-solid fa-chart-line" style="display: block; font-size: 1.3rem; margin-bottom: 6px; color: var(--primary);"></i>
-                                    ${lblScore}
-                                </td>
-                                <td class="${winner(f2.score, f1.score)}" style="font-size: 2rem; font-weight: 900; padding: 20px; text-align: center; border-radius: 0 12px 12px 0;">${f2.score}</td>
-                            </tr>
-                            <tr style="background: rgba(0, 0, 0, 0.2); border-radius: 12px;">
-                                <td class="${winner(f1.details.velos, f2.details.velos)}" style="font-size: 1.5rem; font-weight: 700; padding: 16px; text-align: center; border-radius: 12px 0 0 12px;">${f1.details.velos}</td>
-                                <td style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-align: center; text-transform: uppercase; letter-spacing: 1px; padding: 16px;">
-                                    <i class="fa-solid fa-bicycle" style="display: block; font-size: 1.3rem; margin-bottom: 6px; color: #06b6d4;"></i>
-                                    ${lblVelos}
-                                </td>
-                                <td class="${winner(f2.details.velos, f1.details.velos)}" style="font-size: 1.5rem; font-weight: 700; padding: 16px; text-align: center; border-radius: 0 12px 12px 0;">${f2.details.velos}</td>
-                            </tr>
-                            <tr style="background: rgba(0, 0, 0, 0.2); border-radius: 12px;">
-                                <td class="${winner(f1.details.bornes, f2.details.bornes)}" style="font-size: 1.5rem; font-weight: 700; padding: 16px; text-align: center; border-radius: 12px 0 0 12px;">${f1.details.bornes}</td>
-                                <td style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-align: center; text-transform: uppercase; letter-spacing: 1px; padding: 16px;">
-                                    <i class="fa-solid fa-plug" style="display: block; font-size: 1.3rem; margin-bottom: 6px; color: #f59e0b;"></i>
-                                    ${lblBornes}
-                                </td>
-                                <td class="${winner(f2.details.bornes, f1.details.bornes)}" style="font-size: 1.5rem; font-weight: 700; padding: 16px; text-align: center; border-radius: 0 12px 12px 0;">${f2.details.bornes}</td>
-                            </tr>
-                            <tr style="background: rgba(0, 0, 0, 0.2); border-radius: 12px;">
-                                <td class="${winner(f1.details.covoit, f2.details.covoit)}" style="font-size: 1.5rem; font-weight: 700; padding: 16px; text-align: center; border-radius: 12px 0 0 12px;">${f1.details.covoit}</td>
-                                <td style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; text-align: center; text-transform: uppercase; letter-spacing: 1px; padding: 16px;">
-                                    <i class="fa-solid fa-car" style="display: block; font-size: 1.3rem; margin-bottom: 6px; color: #a855f7;"></i>
-                                    ${lblCovoit}
-                                </td>
-                                <td class="${winner(f2.details.covoit, f1.details.covoit)}" style="font-size: 1.5rem; font-weight: 700; padding: 16px; text-align: center; border-radius: 0 12px 12px 0;">${f2.details.covoit}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 30px; align-items: start;">
+                    <!-- Gare 1 -->
+                    <div>
+                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                <i class="fa-solid fa-train" style="color: var(--primary); font-size: 1.2rem;"></i>
+                                <h3 style="margin: 0; font-size: 1rem; font-weight: 600; color: white;">${escapeHTML(f1.nom)}</h3>
+                            </div>
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <div style="display: inline-block; width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(var(--primary) ${(f1.score * 36)}deg, rgba(255,255,255,0.05) 0deg); padding: 8px;">
+                                    <div style="width: 100%; height: 100%; border-radius: 50%; background: #0f172a; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                                        <div style="font-size: 1.8rem; font-weight: 900; color: var(--primary);">${f1.score}</div>
+                                        <div style="font-size: 0.7rem; color: #64748b; margin-top: -4px;">/10</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255, 255, 255, 0.02); border-radius: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-bicycle" style="color: #06b6d4; font-size: 1rem;"></i>
+                                        <span style="font-size: 0.85rem; color: #94a3b8;">${lblVelos}</span>
+                                    </div>
+                                    <span class="${winner(f1.details.velos, f2.details.velos)}" style="font-size: 1.1rem; font-weight: 700;">${f1.details.velos}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255, 255, 255, 0.02); border-radius: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-plug" style="color: #f59e0b; font-size: 1rem;"></i>
+                                        <span style="font-size: 0.85rem; color: #94a3b8;">${lblBornes}</span>
+                                    </div>
+                                    <span class="${winner(f1.details.bornes, f2.details.bornes)}" style="font-size: 1.1rem; font-weight: 700;">${f1.details.bornes}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255, 255, 255, 0.02); border-radius: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-car" style="color: #a855f7; font-size: 1rem;"></i>
+                                        <span style="font-size: 0.85rem; color: #94a3b8;">${lblCovoit}</span>
+                                    </div>
+                                    <span class="${winner(f1.details.covoit, f2.details.covoit)}" style="font-size: 1.1rem; font-weight: 700;">${f1.details.covoit}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- VS Divider -->
+                    <div style="display: flex; align-items: center; justify-content: center; padding-top: 60px;">
+                        <div style="width: 50px; height: 50px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 0.9rem; font-weight: 700; color: #64748b;">VS</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Gare 2 -->
+                    <div>
+                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                <i class="fa-solid fa-train" style="color: #3b82f6; font-size: 1.2rem;"></i>
+                                <h3 style="margin: 0; font-size: 1rem; font-weight: 600; color: white;">${escapeHTML(f2.nom)}</h3>
+                            </div>
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <div style="display: inline-block; width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(#3b82f6 ${(f2.score * 36)}deg, rgba(255,255,255,0.05) 0deg); padding: 8px;">
+                                    <div style="width: 100%; height: 100%; border-radius: 50%; background: #0f172a; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                                        <div style="font-size: 1.8rem; font-weight: 900; color: #3b82f6;">${f2.score}</div>
+                                        <div style="font-size: 0.7rem; color: #64748b; margin-top: -4px;">/10</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255, 255, 255, 0.02); border-radius: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-bicycle" style="color: #06b6d4; font-size: 1rem;"></i>
+                                        <span style="font-size: 0.85rem; color: #94a3b8;">${lblVelos}</span>
+                                    </div>
+                                    <span class="${winner(f2.details.velos, f1.details.velos)}" style="font-size: 1.1rem; font-weight: 700;">${f2.details.velos}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255, 255, 255, 0.02); border-radius: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-plug" style="color: #f59e0b; font-size: 1rem;"></i>
+                                        <span style="font-size: 0.85rem; color: #94a3b8;">${lblBornes}</span>
+                                    </div>
+                                    <span class="${winner(f2.details.bornes, f1.details.bornes)}" style="font-size: 1.1rem; font-weight: 700;">${f2.details.bornes}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255, 255, 255, 0.02); border-radius: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-car" style="color: #a855f7; font-size: 1rem;"></i>
+                                        <span style="font-size: 0.85rem; color: #94a3b8;">${lblCovoit}</span>
+                                    </div>
+                                    <span class="${winner(f2.details.covoit, f1.details.covoit)}" style="font-size: 1.1rem; font-weight: 700;">${f2.details.covoit}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
             openModal('vsModal');

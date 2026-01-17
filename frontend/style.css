@@ -835,7 +835,10 @@ justify-content: center; align-items: center; font-weight: 900; font-size: 1.2re
 .stat-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
 }
 .btn-main { 
-    display: block; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     width: 100%; 
     text-align: center; 
     background: linear-gradient(135deg, var(--primary), #059669);
