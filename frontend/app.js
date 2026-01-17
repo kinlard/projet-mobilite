@@ -288,9 +288,24 @@ function getDist(lat1, lon1, lat2, lon2) {
 // Fonction pour mettre à jour le compteur de gares visibles
 function updateCount() {
     const countEl = document.getElementById('count-val');
-    if (countEl) {
-        const visibleCount = markersLayer.getLayers().length;
+    if (!countEl || !map) return;
+    
+    try {
+        // Récupérer les limites de la carte visible
+        const bounds = map.getBounds();
+        
+        // Compter uniquement les gares visibles dans la zone actuelle
+        let visibleCount = 0;
+        markersLayer.eachLayer((marker) => {
+            const latLng = marker.getLatLng();
+            if (bounds.contains(latLng)) {
+                visibleCount++;
+            }
+        });
+        
         countEl.textContent = visibleCount;
+    } catch (e) {
+        // Silencieux en cas d'erreur
     }
 }
 
@@ -309,15 +324,12 @@ function isFavori(id) {
 }
 
 function toggleFavori(id, nom, type) {
-    console.log('🔄 toggleFavori appelé:', { id, nom, type });
-    
     let favoris = getFavoris();
     const index = favoris.findIndex(f => f.id === id);
     
     if (index >= 0) {
         // Supprimer des favoris
         favoris.splice(index, 1);
-        console.log('❌ Supprimé des favoris. Nouveau count:', favoris.length);
         showToast(`${nom} ${APP_TEXTS.favoris.removed[currentLang]}`);
     } else {
         // Ajouter aux favoris
@@ -327,22 +339,17 @@ function toggleFavori(id, nom, type) {
             type,
             date: new Date().toISOString() 
         });
-        console.log('✅ Ajouté aux favoris. Nouveau count:', favoris.length);
         showToast(`${nom} ${APP_TEXTS.favoris.added[currentLang]}`);
     }
     
     // Sauvegarder dans localStorage
     localStorage.setItem('eco_favoris', JSON.stringify(favoris));
-    console.log('💾 localStorage updated:', localStorage.getItem('eco_favoris'));
     
     // Mettre à jour le cœur dans le popup
     const icon = document.getElementById(`fav-${id}`);
     if (icon) {
         icon.classList.toggle('fav-active');
         icon.classList.toggle('fav-inactive');
-        console.log('🎯 Icon updated:', icon.className);
-    } else {
-        console.warn('⚠️ Icon not found for id:', `fav-${id}`);
     }
 }
 
@@ -380,11 +387,8 @@ window.updateAppLanguage = (isFr) => {
         };
         
         const step = tutoData[currentTutoDisplayStep] || tutoData[1];
-        console.log('   Mise à jour tutoriel avec:', step.title[currentLang]);
         tutoTitle.innerText = step.title[currentLang];
         tutoText.innerText = step.text[currentLang];
-    } else {
-        console.log('   ⚠️ Éléments tutoriel non trouvés!');
     }
     
     // Mettre à jour le bouton SUIVANT/NEXT ou TERMINER/FINISH
@@ -518,18 +522,21 @@ async function loadEverything() {
         DATA.garesById.clear();
         gares.forEach(g => { if (g && g.id !== undefined) DATA.garesById.set(g.id, g); });
         
-        DATA.velos = (velos.features || []).map(f => ({
+        DATA.velos = (velos.features || []).filter(f => f.geometry && f.geometry.coordinates).map(f => ({
             lat: f.geometry.coordinates[1],
             lon: f.geometry.coordinates[0]
         }));
-        DATA.bornes = (irve.features || []).map(f => ({
+        console.log(`🚲 Vélos chargés : ${DATA.velos.length} parkings`);
+        DATA.bornes = (irve.features || []).filter(f => f.geometry && f.geometry.coordinates).map(f => ({
             lat: f.geometry.coordinates[1],
             lon: f.geometry.coordinates[0]
         }));
-        DATA.covoit = (covoit.features || []).map(f => ({
+        console.log(`⚡ Bornes IRVE chargées : ${DATA.bornes.length} points`);
+        DATA.covoit = (covoit.features || []).filter(f => f.geometry && f.geometry.coordinates).map(f => ({
             lat: f.geometry.coordinates[1],
             lon: f.geometry.coordinates[0]
         }));
+        console.log(`🚗 Aires de covoiturage chargées : ${DATA.covoit.length} emplacements`);
         
         // Indexer les données de propreté par nom de gare (lowercase pour matching)
         DATA.proprete = (proprete || []).reduce((acc, p) => {
@@ -555,6 +562,9 @@ async function loadEverything() {
         initMapMarkers();
         initSecondaryMarkers(irve, covoit, velos);
         preComputeScoresSync();
+        
+        // Appliquer la gestion du zoom pour afficher/masquer les layers selon le niveau actuel
+        handleZoomEnd();
 
         // Calcul de TOUTES les stats au chargement pour le panneau Stats
         DATA.gares.forEach(g => {
@@ -616,6 +626,7 @@ async function loadEverything() {
 
 async function loadFranceMask() {
     try {
+        console.log('🗺️ Chargement du contour de la France...');
         const r = await fetch('https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/metropole.geojson');
         const d = await r.json();
         
@@ -674,8 +685,8 @@ async function loadFranceMask() {
             }
         }, {
             style: {
-                color: '#0f172a',
-                weight: 1,
+                color: '#000000',
+                weight: 2,
                 fillColor: '#020617',
                 fillOpacity: 0.75,
                 interactive: false
@@ -912,8 +923,6 @@ async function loadPhoto(nom, id) {
     // Extraire le nom de ville principal
     const villeName = cleanName.split(/[-\s]/)[0];
     
-    console.log(`Loading photo for: ${nom} (ville: ${villeName})`);
-    
     // Construire les termes de recherche pour Wikimedia Commons
     const searchTerms = [
         `Gare de ${cleanName}`,
@@ -926,16 +935,13 @@ async function loadPhoto(nom, id) {
     async function searchWikimediaImage(searchTerm) {
         try {
             const url = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(searchTerm)}&srnamespace=6&srlimit=10&format=json&origin=*`;
-            console.log(`Searching Wikimedia: ${searchTerm}`);
             const response = await fetch(url);
             const data = await response.json();
             
             if (data.query && data.query.search && data.query.search.length > 0) {
-                console.log(`Found ${data.query.search.length} results for "${searchTerm}"`);
                 // Chercher une image valide parmi les r�sultats
                 for (const result of data.query.search) {
                     const title = result.title;
-                    console.log(`Checking: ${title}`);
                     // V�rifier que c'est bien une image (jpg, jpeg, png, gif, webp)
                     if (/\.(jpg|jpeg|png|gif|webp)$/i.test(title)) {
                         // Extraire le nom du fichier sans le pr�fixe "File:"
@@ -1462,9 +1468,9 @@ window.showWalkZone = function(lat, lon) {
         DATA.velos.forEach(v => {
             // Vérifier d'abord si dans les bounds pour perf
             if (bounds.contains({ lat: v.lat, lng: v.lon })) {
-                // Puis vérifier la distance réelle - 600m max pour vraiment 10 min de marche
+                // Puis vérifier la distance réelle - 800m pour correspondre au cercle visuel
                 const distKm = getDist(centerLat, centerLon, v.lat, v.lon);
-                if (distKm <= 0.6) { // 600m max = 10 min de marche réalistes
+                if (distKm <= 0.8) { // 800m = rayon du cercle affiché
                     count++;
                     velosInZone.push(v); // Stocker le vélo pour navigation
                 }
@@ -1750,12 +1756,20 @@ const handleZoomEnd = () => {
         if (!map.hasLayer(covoitLayer)) map.addLayer(covoitLayer);
         if (!map.hasLayer(veloParkingLayer)) map.addLayer(veloParkingLayer);
     }
+    
+    // Mettre à jour le compteur de gares visibles après changement de zoom
+    updateCount();
 };
 
 // PERF: Debounce + RAF pour zoomend (�vite les appels excessifs pendant zoom continu)
 map.on('zoomend', () => {
     if (zoomRafId) cancelAnimationFrame(zoomRafId);
     zoomRafId = requestAnimationFrame(handleZoomEnd);
+});
+
+// Mettre à jour le compteur quand la carte bouge
+map.on('moveend', () => {
+    updateCount();
 });
 
 loadEverything();

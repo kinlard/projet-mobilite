@@ -23,8 +23,17 @@
     <!-- STYLES CSS INTÉGRÉS : Design spécifique de la page À propos -->
     <style>
         /* Mise en page centrée avec animations au survol */
+        /* Conteneur principal : largeur maximale de 1024px pour une lecture confortable */
+        /* margin: 0 auto : centrage horizontal automatique */
+        /* padding-bottom: 120px : espace en bas pour que le contenu ne soit pas masqué par le bouton flottant */
         .container { max-width: 1024px; margin: 0 auto; padding-bottom: 120px; }
         /* Cartes de section avec effet de profondeur */
+        /* border: 1px solid rgba(...) : bordure semi-transparente subtile */
+        /* border-radius: 20px : coins arrondis pour un design moderne */
+        /* background: rgba(15,23,42,0.6) : fond bleu foncé semi-transparent */
+        /* backdrop-filter: blur(14px) : effet de flou glassmorphism (verre dépoli) */
+        /* box-shadow: 0 14px 40px : ombre portée pour effet de profondeur */
+        /* transition: permet des animations fluides au survol (transform, box-shadow, border-color) */
         .section-card {
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 20px;
@@ -33,13 +42,30 @@
             box-shadow: 0 14px 40px rgba(0,0,0,0.28);
             transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
         }
+        /* Effet au survol de la carte : élévation visuelle pour indiquer l'interactivité */
+        /* transform: translateY(-8px) : soulève la carte de 8 pixels vers le haut */
+        /* scale(1.05) : agrandit légèrement la carte de 5% */
+        /* box-shadow intensifié : ombre plus prononcée pour accentuer l'effet de profondeur */
+        /* border-color: rgba(16,185,129,0.5) : bordure verte au survol */
+        /* double box-shadow : ajoute un halo vert lumineux autour de la carte */
         .section-card:hover {
             transform: translateY(-8px) scale(1.05);
             box-shadow: 0 22px 52px rgba(0,0,0,0.4);
             border-color: rgba(16,185,129,0.5);
             box-shadow: 0 0 0 2px rgba(16,185,129,0.25), 0 20px 50px rgba(0,0,0,0.35);
         }
+        /* Titre de section avec icône : affichage en ligne flexible */
+        /* display: inline-flex : permet d'aligner l'icône et le texte horizontalement */
+        /* gap: 10px : espacement de 10 pixels entre l'icône et le texte */
+        /* align-items: center : alignement vertical centré */
         .icon-title { display: inline-flex; gap: 10px; align-items: center; }
+        /* Badge pilule pour les fonctionnalités principales */
+        /* display: inline-flex : affichage en ligne avec flexbox pour alignement icône + texte */
+        /* padding: 8px 12px : espacement interne confortable */
+        /* border-radius: 999px : bords totalement arrondis (forme de pilule) */
+        /* background: rgba(15,23,42,0.7) : fond sombre semi-transparent */
+        /* border: 1px solid : bordure subtile pour délimiter le badge */
+        /* transition: permet animations fluides au survol */
         .pill {
             display: inline-flex; align-items: center; gap: 8px;
             padding: 8px 12px; border-radius: 999px;
@@ -47,7 +73,17 @@
             border: 1px solid rgba(255,255,255,0.08);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+        /* Effet au survol de la pilule : légère mise en valeur */
+        /* transform: scale(1.05) : agrandissement de 5% */
+        /* box-shadow: halo vert lumineux pour attirer l'attention */
         .pill:hover { transform: scale(1.05); box-shadow: 0 10px 22px rgba(16,185,129,0.35); }
+        /* Badge de technologie cliquable : lien vers la documentation externe */
+        /* display: inline-flex : affichage en ligne avec icône + texte alignés */
+        /* margin: 6px 6px 0 0 : espacement entre les badges, pas de marge en bas */
+        /* border-radius: 12px : coins arrondis modérés */
+        /* background: rgba(59,130,246,0.12) : fond bleu semi-transparent */
+        /* text-decoration: none : supprime le soulignement des liens */
+        /* transition: pour animations au survol */
         .badge-tech {
             display: inline-flex; align-items: center; gap: 6px;
             padding: 8px 14px; margin: 6px 6px 0 0;
@@ -55,8 +91,27 @@
             color: #e5e7eb; border: 1px solid rgba(255,255,255,0.08);
             text-decoration: none; transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+        /* Effet au survol du badge technologie : animation ludique */
+        /* transform: scale(1.05) rotate(12deg) : agrandissement + rotation de 12 degrés */
+        /* box-shadow: halo bleu lumineux */
+        /* background: rgba(59,130,246,0.2) : fond bleu plus opaque au survol */
         .badge-tech:hover { transform: scale(1.05) rotate(12deg); box-shadow: 0 12px 26px rgba(59,130,246,0.35); background: rgba(59,130,246,0.2); }
+        /* Grille responsive pour afficher les sources de données */
+        /* display: grid : utilisation de CSS Grid pour disposition automatique */
+        /* grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) : colonnes adaptatives */
+        /*    - auto-fit : crée autant de colonnes que possible selon la largeur disponible */
+        /*    - minmax(240px, 1fr) : chaque colonne fait minimum 240px, maximum 1 fraction de l'espace disponible */
+        /* gap: 12px : espacement de 12 pixels entre les éléments de la grille */
         .sources-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+        /* Élément de source de données individuel */
+        /* display: flex : alignement horizontal de l'icône et du texte */
+        /* align-items: center : alignement vertical centré */
+        /* gap: 10px : espacement entre l'icône et le texte */
+        /* padding: 10px 12px : espacement interne confortable */
+        /* border-radius: 12px : coins arrondis */
+        /* background: rgba(255,255,255,0.06) : fond blanc légèrement transparent */
+        /* backdrop-filter: blur(10px) : effet de flou glassmorphism */
+        /* transition: pour animations au survol */
         .source-item {
             display: flex; align-items: center; gap: 10px;
             padding: 10px 12px; border-radius: 12px;
@@ -65,145 +120,401 @@
             backdrop-filter: blur(10px);
             transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
         }
+        /* Effet au survol d'une source : légère élévation */
+        /* transform: translateY(-3px) scale(1.02) : soulèvement de 3px + agrandissement de 2% */
+        /* box-shadow: ombre portée plus prononcée */
+        /* background: rgba(255,255,255,0.1) : fond plus opaque au survol */
         .source-item:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 24px rgba(0,0,0,0.28); background: rgba(255,255,255,0.1); }
+        /* Carte affichant le score écologique avec barre de progression */
+        /* margin-top: 18px : espacement au-dessus de la carte */
+        /* padding: 14px : espacement interne */
+        /* border-radius: 14px : coins arrondis */
+        /* background: rgba(15,23,42,0.85) : fond bleu foncé opaque */
+        /* position: relative : nécessaire pour le positionnement absolu du pseudo-élément ::after */
+        /* overflow: hidden : masque les débordements (utile pour l'effet confetti) */
         .score-card { margin-top: 18px; padding: 14px; border-radius: 14px; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.08); position: relative; overflow: hidden; }
+        /* Effet de fond dégradé radial décoratif sur la carte de score */
+        /* content:"" : crée un élément vide */
+        /* position:absolute; inset:0 : couvre toute la surface de la carte */
+        /* pointer-events:none : n'interfère pas avec les clics */
+        /* background: radial-gradient(...) : deux dégradés radiaux superposés (vert et bleu) pour effet lumineux subtil */
         .score-card::after { content:""; position:absolute; inset:0; pointer-events:none; background: radial-gradient(circle at 20% 20%, rgba(16,185,129,0.12), transparent 50%), radial-gradient(circle at 80% 30%, rgba(59,130,246,0.12), transparent 50%); }
+        /* Barre de progression pour visualiser le score écologique */
+        /* position: relative : permet le positionnement absolu de la barre de remplissage */
+        /* height: 12px : hauteur de la barre */
+        /* border-radius: 999px : bords totalement arrondis (forme de capsule) */
+        /* background: #1f2937 : fond gris foncé (barre vide) */
+        /* overflow: hidden : masque le débordement de la barre de remplissage */
+        /* margin-top: 10px : espacement au-dessus de la barre */
         .score-bar { position: relative; height: 12px; border-radius: 999px; background: #1f2937; overflow: hidden; margin-top: 10px; }
+        /* Barre de remplissage animée représentant le score */
+        /* position: absolute; left: 0; top: 0 : positionnée à gauche de la barre */
+        /* height: 100% : remplit toute la hauteur de la barre */
+        /* width: 0% : commence à 0%, sera animé par JavaScript */
+        /* background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981) : dégradé rouge → orange → vert */
+        /*    - Rouge pour les mauvais scores */
+        /*    - Orange pour les scores moyens */
+        /*    - Vert pour les bons scores */
+        /* box-shadow: 0 0 12px : halo lumineux vert autour de la barre */
+        /* transition: width 1s ease : animation de remplissage progressive sur 1 seconde */
         .score-fill { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981); box-shadow: 0 0 12px rgba(16,185,129,0.5); transition: width 1s ease; }
+        /* Conteneur empilé verticalement pour organiser les éléments */
+        /* display: flex; flex-direction: column : affichage en colonne */
+        /* gap: 10px : espacement vertical de 10 pixels entre chaque élément */
         .stack { display: flex; flex-direction: column; gap: 10px; }
+        /* Ligne d'information compacte avec icône et texte */
+        /* display: flex : alignement horizontal */
+        /* align-items: center : alignement vertical centré */
+        /* gap: 10px : espacement entre l'icône et le texte */
+        /* color: #cbd5e1 : gris clair pour le texte */
         .mini-line { display: flex; align-items: center; gap: 10px; color: #cbd5e1; }
+        /* Effet confetti décoratif animé */
+        /* position:absolute; inset:0 : couvre toute la surface de la carte de score */
+        /* pointer-events:none : n'interfère pas avec les clics */
+        /* background-image: radial-gradient(...) : trois dégradés radiaux superposés créant des petits points colorés */
+        /*    - Points blancs, verts et bleus de différentes tailles (8px, 10px, 12px) */
+        /* background-size: contrôle l'espacement entre les points */
+        /* opacity:0 : invisible par défaut */
+        /* animation: pop 1.6s ease forwards : déclenche l'animation pop au chargement */
         .confetti { position:absolute; inset:0; pointer-events:none; background-image: radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 0), radial-gradient(circle, rgba(16,185,129,0.6) 1px, transparent 0), radial-gradient(circle, rgba(59,130,246,0.6) 1px, transparent 0); background-size: 8px 8px, 10px 10px, 12px 12px; opacity:0; animation: pop 1.6s ease forwards; }
+        /* Animation keyframes pour l'effet confetti */
+        /* from : échelle réduite (0.95) et invisible (opacity:0) */
+        /* 40% : devient visible (opacity:0.8) pendant l'animation */
+        /* to : échelle normale (1) et disparaît progressivement (opacity:0) */
         @keyframes pop { from { transform: scale(0.95); opacity:0; } 40% { opacity:0.8; } to { transform: scale(1); opacity:0; } }
+        /* Déclencheur de tooltip (info-bulle au survol) */
+        /* position: relative : nécessaire pour positionner le tooltip en absolu par rapport à cet élément */
+        /* cursor: pointer : indique que l'élément est interactif */
         .tooltip-trigger { position: relative; cursor: pointer; }
+        /* Tooltip (info-bulle) affichée au survol */
+        /* position: absolute : positionnement par rapport au parent .tooltip-trigger */
+        /* bottom: 140% : placé au-dessus de l'élément déclencheur */
+        /* left: 0 : aligné à gauche */
+        /* padding: 8px 10px : espacement interne confortable */
+        /* background: rgba(0,0,0,0.8) : fond noir semi-transparent */
+        /* color: #e2e8f0 : texte gris très clair */
+        /* border-radius: 8px : coins arrondis */
+        /* font-size: 0.85rem : taille de police légèrement réduite */
+        /* white-space: nowrap : empêche le retour à la ligne du texte */
+        /* opacity: 0 : invisible par défaut */
+        /* pointer-events: none : n'interfère pas avec les événements de souris */
+        /* transform: translateY(6px) : décalé vers le bas de 6 pixels (état initial) */
+        /* transition: animations fluides de l'apparition et du positionnement */
         .tooltip { position: absolute; bottom: 140%; left: 0; padding: 8px 10px; background: rgba(0,0,0,0.8); color: #e2e8f0; border-radius: 8px; font-size: 0.85rem; white-space: nowrap; opacity: 0; pointer-events: none; transform: translateY(6px); transition: opacity 0.2s ease, transform 0.2s ease; }
+        /* Affichage du tooltip au survol du déclencheur */
+        /* opacity: 1 : devient visible */
+        /* transform: translateY(0) : repositionné à sa place finale (animation fluide vers le haut) */
         .tooltip-trigger:hover .tooltip { opacity: 1; transform: translateY(0); }
+        /* État initial des cartes de section pour l'animation d'apparition au scroll */
+        /* data-anim="true" : attribut HTML personnalisé pour identifier les éléments animables */
+        /* opacity: 0 : invisible au chargement */
+        /* transform: translateY(18px) : décalé vers le bas de 18 pixels */
         .section-card[data-anim] { opacity: 0; transform: translateY(18px); }
+        /* État final des cartes de section après animation */
+        /* classe .show ajoutée par JavaScript via IntersectionObserver quand l'élément devient visible */
+        /* opacity: 1 : totalement visible */
+        /* transform: translateY(0) : repositionné à sa place finale */
+        /* transition: opacity 0.6s ease, transform 0.6s ease : animations fluides sur 0.6 secondes */
         .section-card.show { opacity: 1; transform: translateY(0); transition: opacity 0.6s ease, transform 0.6s ease; }
+        /* Sous-titre du hero avec soulignement animé */
+        /* position: relative : nécessaire pour positionner le pseudo-élément ::after */
+        /* display: inline-block : permet au pseudo-élément de prendre la largeur du texte */
+        /* overflow: hidden : masque les débordements éventuels */
         .hero-subtitle { position: relative; display: inline-block; overflow: hidden; }
+        /* Soulignement animé sous le sous-titre */
+        /* content: "" : crée un élément vide */
+        /* position: absolute; left: 0; bottom: 0 : positionné en bas du texte */
+        /* width: 100% : prend toute la largeur du texte */
+        /* height: 2px : hauteur de la ligne de soulignement */
+        /* background: linear-gradient(90deg, #10b981, #3b82f6) : dégradé vert → bleu */
+        /* animation: pulse 1.8s ease-in-out infinite : pulsation infinie toutes les 1.8 secondes */
         .hero-subtitle::after { content: ""; position: absolute; left: 0; bottom: 0; width: 100%; height: 2px; background: linear-gradient(90deg, #10b981, #3b82f6); animation: pulse 1.8s ease-in-out infinite; }
+        /* Animation keyframes pour le soulignement pulsant */
+        /* 0%,100% : échelle réduite (0.9) et légèrement transparent (opacity: 0.7) */
+        /* 50% : échelle normale (1) et totalement opaque (opacity: 1) */
         @keyframes pulse { 0%,100% { transform: scaleX(0.9); opacity: 0.7; } 50% { transform: scaleX(1); opacity: 1; } }
+        /* Effet machine à écrire pour les crédits */
+        /* display: inline-flex : affichage en ligne avec flexbox */
+        /* align-items: center : alignement vertical centré */
+        /* gap: 8px : espacement entre l'icône et le texte */
+        /* animation: type 4s steps(30,end) infinite alternate : effet de frappe sur 4 secondes */
+        /*    - steps(30,end) : anime en 30 étapes discrètes (comme une machine à écrire) */
+        /*    - infinite alternate : boucle infinie en alternance */
+        /* white-space: nowrap : empêche le retour à la ligne */
         .credits-type { display: inline-flex; align-items: center; gap: 8px; animation: type 4s steps(30,end) infinite alternate; white-space: nowrap; }
+        /* Animation keyframes pour l'effet machine à écrire */
+        /* 0% : width: 0 : texte invisible (non encore tapé) */
+        /* 50% : width: 100% : texte complètement visible (fin de frappe) */
+        /* 100% : width: 100% : reste visible avant de recommencer */
         @keyframes type { 0% { width: 0; } 50% { width: 100%; } 100% { width: 100%; } }
     </style>
 </head>
+<!-- Début du corps de la page HTML -->
+<!-- class="page-apropos" : classe CSS pour cibler spécifiquement cette page dans les styles -->
 <body class="page-apropos">
 
+    <!-- Barre de navigation supérieure fixe -->
+    <!-- Identique aux autres pages pour cohérence de navigation -->
     <div class="dashboard-header">
+        <!-- Logo du site cliquable -->
         <div class="brand"><h1>Eco-Escapade</h1></div>
+        <!-- Liens de navigation vers les autres pages -->
         <div class="nav-links">
+            <!-- Lien vers la page d'accueil -->
             <a href="index.html">Accueil</a>
+            <!-- Lien vers la carte interactive -->
             <a href="map.html">Carte</a>
+            <!-- Lien vers la page à propos (page actuelle, donc classe "active") -->
             <a href="#" class="active">À propos</a>
+            <!-- Lien vers le carnet de voyage avec les gares favorites -->
             <a href="carnet.html">Mes favoris</a>
         </div>
+        <!-- Espaceur vide pour équilibrer la mise en page -->
+        <!-- width: 80px : compense l'espace du bouton de langue présent sur d'autres pages -->
         <div style="width: 80px;"></div> 
     </div>
 
+    <!-- Conteneur principal centré avec largeur maximale -->
     <div class="container">
     
+        <!-- Section hero : en-tête principal de la page -->
         <div class="hero-section">
+            <!-- Titre principal de la page -->
             <div class="hero-title">À propos d'Eco-Escapade</div>
+            <!-- Sous-titre avec soulignement animé (défini dans le CSS) -->
             <div class="hero-subtitle">Voyagez vert, choisissez mieux</div>
         </div>
 
+        <!-- Section 1 : Présentation du concept du projet -->
+        <!-- data-anim="true" : active l'animation d'apparition au scroll -->
         <section class="section-card" data-anim="true">
+            <!-- Titre de section avec icône ampoule (représente l'idée/concept) -->
+            <!-- style="color:#facc15" : couleur jaune pour l'icône -->
             <h2 class="icon-title"><i class="fa-solid fa-lightbulb" style="color:#facc15;"></i> Concept</h2>
+            <!-- Conteneur empilé verticalement pour organiser le contenu -->
             <div class="stack">
+                <!-- Explication courte du rôle principal de l'application -->
                 <p>Eco-Escapade t'aide à choisir une gare plus verte.</p>
+                <!-- Description de la simplicité d'utilisation -->
                 <p>En deux clics, tu vois les bons plans proches.</p>
+                <!-- Badge pilule listant les fonctionnalités principales -->
+                <!-- Icône carte avec couleur verte -->
                 <div class="pill"><i class="fa-solid fa-map-location-dot" style="color:#22c55e;"></i>Carte live • Favoris • Comparateur</div>
             </div>
         </section>
 
+        <!-- Section 2 : Explication de la méthodologie de calcul du score écologique -->
         <section class="section-card" data-anim="true">
+            <!-- Titre avec icône calculatrice (représente le calcul du score) -->
+            <!-- style="color:#38bdf8" : couleur cyan pour l'icône -->
             <h2 class="icon-title"><i class="fa-solid fa-calculator" style="color:#38bdf8;"></i> Méthodologie</h2>
+            <!-- Conteneur empilé pour organiser les critères -->
             <div class="stack">
+                <!-- Critère 1 : Gare TGV -->
+                <!-- Icône train avec couleur bleue -->
                 <div class="mini-line"><i class="fa-solid fa-train" style="color:#3b82f6;"></i>+1 si la gare est TGV.</div>
+                <!-- Critère 2 : Parkings vélo -->
+                <!-- Icône vélo avec couleur cyan -->
+                <!-- max 7 : limite le score à 7 parkings vélo maximum -->
                 <div class="mini-line"><i class="fa-solid fa-bicycle" style="color:#0ea5e9;"></i>+1 par parking vélo à 800 m (max 7).</div>
+                <!-- Critère 3 : Bornes de recharge électrique IRVE -->
+                <!-- Icône prise électrique avec couleur orange -->
+                <!-- max 2 : limite le score à 2 bornes maximum -->
                 <div class="mini-line"><i class="fa-solid fa-plug" style="color:#f59e0b;"></i>+0.5 par borne IRVE à 3 km (max 2).</div>
+                <!-- Critère 4 : Aires de covoiturage -->
+                <!-- Icône voiture avec couleur violette -->
+                <!-- max 1 : limite le score à 1 aire de covoiturage -->
                 <div class="mini-line"><i class="fa-solid fa-car-side" style="color:#a855f7;"></i>+0.5 par aire covoit à 3 km (max 1).</div>
+                <!-- Carte affichant un exemple de score avec jauge visuelle -->
                 <div class="score-card">
+                    <!-- Ligne affichant le score avec icône jauge -->
+                    <!-- justify-content: space-between : répartit le texte et le score aux extrémités -->
                     <div class="mini-line" style="justify-content: space-between;">
+                        <!-- Icône jauge avec couleur verte -->
                         <span><i class="fa-solid fa-gauge" style="color:#10b981;"></i>Jauge éco</span>
+                        <!-- Score exemple affiché en gras avec couleur verte -->
                         <strong style="color:#10b981;">7 / 10 (exemple)</strong>
                     </div>
+                    <!-- Barre de progression visuelle du score -->
+                    <!-- Contient la barre de remplissage animée par JavaScript -->
                     <div class="score-bar"><div class="score-fill" id="scoreFill"></div></div>
+                    <!-- Ligne d'information avec tooltip explicatif sur la palette de couleurs -->
                     <div class="mini-line tooltip-trigger" style="font-size:0.85rem; color:#94a3b8;">
+                        <!-- Icône info circulaire -->
                         <i class="fa-solid fa-circle-info"></i>
+                        <!-- Texte souligné pour indiquer l'interactivité -->
                         <span style="text-decoration:underline;">Palette du score</span>
+                        <!-- Tooltip affiché au survol : explique la signification des couleurs -->
+                        <!-- Rouge <4 : mauvais score -->
+                        <!-- Orange <7 : score moyen -->
+                        <!-- Vert ≥7 : bon score -->
                         <div class="tooltip">Rouge &lt;4 • Orange &lt;7 • Vert ≥7</div>
                     </div>
+                    <!-- Effet confetti décoratif animé (défini dans le CSS) -->
+                    <!-- aria-hidden="true" : caché des lecteurs d'écran (purement décoratif) -->
                     <div class="confetti" aria-hidden="true"></div>
                 </div>
             </div>
         </section>
 
+        <!-- Section 3 : Liste des sources de données utilisées -->
         <section class="section-card" data-anim="true">
+            <!-- Titre avec icône database (base de données) -->
+            <!-- style="color:#f97316" : couleur orange pour l'icône -->
             <h2 class="icon-title"><i class="fa-solid fa-database" style="color:#f97316;"></i> Sources</h2>
+            <!-- Grille responsive affichant les sources -->
             <div class="sources-list">
+                <!-- Source 1 : SNCF Open Data -->
+                <!-- Icône train bleue -->
                 <div class="source-item"><i class="fa-solid fa-train" style="color:#3b82f6;"></i><span>SNCF Open Data : gares, rails, propreté, défibrillateurs.</span></div>
+                <!-- Source 2 : OpenDataSoft (basé sur OpenStreetMap) -->
+                <!-- Icône vélo cyan -->
                 <div class="source-item"><i class="fa-solid fa-bicycle" style="color:#0ea5e9;"></i><span>OpenDataSoft (OSM) : parkings vélos, bornes IRVE, covoiturage.</span></div>
+                <!-- Source 3 : Open-Meteo pour les données météorologiques -->
+                <!-- Icône nuage et soleil cyan -->
                 <div class="source-item"><i class="fa-solid fa-cloud-sun" style="color:#38bdf8;"></i><span>Open-Meteo : météo en direct.</span></div>
+                <!-- Source 4 : OpenAQ pour la qualité de l'air -->
+                <!-- Icône vent verte -->
                 <div class="source-item"><i class="fa-solid fa-wind" style="color:#22c55e;"></i><span>OpenAQ : qualité de l'air.</span></div>
+                <!-- Source 5 : iNaturalist pour les observations de biodiversité -->
+                <!-- Icône feuille verte -->
                 <div class="source-item"><i class="fa-solid fa-leaf" style="color:#22c55e;"></i><span>iNaturalist : biodiversité locale.</span></div>
+                <!-- Source 6 : Wikipedia pour les photos des villes -->
+                <!-- Icône caméra rose -->
                 <div class="source-item"><i class="fa-solid fa-camera" style="color:#f472b6;"></i><span>Wikipedia : photos des villes.</span></div>
+                <!-- Source 7 : Google Maps Satellite pour le fond de carte -->
+                <!-- Icône globe verte -->
                 <div class="source-item"><i class="fa-solid fa-globe" style="color:#10b981;"></i><span>Google Satellite : fond hybride.</span></div>
             </div>
         </section>
 
+        <!-- Section 4 : Technologies utilisées dans le projet -->
         <section class="section-card" data-anim="true">
+            <!-- Titre avec icône code (balises HTML) -->
+            <!-- style="color:#22c55e" : couleur verte pour l'icône -->
             <h2 class="icon-title"><i class="fa-solid fa-code" style="color:#22c55e;"></i> Technologies</h2>
+            <!-- Conteneur empilé pour organiser frontend et backend -->
             <div class="stack">
+                <!-- Sous-titre Frontend en gras -->
                 <div class="mini-line" style="font-weight:700; color:#e2e8f0;">Frontend</div>
+                <!-- Conteneur des badges technologies frontend -->
                 <div>
+                    <!-- Badge Leaflet : bibliothèque de cartographie interactive -->
+                    <!-- target="_blank" : ouvre le lien dans un nouvel onglet -->
+                    <!-- rel="noreferrer" : sécurité pour les liens externes -->
                     <a class="badge-tech" href="https://leafletjs.com/" target="_blank" rel="noreferrer"><i class="fa-solid fa-map"></i>Leaflet 1.9</a>
+                    <!-- Badge MarkerCluster : regroupe les marqueurs proches -->
                     <a class="badge-tech" href="https://github.com/Leaflet/Leaflet.markercluster" target="_blank" rel="noreferrer"><i class="fa-solid fa-layer-group"></i>MarkerCluster</a>
+                    <!-- Badge MiniMap : mini-carte de navigation -->
                     <a class="badge-tech" href="https://github.com/Norkart/Leaflet-MiniMap" target="_blank" rel="noreferrer"><i class="fa-solid fa-square"></i>MiniMap</a>
+                    <!-- Badge EasyPrint : impression de carte -->
                     <a class="badge-tech" href="https://github.com/rowanwins/leaflet-easyPrint" target="_blank" rel="noreferrer"><i class="fa-solid fa-print"></i>EasyPrint</a>
+                    <!-- Badge OSM Buildings : affichage 3D des bâtiments -->
                     <a class="badge-tech" href="https://osmbuildings.org/" target="_blank" rel="noreferrer"><i class="fa-solid fa-city"></i>OSM Buildings</a>
+                    <!-- Badge Font Awesome : bibliothèque d'icônes -->
                     <a class="badge-tech" href="https://fontawesome.com/" target="_blank" rel="noreferrer"><i class="fa-solid fa-icons"></i>Font Awesome 6</a>
+                    <!-- Badge Canvas Confetti : animations de confettis -->
                     <a class="badge-tech" href="https://www.npmjs.com/package/canvas-confetti" target="_blank" rel="noreferrer"><i class="fa-solid fa-fire"></i>Canvas Confetti</a>
                 </div>
+                <!-- Sous-titre Backend en gras avec espacement au-dessus -->
                 <div class="mini-line" style="font-weight:700; color:#e2e8f0; margin-top:8px;">Backend</div>
+                <!-- Conteneur des badges technologies backend -->
                 <div>
+                    <!-- Badge Node.js : environnement d'exécution JavaScript -->
                     <a class="badge-tech" href="https://nodejs.org/" target="_blank" rel="noreferrer"><i class="fa-brands fa-node-js"></i>Node.js</a>
+                    <!-- Badge Express : framework web pour Node.js -->
                     <a class="badge-tech" href="https://expressjs.com/" target="_blank" rel="noreferrer"><i class="fa-solid fa-server"></i>Express 5</a>
+                    <!-- Badge Axios : client HTTP pour requêtes API -->
                     <a class="badge-tech" href="https://axios-http.com/" target="_blank" rel="noreferrer"><i class="fa-solid fa-cloud-arrow-down"></i>Axios</a>
+                    <!-- Badge node-cache : système de cache en mémoire -->
                     <a class="badge-tech" href="https://www.npmjs.com/package/node-cache" target="_blank" rel="noreferrer"><i class="fa-solid fa-database"></i>node-cache</a>
+                    <!-- Badge dotenv : gestion des variables d'environnement -->
                     <a class="badge-tech" href="https://www.npmjs.com/package/dotenv" target="_blank" rel="noreferrer"><i class="fa-solid fa-key"></i>dotenv</a>
+                    <!-- Badge CORS : gestion des requêtes cross-origin -->
                     <a class="badge-tech" href="https://www.npmjs.com/package/cors" target="_blank" rel="noreferrer"><i class="fa-solid fa-shield"></i>CORS</a>
                 </div>
             </div>
         </section>
 
+        <!-- Section 5 : Informations sur les crédits et auteur du projet -->
         <section class="section-card" data-anim="true">
+            <!-- Titre avec icône étudiant diplômé -->
+            <!-- style="color:#f472b6" : couleur rose pour l'icône -->
             <h2 class="icon-title"><i class="fa-solid fa-user-graduate" style="color:#f472b6;"></i> Crédits</h2>
+            <!-- Conteneur empilé pour organiser les informations -->
             <div class="stack">
+                <!-- Ligne développeur avec effet machine à écrire (animation CSS) -->
+                <!-- Icône utilisateur verte -->
                 <div class="mini-line credits-type"><i class="fa-solid fa-user" style="color:#22c55e;"></i><strong>Développeur :</strong> Théo BAS - LP GGAT IUT Auch</div>
+                <!-- Ligne diplôme avec icône école bleue -->
                 <div class="mini-line"><i class="fa-solid fa-school" style="color:#3b82f6;"></i>Licence Pro GGAT — IUT Auch</div>
+                <!-- Ligne année universitaire avec icône calendrier orange -->
                 <div class="mini-line"><i class="fa-solid fa-calendar" style="color:#f59e0b;"></i>Année 2025-2026</div>
+                <!-- Ligne note de contexte pédagogique -->
+                <!-- color:#94a3b8 : gris clair pour texte secondaire -->
+                <!-- font-size:0.9rem : taille de police légèrement réduite -->
+                <!-- Icône coeur rouge -->
                 <div class="mini-line" style="color:#94a3b8; font-size:0.9rem;"><i class="fa-solid fa-heart" style="color:#ef4444;"></i>Projet pédagogique, données publiques.</div>
             </div>
         </section>
     </div>
 
+    <!-- Bouton flottant fixe pour retourner à la carte interactive -->
+    <!-- Position fixe en bas à droite de l'écran -->
+    <!-- aria-label : description pour les lecteurs d'écran -->
     <a href="map.html" class="btn-float" aria-label="Retour à la carte"><i class="fa-solid fa-map"></i> Retour à la carte</a>
 
+    <!-- SCRIPT JAVASCRIPT : Animations et interactions de la page -->
+    <!-- SCRIPT JAVASCRIPT : Animations et interactions de la page -->
     <script>
         // Scroll reveal + minimal hover boosts
+        // Sélection de toutes les cartes de section à animer
         const cards = document.querySelectorAll('.section-card');
+        // Création d'un observateur d'intersection pour détecter quand les cartes deviennent visibles
+        // IntersectionObserver : API moderne du navigateur pour détecter la visibilité des éléments
         const io = new IntersectionObserver((entries) => {
-            entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('show'); });
-        }, { threshold: 0.15 });
+            // Boucle sur chaque entrée observée
+            entries.forEach(e => { 
+                // Si l'élément est visible à l'écran (intersection détectée)
+                if (e.isIntersecting) 
+                    // Ajoute la classe 'show' qui déclenche l'animation CSS (opacité 0→1, translateY 18px→0)
+                    e.target.classList.add('show'); 
+            });
+        }, { 
+            // threshold: 0.15 : l'animation se déclenche quand 15% de l'élément est visible
+            // Valeur faible pour déclencher l'animation avant que l'élément soit totalement visible
+            threshold: 0.15 
+        });
+        // Observe chaque carte de section pour détecter son apparition à l'écran
         cards.forEach(c => io.observe(c));
 
         // Animated score fill
+        // Sélection de la barre de remplissage du score
         const fill = document.getElementById('scoreFill');
-        if (fill) { requestAnimationFrame(() => { fill.style.width = '70%'; }); }
+        // Si la barre existe dans le DOM
+        if (fill) { 
+            // requestAnimationFrame : garantit que l'animation se déclenche au prochain rafraîchissement de l'écran
+            // Permet une animation plus fluide et synchronisée avec le rendu du navigateur
+            requestAnimationFrame(() => { 
+                // Définit la largeur de la barre à 70% (score exemple de 7/10)
+                // La transition CSS (définie dans .score-fill) anime le changement de 0% à 70% sur 1 seconde
+                fill.style.width = '70%'; 
+            }); 
+        }
 
         // Light hover particle pop
+        // Sélection de l'élément confetti décoratif
         const confetti = document.querySelector('.confetti');
-        if (confetti) { setTimeout(() => confetti.style.opacity = '1', 200); }
+        // Si l'élément confetti existe dans le DOM
+        if (confetti) { 
+            // setTimeout : déclenche l'animation après 200ms (0.2 secondes)
+            // Délai court pour laisser le temps à la page de se charger complètement
+            setTimeout(() => 
+                // Rend le confetti visible (opacity: 1)
+                // L'animation CSS @keyframes pop se déclenche automatiquement
+                confetti.style.opacity = '1', 
+            200); 
+        }
     </script>
 
 </body>
