@@ -21,7 +21,7 @@ Tableau de Bord</title>
             <a href="index.html">Accueil</a>
             <a href="map.html" id="nav-carte">Carte</a>
             <a href="apropos.html" id="nav-about">À propos</a>
-            <a href="#" class="active" id="nav-aide" onclick="openOnboarding(); return false;">Mes favoris</a>
+            <a href="#" class="active" id="nav-aide" onclick="openOnboarding(); return false;">Aide</a>
         </div>
         <button class="lang-switch" onclick="switchLangCarnet()">FR / EN</button>
     </div>
@@ -330,6 +330,17 @@ count--; screen.innerHTML = count;
 window.openOnboarding = () => document.getElementById('onboardingModal').classList.add('active');
         if(!localStorage.getItem('visited_carnet_final')) { setTimeout(openOnboarding, 1000); localStorage.setItem('visited_carnet_final', 'true');
 }
+        
+        // Initialiser les traductions au chargement
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.switchLangCarnet) {
+                // Forcer une mise à jour pour initialiser les textes corrects
+                isFrCarnet = true;
+                switchLangCarnet();
+                isFrCarnet = false;
+                switchLangCarnet();
+            }
+        });
     </script>
     
     <script type="module">

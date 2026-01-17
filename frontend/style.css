@@ -752,10 +752,25 @@ justify-content: center; align-items: center; font-weight: 900; font-size: 1.2re
 }
 .stat-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
 }
-.btn-main { display: block; width: 100%; text-align: center; background: var(--primary); color: #022c22;
-padding: 12px; border-radius: 10px; font-weight: 800; text-decoration: none; margin-bottom: 15px; transition: 0.2s;
+.btn-main { 
+    display: block; 
+    width: 100%; 
+    text-align: center; 
+    background: var(--primary); 
+    color: #022c22;
+    padding: 12px; 
+    border-radius: 10px; 
+    font-weight: 800; 
+    text-decoration: none; 
+    margin-bottom: 15px; 
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
 }
-.btn-main:hover { background: #34d399; transform: scale(1.02);
+.btn-main:hover { 
+    background: #34d399; 
+    transform: scale(1.05);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
 }
 .tools-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
 }
@@ -788,16 +803,53 @@ border-radius: 8px; background: #334155; transition: transform 0.2s; border: 2px
 }
 .danger-zone { margin-top: 60px; text-align: center; border-top: 1px dashed #334155; padding-top: 20px;
 }
-.btn-nuke { background: transparent; border: 1px solid #ef4444; color: #ef4444;
-padding: 10px 20px; border-radius: 8px; cursor: pointer; font-family: monospace; letter-spacing: 2px; transition: 0.3s;
+.btn-nuke { 
+    background: transparent; 
+    border: 2px solid #ef4444; 
+    color: #ef4444;
+    padding: 12px 24px; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-family: monospace; 
+    letter-spacing: 2px; 
+    transition: all 0.3s ease;
+    font-weight: 700;
 }
-.btn-nuke:hover { background: #ef4444; color: white;
-box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
-#vs-btn { position: fixed;
-bottom: 30px; left: 50%; transform: translateX(-50%) translateY(150px); background: linear-gradient(135deg, #f59e0b, #d97706); padding: 15px 40px; border-radius: 50px; font-weight: 900; color: white;
-border: none; cursor: pointer; box-shadow: 0 0 30px rgba(245, 158, 11, 0.5); z-index: 1500; transition: transform 0.3s; display: flex;
-align-items: center; gap: 10px; }
-#vs-btn.visible { transform: translateX(-50%) translateY(0);
+.btn-nuke:hover { 
+    background: #ef4444; 
+    color: white;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+    transform: scale(1.05);
+}
+#vs-btn { 
+    position: fixed;
+    bottom: 30px; 
+    left: 50%; 
+    transform: translateX(-50%) translateY(150px); 
+    background: linear-gradient(135deg, #10b981, #059669); 
+    padding: 15px 40px; 
+    border-radius: 50px; 
+    font-weight: 900; 
+    color: white;
+    border: none; 
+    cursor: pointer; 
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); 
+    z-index: 1500; 
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    display: flex;
+    align-items: center; 
+    gap: 10px;
+}
+#vs-btn:hover {
+    transform: translateX(-50%) translateY(160px);
+    box-shadow: 0 8px 30px rgba(16, 185, 129, 0.6);
+    background: linear-gradient(135deg, #059669, #047857);
+}
+#vs-btn.visible { 
+    transform: translateX(-50%) translateY(0);
+}
+#vs-btn.visible:hover {
+    transform: translateX(-50%) translateY(-5px);
 }
 .vs-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem;
 }
