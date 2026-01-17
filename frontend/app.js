@@ -297,8 +297,7 @@ function updateCount() {
     const countEl = document.getElementById('count-val');
     if (countEl) {
         const visibleCount = markersLayer.getLayers().length;
-        const displayCount = Math.min(visibleCount, 1500);
-        countEl.textContent = displayCount;
+        countEl.textContent = visibleCount;
     }
 }
 
