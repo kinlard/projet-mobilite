@@ -307,7 +307,7 @@ document.getElementById('toast-msg').innerText = msg;
                 return;
             }
             
-            grid.innerHTML = `<div style="color:#94a3b8; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> ${isFrCarnet ? DASHBOARD_TEXTS.imgLoad.fr : DASHBOARD_TEXTS.imgLoad.en}</div>`;
+            grid.innerHTML = `<div style="color:#94a3b8; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> ${isFrCarnet ? 'Chargement des images...' : 'Loading images...'}</div>`;
             
             try {
                 // Utiliser la fonction fetchWikimediaImage
@@ -353,14 +353,14 @@ document.getElementById('confirmDeleteBtn').onclick = () => {
                 favoris.splice(itemToDeleteIndex, 1);
 localStorage.setItem('eco_favoris', JSON.stringify(favoris));
                 // MODIFIɉ : Toast traduit
-                render(); closeAll(); showToast(isFrCarnet ? DASHBOARD_TEXTS.toastDel.fr : DASHBOARD_TEXTS.toastDel.en);
+                render(); closeAll(); showToast(isFrCarnet ? '✅ Favori supprimé' : '✅ Favorite removed');
             }
         };
 window.toggleVs = (index, checkbox) => {
             if (checkbox.checked) {
                 if (selectedVs.length >= 2) { checkbox.checked = false;
-// MODIFIɉ : Toast traduit
-showToast(isFrCarnet ? DASHBOARD_TEXTS.toastMax.fr : DASHBOARD_TEXTS.toastMax.en); return; }
+// MODIFI : Toast traduit
+showToast(isFrCarnet ? '⚠️ Max 2 sélections' : '⚠️ Max 2 selections'); return; }
                 selectedVs.push(index);
 } else {
                 selectedVs = selectedVs.filter(i => i !== index);
