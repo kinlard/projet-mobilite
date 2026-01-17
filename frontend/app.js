@@ -988,6 +988,54 @@ async function loadPhoto(nom, id) {
     img.src = FALLBACK_IMAGES[fallbackIndex];
 }
 
+// Fonction pour charger les photos dans la modal découvrir (réutilise la logique de loadPhoto)
+async function loadDiscoverPhoto(nom, id) {
+    const img = document.getElementById(`discover-photo-${id}`);
+    if (!img) return;
+    
+    const cleanName = nom.replace(/['']/g, "'").trim();
+    const villeName = cleanName.split(/[-\s]/)[0];
+    
+    const searchTerms = [
+        `Gare de ${cleanName}`,
+        `Gare ${villeName}`,
+        `${villeName} gare SNCF`,
+        `${villeName} train station`
+    ];
+    
+    async function searchWikimediaImage(searchTerm) {
+        try {
+            const url = `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(searchTerm)}&srnamespace=6&srlimit=10&format=json&origin=*`;
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.query && data.query.search && data.query.search.length > 0) {
+                for (const result of data.query.search) {
+                    const title = result.title;
+                    if (/\.(jpg|jpeg|png|gif|webp)$/i.test(title)) {
+                        const fileName = title.replace(/^File:/i, '');
+                        return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}?width=500`;
+                    }
+                }
+            }
+        } catch (e) {
+            console.error(`Wikimedia search error:`, e);
+        }
+        return null;
+    }
+    
+    for (const term of searchTerms) {
+        const imageUrl = await searchWikimediaImage(term);
+        if (imageUrl) {
+            img.onerror = () => {
+                img.src = FALLBACK_IMAGES[id % FALLBACK_IMAGES.length];
+            };
+            img.src = imageUrl;
+            return;
+        }
+    }
+}
+
 async function loadWeather(lat, lon, id) {
     const el = document.getElementById(`weather-${id}`);
     if (!el) return;
@@ -1771,11 +1819,12 @@ window.showCategory = (category, titleArg) => {
         container.innerHTML = `<div style="color:white; grid-column:span 3;">${tRes.loading[lang]}</div>`;
     } else {
         top9.forEach((g, idx) => {
-            const cleanName = g.nom.split(' ')[0].replace(/-/g, '');
-            const imgUrl = `https://loremflickr.com/400/200/${cleanName},city/all?lock=${g.id}`;
+            const fallbackIndex = g.id % FALLBACK_IMAGES.length;
+            const fallbackImg = FALLBACK_IMAGES[fallbackIndex];
             const html = `
                 <div class="result-card rank-${idx+1}" style="overflow:hidden;">
-                    <div style="height:120px; background:url('${imgUrl}') center/cover no-repeat; position:relative;">
+                    <div style="height:120px; position:relative; overflow:hidden; background:#1e293b;">
+                        <img id="discover-photo-${g.id}" src="${fallbackImg}" style="width:100%; height:100%; object-fit:cover; object-position:center;" alt="${escapeHTML(g.nom)}">
                         <div class="rank-badge">#${idx+1}</div>
                         <div class="street-view-btn" onclick="window.open('https://www.google.com/maps?q=${encodeURIComponent(g.nom)}', '_blank'); event.stopPropagation();"><i class="fa-solid fa-street-view"></i></div>
                     </div>
@@ -1785,7 +1834,7 @@ window.showCategory = (category, titleArg) => {
 margin-bottom:10px;">${g.computedScore}/10</div>
                         <div style="font-size:0.85rem;
 color:#94a3b8; margin-bottom:15px;">
-                            <i class="fa-solid fa-bicycle"></i> ${g.computedDetails.velos} ${tRes.bikes[lang]} � 
+                            <i class="fa-solid fa-bicycle"></i> ${g.computedDetails.velos} ${tRes.bikes[lang]} &bull; 
                             <i class="fa-solid fa-plug"></i> ${g.computedDetails.bornes} ${tRes.bornes[lang]}
                         </div>
          
@@ -1794,6 +1843,13 @@ padding:10px; width:100%; border-radius:6px; font-weight:bold; cursor:pointer; c
                     </div>
                 </div>`;
             container.innerHTML += html;
+        });
+        
+        // Charger les vraies photos après insertion dans le DOM
+        top9.forEach((g) => {
+            setTimeout(() => {
+                loadDiscoverPhoto(g.nom, g.id);
+            }, 100);
         });
     }
 };
