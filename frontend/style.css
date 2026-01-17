@@ -116,9 +116,9 @@ box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
     .city-photo.loaded { opacity: 1; }
 
     .weather-box { display: flex; justify-content: space-between; align-items: center;
-background: #0f172a; color: white; padding: 8px 15px; font-size: 0.8rem; font-weight: 600; border-bottom: 3px solid #3b82f6;
+background: #0f172a; color: #0f172a; padding: 8px 15px; font-size: 0.8rem; font-weight: 600; border-bottom: 3px solid #3b82f6;
 }
-    .weather-item { display: flex; align-items: center; gap: 6px; }
+    .weather-item { display: flex; align-items: center; gap: 6px; color: #0f172a; }
     .weather-icon { color: #3b82f6;
 font-size: 0.9rem; }
 

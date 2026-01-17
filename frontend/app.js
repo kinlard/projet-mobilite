@@ -297,7 +297,8 @@ function updateCount() {
     const countEl = document.getElementById('count-val');
     if (countEl) {
         const visibleCount = markersLayer.getLayers().length;
-        countEl.textContent = visibleCount;
+        const displayCount = Math.min(visibleCount, 1500);
+        countEl.textContent = displayCount;
     }
 }
 
@@ -859,11 +860,11 @@ function generatePopupContent(g) {
                 ${hasPropreteData ? `
                 <div style="display:flex;align-items:center;gap:4px;">
                     <span>🧹</span>
-                    <span style="color:#475569;">Propreté:</span>
+                    <span style="color:#0f172a;">Propreté:</span>
                     <span style="font-weight:700;color:${propreteColor};">${propreteData.note_proprete}/5</span>
                 </div>` : ''}
                 <div style="display:flex;align-items:center;gap:4px;">
-                    <span style="color:#475569;">Défib:${defibSvg}</span>
+                    <span style="color:#0f172a;">Défib:${defibSvg}</span>
                     <span style="font-weight:700;color:${hasDefibData ? '#10b981' : '#94a3b8'};">${hasDefibData ? 'Oui' : 'Non'}</span>
                 </div>
             </div>`;
@@ -875,8 +876,8 @@ function generatePopupContent(g) {
                 <img id="photo-${g.id}" class="city-photo" src="" alt="${safeNom}" style="width:100%;height:100%;object-fit:cover;">
                 <div style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.7);padding:6px 12px;border-radius:20px;color:white;font-size:11px;font-weight:bold;backdrop-filter:blur(5px);">${isTGV?'🚄 TGV':'🚂 TER'}</div>
             </div>
-            <div id="weather-${g.id}" class="weather-box" style="background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(16,185,129,0.1));border-radius:0;padding:10px;text-align:center;font-size:0.85rem;">
-                <span style="color:#475569;"><i class="fa-solid fa-spinner fa-spin"></i> ${APP_TEXTS.weather.loading[lang]}</span>
+            <div id="weather-${g.id}" class="weather-box" style="background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(16,185,129,0.1));border-radius:0;padding:10px;text-align:center;font-size:0.85rem;color:#0f172a;">
+                <span><i class="fa-solid fa-spinner fa-spin"></i> ${APP_TEXTS.weather.loading[lang]}</span>
             </div>
             <div style="padding:15px;background:rgba(255,255,255,0.95);border-radius:0 0 12px 12px;">
                 <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
@@ -1974,20 +1975,20 @@ function refreshStatsPanel() {
             const nomHot = weather.hottest.name.length > 12 ? weather.hottest.name.substring(0, 12) + '...' : weather.hottest.name;
             if (weather.hottest.lat && weather.hottest.lon) {
                 hottestEl.innerHTML = `<span class="stat-clickable" onclick="goToGareByCoords(${weather.hottest.lat}, ${weather.hottest.lon}, '${weather.hottest.name.replace(/'/g, "\\'")}')">
-                    ${nomHot} (${weather.hottest.temp}�C) <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.7rem;margin-left:4px;"></i>
+                    ${nomHot} (${weather.hottest.temp}&deg;C) <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.7rem;margin-left:4px;"></i>
                 </span>`;
             } else {
-                hottestEl.innerText = `${nomHot} (${weather.hottest.temp}�C)`;
+                hottestEl.innerText = `${nomHot} (${weather.hottest.temp}&deg;C)`;
             }
         }
         if (coldestEl && weather.coldest) {
             const nomCold = weather.coldest.name.length > 12 ? weather.coldest.name.substring(0, 12) + '...' : weather.coldest.name;
             if (weather.coldest.lat && weather.coldest.lon) {
                 coldestEl.innerHTML = `<span class="stat-clickable" onclick="goToGareByCoords(${weather.coldest.lat}, ${weather.coldest.lon}, '${weather.coldest.name.replace(/'/g, "\\'")}')">
-                    ${nomCold} (${weather.coldest.temp}�C) <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.7rem;margin-left:4px;"></i>
+                    ${nomCold} (${weather.coldest.temp}&deg;C) <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.7rem;margin-left:4px;"></i>
                 </span>`;
             } else {
-                coldestEl.innerText = `${nomCold} (${weather.coldest.temp}�C)`;
+                coldestEl.innerText = `${nomCold} (${weather.coldest.temp}&deg;C)`;
             }
         }
     } else {
