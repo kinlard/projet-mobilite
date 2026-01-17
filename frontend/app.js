@@ -83,6 +83,9 @@ const railsLayer = L.geoJSON(null, {
     bubblingMouseEvents: false
 });
 
+// Regroupe les éléments de localisation utilisateur (pin + cercle) pour nettoyage facile
+const userLocationLayer = L.layerGroup().addTo(map);
+
 // FIX: Initialiser variables globales pour la gestion de la zone piétonne
 let walkCircle = null;
 
@@ -1124,11 +1127,23 @@ function setupSearchListeners() {
     }
 }
 
-// Refonte Popup Localisation Found
-map.on('locationfound', (e) => {
-    map.eachLayer((layer) => {
-        if (layer.options && layer.options.icon && layer.options.icon.options.className === 'user-pin-icon') map.removeLayer(layer);
+// Bouton "Me localiser" exposé globalement pour les handlers inline
+window.locateUser = () => {
+    // Feedback rapide
+    showToast(APP_TEXTS.buttons.locate[currentLang]);
+
+    map.locate({
+        setView: true,
+        maxZoom: 15,
+        enableHighAccuracy: true,
+        timeout: 12000
     });
+};
+
+// Popup de localisation revisitée (look carte + puce précision)
+map.on('locationfound', (e) => {
+    userLocationLayer.clearLayers();
+
     const userIcon = L.divIcon({
         className: 'user-pin-icon',
         html: '<div class="user-pin"></div>',
@@ -1137,14 +1152,24 @@ map.on('locationfound', (e) => {
 
     const t = APP_TEXTS.location;
     const lang = currentLang;
+    const accuracyMeters = Math.round(e.accuracy);
 
     const popupContent = `
         <div class="location-popup">
-            <div class="location-header">${t.title[lang]}</div>
+            <div class="location-header">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                ${t.title[lang]}
+            </div>
             <div class="location-body">
-                <i class="fa-solid fa-street-view" style="font-size:2rem; margin-bottom:10px; display:block;"></i>
-                <p style="margin:0 0 10px 0;">${t.text[lang]} <b>${Math.round(e.accuracy)} ${t.meters[lang]}</b>.</p>
-                <small style="color:#64748b;">${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}</small>
+                <div style="display:flex;justify-content:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+                    <span style="background:#e0f2fe;color:#0369a1;padding:6px 10px;border-radius:999px;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;">
+                        <i class="fa-solid fa-bullseye"></i> ±${accuracyMeters} ${t.meters[lang]}
+                    </span>
+                </div>
+                <p style="margin:0 0 10px 0; color:#0f172a;">
+                    ${t.text[lang]} <b>${accuracyMeters} ${t.meters[lang]}</b>.
+                </p>
+                <small style="color:#64748b;display:block;margin-bottom:8px;">${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}</small>
                 <button class="location-btn" onclick="window.findNearbyStation(${e.latlng.lat}, ${e.latlng.lng})">
                     <i class="fa-solid fa-magnifying-glass-location"></i> ${t.findStation[lang]}
                 </button>
@@ -1152,17 +1177,18 @@ map.on('locationfound', (e) => {
         </div>
     `;
 
-    L.marker(e.latlng, {
-        icon: userIcon
-    }).addTo(map).bindPopup(popupContent).openPopup();
+    L.marker(e.latlng, { icon: userIcon }).addTo(userLocationLayer).bindPopup(popupContent).openPopup();
     L.circle(e.latlng, {
         radius: e.accuracy / 2,
         color: '#3b82f6',
         fillOpacity: 0.1,
         weight: 1
-    }).addTo(map);
+    }).addTo(userLocationLayer);
 });
-map.on('locationerror', () => alert(APP_TEXTS.errors.localization[currentLang]));
+
+map.on('locationerror', () => {
+    showToast(APP_TEXTS.errors.localization[currentLang], true);
+});
 
 // Choisit une gare al�atoire uniquement lorsque les marqueurs sont Pr�ts
 // PERF: Cache du pool de gares valides pour �viter filter() � chaque clic

@@ -53,7 +53,7 @@
         <div class="actions">
             <button class="btn-discover" onclick="openDiscoverModal()"><i class="fa-solid fa-compass"></i> <span id="btn-discover-text">DÉCOUVRIR</span></button>
             <button id="btnStats" class="btn-discover" style="background: linear-gradient(135deg, #3b82f6, #2563eb); margin-right: 5px;"><i class="fa-solid fa-chart-column"></i> STATS</button>
-            <button class="btn-tool" title="Me Localiser" onclick="map.locate({setView: true, maxZoom: 12})"><i class="fa-solid fa-location-arrow"></i></button>
+            <button class="btn-tool" title="Me Localiser" onclick="locateUser()"><i class="fa-solid fa-location-arrow"></i></button>
             <button id="btnRandomGare" class="btn-tool" title="Gare Aléatoire" onclick="randomGare()"><i class="fa-solid fa-dice"></i></button>
             
             <button id="btnHeatmap" class="btn-tool" onclick="toggleHeatmap()" title="Carte de chaleur affluence" style="display:none;">
@@ -97,7 +97,7 @@
                 <i class="fa-solid fa-chart-column"></i>
                 <span>Stats</span>
             </button>
-            <button class="mobile-tool-btn" onclick="map.locate({setView: true, maxZoom: 12})" title="Ma position">
+            <button class="mobile-tool-btn" onclick="locateUser()" title="Ma position">
                 <i class="fa-solid fa-location-arrow"></i>
                 <span>Position</span>
             </button>
