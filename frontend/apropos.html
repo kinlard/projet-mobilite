@@ -9,6 +9,100 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="responsive.css">
+    <style>
+        /* Dynamique et simple pour la page À propos */
+        .section-card {
+            border: 1px solid transparent;
+            border-image: linear-gradient(135deg, rgba(16,185,129,0.7), rgba(59,130,246,0.6)) 1;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+            transition: all 0.3s ease;
+        }
+        .section-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+        }
+        .icon-title {
+            display: inline-flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(15,23,42,0.7);
+            color: #e2e8f0;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.3s ease;
+        }
+        .pill:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(16,185,129,0.35);
+        }
+        .badge-tech {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            margin: 6px 6px 0 0;
+            border-radius: 12px;
+            background: rgba(59,130,246,0.12);
+            color: #e5e7eb;
+            border: 1px solid rgba(255,255,255,0.08);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .badge-tech:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 24px rgba(59,130,246,0.35);
+            background: rgba(59,130,246,0.2);
+        }
+        .sources-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+        .source-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(15,23,42,0.6);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s ease;
+        }
+        .source-item:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,0,0,0.25); }
+        .score-card {
+            margin-top: 18px;
+            padding: 14px;
+            border-radius: 14px;
+            background: rgba(15,23,42,0.85);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .score-bar {
+            position: relative;
+            height: 12px;
+            border-radius: 999px;
+            background: #1f2937;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .score-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 70%;
+            background: linear-gradient(90deg, #f59e0b, #10b981);
+            box-shadow: 0 0 12px rgba(16,185,129,0.5);
+            transition: width 0.6s ease;
+        }
+        .stack { display: flex; flex-direction: column; gap: 10px; }
+        .mini-line { display: flex; align-items: center; gap: 10px; color: #cbd5e1; }
+    </style>
 </head>
 <body class="page-apropos">
 
@@ -31,100 +125,78 @@
         </div>
 
         <section class="section-card">
-            <h2><i class="fa-solid fa-lightbulb"></i> Concept du projet</h2>
-            <p>Eco-Escapade est une application de webmapping universitaire conçue pour évaluer l'accessibilité écologique des gares SNCF en France. L'objectif est de promouvoir la mobilité durable en mettant en lumière les gares les mieux connectées aux transports doux (vélo, véhicules électriques, covoiturage).</p>
-            <p><strong>Public visé :</strong> Éco-voyageurs, étudiants et citoyens soucieux de leur empreinte carbone souhaitant planifier des déplacements en train de manière responsable.</p>
-            <p><strong>Fonctionnalités clés :</strong></p>
-            <ul>
-                <li>Carte interactive avec visualisation des gares TGV et TER</li>
-                <li>Score écologique calculé automatiquement pour chaque gare</li>
-                <li>Zone piétonne de 10 minutes pour identifier les services accessibles à pied</li>
-                <li>Comparateur de gares avec suggestions d'alternatives mieux notées</li>
-                <li>Carnet de favoris avec sauvegarde locale</li>
-                <li>Données météo et qualité de l'air en temps réel</li>
-            </ul>
+            <h2 class="icon-title"><i class="fa-solid fa-lightbulb" style="color:#facc15;"></i> Concept</h2>
+            <div class="stack">
+                <p>Eco-Escapade t'aide à choisir une gare plus verte.</p>
+                <p>En deux clics, tu vois les bons plans proches.</p>
+                <div class="pill"><i class="fa-solid fa-map-location-dot" style="color:#22c55e;"></i>Carte live • Favoris • Comparateur</div>
+            </div>
         </section>
 
         <section class="section-card">
-            <h2><i class="fa-solid fa-calculator"></i> Méthodologie</h2>
-            <p>Le cœur du projet repose sur un algorithme qui attribue un <strong>score écologique de 0 à 10</strong> à chaque gare. Ce score est calculé dynamiquement en fonction des services de mobilité douce à proximité.</p>
-            
-            <h3>Formule de calcul :</h3>
-            <div class="formula-box">
-                <strong>Note = Bonus TGV + Points Vélos + Points Bornes IRVE + Points Covoiturage</strong>
-                <br><br>
-                <strong>Bonus TGV :</strong> +1 point si la gare est desservie par des trains TGV.
-                <br><br>
-                <strong>Parkings Vélos (rayon 800m, ~10 min à pied) :</strong>
-                <br>→ +1 point par parking vélo détecté, plafonné à <strong>7 points max</strong>.
-                <br><br>
-                <strong>Bornes IRVE (rayon 3 km) :</strong>
-                <br>→ +0.5 point par borne de recharge électrique, plafonné à <strong>2 points max</strong>.
-                <br><br>
-                <strong>Aires de Covoiturage (rayon 3 km) :</strong>
-                <br>→ +0.5 point par aire de covoiturage, plafonné à <strong>1 point max</strong>.
+            <h2 class="icon-title"><i class="fa-solid fa-calculator" style="color:#38bdf8;"></i> Méthodologie</h2>
+            <div class="stack">
+                <div class="mini-line"><i class="fa-solid fa-train" style="color:#3b82f6;"></i>+1 si la gare est TGV.</div>
+                <div class="mini-line"><i class="fa-solid fa-bicycle" style="color:#0ea5e9;"></i>+1 par parking vélo à 800 m (max 7).</div>
+                <div class="mini-line"><i class="fa-solid fa-plug" style="color:#f59e0b;"></i>+0.5 par borne IRVE à 3 km (max 2).</div>
+                <div class="mini-line"><i class="fa-solid fa-car-side" style="color:#a855f7;"></i>+0.5 par aire covoit à 3 km (max 1).</div>
+                <div class="score-card">
+                    <div class="mini-line" style="justify-content: space-between;">
+                        <span><i class="fa-solid fa-gauge" style="color:#10b981;"></i>Jauge éco</span>
+                        <strong style="color:#10b981;">7 / 10 (exemple)</strong>
+                    </div>
+                    <div class="score-bar"><div class="score-fill"></div></div>
+                    <div class="mini-line" style="font-size:0.85rem; color:#94a3b8;">Rouge &lt;4 • Orange &lt;7 • Vert ≥7</div>
+                </div>
             </div>
-
-            <h3>Échelle de notation :</h3>
-            <div class="score-scale">
-                <div class="scale-item scale-bad">0 - 3.9 : 🔴 Potentiel limité</div>
-                <div class="scale-item scale-mid">4 - 6.9 : 🟠 Bon potentiel</div>
-                <div class="scale-item scale-good">7 - 10 : 🟢 Excellent</div>
-            </div>
-            <p style="margin-top: 15px; font-size: 0.9rem; color: #94a3b8;"><em>Note : La formule Haversine est utilisée pour calculer les distances géodésiques entre la gare et les équipements environnants.</em></p>
         </section>
 
         <section class="section-card">
-            <h2><i class="fa-solid fa-database"></i> Sources de données</h2>
-            <ul>
-                <li><strong>API SNCF Open Data :</strong> Liste des gares de voyageurs avec coordonnées GPS, type (TGV/TER), et tracé des lignes ferroviaires (WFS GeoJSON). Données de propreté en gare et localisation des défibrillateurs.</li>
-                <li><strong>OpenDataSoft (données OSM) :</strong> Parkings vélos en France (osm-france-bicycle-parking), bornes de recharge électrique IRVE (osm-france-charging-station), et aires de covoiturage (aires-covoiturage).</li>
-                <li><strong>Open-Meteo API :</strong> Données météorologiques en temps réel (température, conditions) pour chaque gare.</li>
-                <li><strong>OpenAQ API :</strong> Indice de qualité de l'air basé sur les stations de mesure proches (PM2.5, PM10, O3, NO2).</li>
-                <li><strong>iNaturalist API :</strong> Données de biodiversité locale (espèces observées dans un rayon de 5 km autour des gares).</li>
-                <li><strong>Wikipedia API :</strong> Récupération dynamique des photos des villes pour illustrer les gares.</li>
-                <li><strong>Google Satellite Tiles :</strong> Fond de carte hybride satellite avec labels.</li>
-            </ul>
+            <h2 class="icon-title"><i class="fa-solid fa-database" style="color:#f97316;"></i> Sources</h2>
+            <div class="sources-list">
+                <div class="source-item"><i class="fa-solid fa-train" style="color:#3b82f6;"></i><span>SNCF Open Data : gares, rails, propreté, défibrillateurs.</span></div>
+                <div class="source-item"><i class="fa-solid fa-bicycle" style="color:#0ea5e9;"></i><span>OpenDataSoft (OSM) : parkings vélos, bornes IRVE, covoiturage.</span></div>
+                <div class="source-item"><i class="fa-solid fa-cloud-sun" style="color:#38bdf8;"></i><span>Open-Meteo : météo en direct.</span></div>
+                <div class="source-item"><i class="fa-solid fa-wind" style="color:#22c55e;"></i><span>OpenAQ : qualité de l'air.</span></div>
+                <div class="source-item"><i class="fa-solid fa-leaf" style="color:#22c55e;"></i><span>iNaturalist : biodiversité locale.</span></div>
+                <div class="source-item"><i class="fa-solid fa-camera" style="color:#f472b6;"></i><span>Wikipedia : photos des villes.</span></div>
+                <div class="source-item"><i class="fa-solid fa-globe" style="color:#10b981;"></i><span>Google Satellite : fond hybride.</span></div>
+            </div>
         </section>
 
         <section class="section-card">
-            <h2><i class="fa-solid fa-code"></i> Technologies utilisées</h2>
-            <h3>Frontend</h3>
-            <div class="tech-tags">
-                <span class="tag frontend">Leaflet.js 1.9</span>
-                <span class="tag frontend">Leaflet.MarkerCluster</span>
-                <span class="tag frontend">Leaflet.MiniMap</span>
-                <span class="tag frontend">Leaflet.EasyPrint</span>
-                <span class="tag frontend">OSM Buildings</span>
-                <span class="tag frontend">Canvas Confetti</span>
-                <span class="tag frontend">Font Awesome 6</span>
-                <span class="tag frontend">HTML5 / CSS3</span>
-                <span class="tag frontend">JavaScript ES6+ Modules</span>
+            <h2 class="icon-title"><i class="fa-solid fa-code" style="color:#22c55e;"></i> Technologies</h2>
+            <div class="stack">
+                <div class="mini-line" style="font-weight:700; color:#e2e8f0;">Frontend</div>
+                <div>
+                    <a class="badge-tech" href="https://leafletjs.com/" target="_blank" rel="noreferrer"><i class="fa-solid fa-map"></i>Leaflet 1.9</a>
+                    <a class="badge-tech" href="https://github.com/Leaflet/Leaflet.markercluster" target="_blank" rel="noreferrer"><i class="fa-solid fa-layer-group"></i>MarkerCluster</a>
+                    <a class="badge-tech" href="https://github.com/Norkart/Leaflet-MiniMap" target="_blank" rel="noreferrer"><i class="fa-solid fa-square"></i>MiniMap</a>
+                    <a class="badge-tech" href="https://github.com/rowanwins/leaflet-easyPrint" target="_blank" rel="noreferrer"><i class="fa-solid fa-print"></i>EasyPrint</a>
+                    <a class="badge-tech" href="https://osmbuildings.org/" target="_blank" rel="noreferrer"><i class="fa-solid fa-city"></i>OSM Buildings</a>
+                    <a class="badge-tech" href="https://fontawesome.com/" target="_blank" rel="noreferrer"><i class="fa-solid fa-icons"></i>Font Awesome 6</a>
+                    <a class="badge-tech" href="https://www.npmjs.com/package/canvas-confetti" target="_blank" rel="noreferrer"><i class="fa-solid fa-fire"></i>Canvas Confetti</a>
+                </div>
+                <div class="mini-line" style="font-weight:700; color:#e2e8f0; margin-top:8px;">Backend</div>
+                <div>
+                    <a class="badge-tech" href="https://nodejs.org/" target="_blank" rel="noreferrer"><i class="fa-brands fa-node-js"></i>Node.js</a>
+                    <a class="badge-tech" href="https://expressjs.com/" target="_blank" rel="noreferrer"><i class="fa-solid fa-server"></i>Express 5</a>
+                    <a class="badge-tech" href="https://axios-http.com/" target="_blank" rel="noreferrer"><i class="fa-solid fa-cloud-arrow-down"></i>Axios</a>
+                    <a class="badge-tech" href="https://www.npmjs.com/package/node-cache" target="_blank" rel="noreferrer"><i class="fa-solid fa-database"></i>node-cache</a>
+                    <a class="badge-tech" href="https://www.npmjs.com/package/dotenv" target="_blank" rel="noreferrer"><i class="fa-solid fa-key"></i>dotenv</a>
+                    <a class="badge-tech" href="https://www.npmjs.com/package/cors" target="_blank" rel="noreferrer"><i class="fa-solid fa-shield"></i>CORS</a>
+                </div>
             </div>
-            
-            <h3>Backend</h3>
-            <div class="tech-tags">
-                <span class="tag backend">Node.js</span>
-                <span class="tag backend">Express 5</span>
-                <span class="tag backend">Axios</span>
-                <span class="tag backend">node-cache</span>
-                <span class="tag backend">dotenv</span>
-                <span class="tag backend">CORS</span>
-            </div>
-
-            <h3>Architecture</h3>
-            <p style="margin-top: 10px; color: #cbd5e1; font-size: 0.95rem;">Le backend Node.js/Express agit comme proxy API avec mise en cache (TTL 1h pour les données, 24h pour propreté/défibrillateurs). Il agrège les données de multiples APIs externes et les expose au frontend via des endpoints REST. Le frontend est une Single Page Application (SPA) utilisant Leaflet pour le rendu cartographique avec clusters optimisés et animations fluides (GPU compositing).</p>
         </section>
 
         <section class="section-card">
-            <h2><i class="fa-solid fa-user-graduate"></i> Crédits</h2>
-            <p>Ce projet a été réalisé dans le cadre de la <strong>Licence Professionnelle GGAT</strong> (Géomatique et Géographie de l'Aménagement du Territoire) à l'<strong>IUT d'Auch</strong> (Université Toulouse Jean Jaurès).</p>
-            <ul>
-                <li><strong>Développeur :</strong> Hanan JEMMAL – Étudiant LP GGAT</li>
-                <li><strong>Année universitaire :</strong> 2025-2026</li>
-                <li><strong>Dernière mise à jour :</strong> Janvier 2026</li>
-            </ul>
-            <p style="margin-top: 15px; font-size: 0.9rem; color: #94a3b8;"><em>Projet open source à vocation pédagogique – Données issues d'APIs publiques.</em></p>
+            <h2 class="icon-title"><i class="fa-solid fa-user-graduate" style="color:#f472b6;"></i> Crédits</h2>
+            <div class="stack">
+                <div class="mini-line"><i class="fa-solid fa-user" style="color:#22c55e;"></i><strong>Développeur :</strong> Théo BAS</div>
+                <div class="mini-line"><i class="fa-solid fa-school" style="color:#3b82f6;"></i>Licence Pro GGAT — IUT Auch</div>
+                <div class="mini-line"><i class="fa-solid fa-calendar" style="color:#f59e0b;"></i>Année 2025-2026</div>
+                <div class="mini-line" style="color:#94a3b8; font-size:0.9rem;"><i class="fa-solid fa-heart" style="color:#ef4444;"></i>Projet pédagogique, données publiques.</div>
+            </div>
         </section>
     </div>
 
