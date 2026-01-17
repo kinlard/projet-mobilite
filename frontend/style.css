@@ -914,7 +914,9 @@ justify-content: center; align-items: center; font-weight: 900; font-size: 1.2re
     padding: 40px; 
     border-radius: 24px;
     width: 90%; 
-    max-width: 550px; 
+    max-width: 650px; 
+    max-height: 85vh;
+    overflow-y: auto;
     text-align: center; 
     box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 60px rgba(16, 185, 129, 0.1); 
     position: relative; 
