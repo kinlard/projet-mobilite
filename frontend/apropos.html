@@ -10,190 +10,289 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="responsive.css">
     <style>
-        /* Dynamique et simple pour la page À propos */
+        /* Glass + motion */
+        :root { --card-blur: 18px; --card-bg: rgba(15,23,42,0.55); --ring: rgba(59,130,246,0.4); }
+        body { background: radial-gradient(circle at 20% 20%, rgba(16,185,129,0.08), transparent 30%), radial-gradient(circle at 80% 10%, rgba(59,130,246,0.08), transparent 35%), radial-gradient(circle at 40% 70%, rgba(244,114,182,0.08), transparent 35%); }
+        .container { padding-bottom: 140px; }
+        .hero-section { position: relative; overflow: hidden; padding: 80px 20px 40px; backdrop-filter: blur(8px); }
+        .hero-section::after { content:""; position:absolute; inset:0; background: radial-gradient(circle at 60% 20%, rgba(59,130,246,0.25), transparent 55%); pointer-events:none; }
+        .hero-title { font-size: 3rem; margin-bottom: 10px; }
+        .hero-subtitle { font-size: 1.1rem; color: #cbd5e1; }
+        .parallax { transform: translateY(calc(var(--scrollY, 0) * 0.15px)); transition: transform 0.2s ease-out; }
         .section-card {
-            border: 1px solid transparent;
-            border-image: linear-gradient(135deg, rgba(16,185,129,0.7), rgba(59,130,246,0.6)) 1;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-            transition: all 0.3s ease;
-        }
-        .section-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 18px 40px rgba(0,0,0,0.35);
-        }
-        .icon-title {
-            display: inline-flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border-radius: 999px;
-            background: rgba(15,23,42,0.7);
-            color: #e2e8f0;
             border: 1px solid rgba(255,255,255,0.08);
-            transition: all 0.3s ease;
-        }
-        .pill:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 20px rgba(16,185,129,0.35);
-        }
-        .badge-tech {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 14px;
-            margin: 6px 6px 0 0;
-            border-radius: 12px;
-            background: rgba(59,130,246,0.12);
-            color: #e5e7eb;
-            border: 1px solid rgba(255,255,255,0.08);
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        .badge-tech:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 24px rgba(59,130,246,0.35);
-            background: rgba(59,130,246,0.2);
-        }
-        .sources-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 12px;
-        }
-        .source-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            border-radius: 12px;
-            background: rgba(15,23,42,0.6);
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: all 0.3s ease;
-        }
-        .source-item:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,0,0,0.25); }
-        .score-card {
-            margin-top: 18px;
-            padding: 14px;
-            border-radius: 14px;
-            background: rgba(15,23,42,0.85);
-            border: 1px solid rgba(255,255,255,0.08);
-        }
-        .score-bar {
+            border-radius: 20px;
+            background: var(--card-bg);
+            backdrop-filter: blur(var(--card-blur));
+            box-shadow: 0 14px 40px rgba(0,0,0,0.28);
+            transition: all 0.3s ease, transform 0.4s ease;
             position: relative;
-            height: 12px;
-            border-radius: 999px;
-            background: #1f2937;
             overflow: hidden;
-            margin-top: 10px;
         }
-        .score-fill {
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 70%;
-            background: linear-gradient(90deg, #f59e0b, #10b981);
-            box-shadow: 0 0 12px rgba(16,185,129,0.5);
-            transition: width 0.6s ease;
+        .section-card::before {
+            content:"";
+            position:absolute;
+            inset:0;
+            background: linear-gradient(135deg, rgba(16,185,129,0.18), rgba(59,130,246,0.16));
+            opacity:0;
+            transition: opacity 0.3s ease;
+            pointer-events:none;
         }
+        .section-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 20px 48px rgba(0,0,0,0.35); }
+        .section-card:hover::before { opacity:1; }
+        .icon-title { display: inline-flex; gap: 10px; align-items: center; }
+        .pill {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 14px; border-radius: 999px;
+            background: rgba(15,23,42,0.7); color: #e2e8f0;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .pill:hover { transform: scale(1.05); box-shadow: 0 10px 22px rgba(16,185,129,0.35); }
+        .badge-tech {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 10px 16px; margin: 8px 8px 0 0;
+            border-radius: 14px; background: rgba(59,130,246,0.12);
+            color: #e5e7eb; border: 1px solid rgba(255,255,255,0.08);
+            text-decoration: none; transition: all 0.3s ease; cursor: pointer;
+            perspective: 600px;
+        }
+        .badge-tech:hover { transform: scale(1.05) translateY(-2px); box-shadow: 0 12px 26px rgba(59,130,246,0.35); background: rgba(59,130,246,0.2); }
+        .sources-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+        .source-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 14px; border-radius: 14px;
+            background: rgba(15,23,42,0.65); border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.3s ease; cursor: pointer;
+            transform-style: preserve-3d;
+        }
+        .source-item:hover { transform: translateY(-3px) rotateY(-4deg); box-shadow: 0 14px 26px rgba(0,0,0,0.28); }
+        .score-card { margin-top: 18px; padding: 14px; border-radius: 14px; background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.08); }
+        .score-bar { position: relative; height: 14px; border-radius: 999px; background: #1f2937; overflow: hidden; margin-top: 10px; }
+        .score-fill { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981); box-shadow: 0 0 14px rgba(16,185,129,0.5); transition: width 0.8s ease; }
+        .gauge-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 12px; }
+        .gauge { position: relative; padding: 12px; border-radius: 14px; background: rgba(15,23,42,0.75); border: 1px solid rgba(255,255,255,0.06); overflow: hidden; cursor: pointer; }
+        .gauge:hover { box-shadow: 0 12px 26px rgba(0,0,0,0.28); transform: translateY(-3px); }
+        .gauge svg { width: 90px; height: 90px; }
+        .gauge .value { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; color: #e2e8f0; }
+        .gauge .tooltip { position: absolute; bottom: 10px; left: 12px; padding: 6px 10px; background: rgba(0,0,0,0.7); border-radius: 10px; font-size: 0.8rem; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+        .gauge:hover .tooltip { opacity: 1; }
         .stack { display: flex; flex-direction: column; gap: 10px; }
         .mini-line { display: flex; align-items: center; gap: 10px; color: #cbd5e1; }
+        .scale-dynamic { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+        .scale-chip { position: relative; padding: 10px 12px; border-radius: 12px; background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.08); color: #e2e8f0; cursor: pointer; transition: all 0.3s ease; }
+        .scale-chip:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .scale-chip[data-level="low"] { box-shadow: 0 0 0 1px rgba(239,68,68,0.3); }
+        .scale-chip[data-level="mid"] { box-shadow: 0 0 0 1px rgba(245,158,11,0.3); }
+        .scale-chip[data-level="high"] { box-shadow: 0 0 0 1px rgba(16,185,129,0.35); }
+        .scale-chip .tip { position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); padding: 8px 10px; border-radius: 10px; background: rgba(0,0,0,0.8); color: #e2e8f0; font-size: 0.85rem; white-space: nowrap; opacity: 0; transition: opacity 0.2s ease; pointer-events: none; }
+        .scale-chip:hover .tip { opacity: 1; }
+        .timeline { display: grid; gap: 12px; margin-top: 12px; }
+        .timeline-item { padding: 12px; border-radius: 12px; background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.08); transition: all 0.3s ease; }
+        .timeline-item:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(0,0,0,0.24); }
+        .section-card[data-anim] { opacity: 0; transform: translateY(20px); }
+        .section-card.show { opacity: 1; transform: translateY(0); transition: opacity 0.6s ease, transform 0.6s ease; }
+        .hero-cta { display:inline-flex; align-items:center; gap:10px; padding:12px 16px; border-radius:12px; background:#10b981; color:#0b1725; font-weight:800; border:none; cursor:pointer; transition: all 0.25s ease; position:relative; overflow:hidden; }
+        .hero-cta::after { content:""; position:absolute; inset:0; background:rgba(255,255,255,0.25); opacity:0; transition:opacity 0.2s ease; }
+        .hero-cta:hover { transform: translateY(-2px) scale(1.02); box-shadow:0 12px 24px rgba(16,185,129,0.35); }
+        .hero-cta:active::after { opacity:1; }
+        .orbit { position: relative; width: 240px; height: 240px; margin: 16px auto; }
+        .orbit-center { position:absolute; inset:50%; transform: translate(-50%, -50%); background:#0ea5e9; color:#0b1725; padding:12px 14px; border-radius:14px; font-weight:800; box-shadow:0 10px 24px rgba(14,165,233,0.35); }
+        .orbit-icon { position:absolute; width:54px; height:54px; display:grid; place-items:center; border-radius:50%; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; box-shadow:0 10px 20px rgba(0,0,0,0.25); animation: orbit 12s linear infinite; }
+        .orbit-icon:nth-child(2){ animation-delay: -2s; }
+        .orbit-icon:nth-child(3){ animation-delay: -4s; }
+        .orbit-icon:nth-child(4){ animation-delay: -6s; }
+        @keyframes orbit { from { transform: rotate(0deg) translateX(90px) rotate(0deg);} to { transform: rotate(360deg) translateX(90px) rotate(-360deg);} }
+        @media(max-width:768px){ .hero-title{font-size:2.2rem;} .orbit{width:200px;height:200px;} }
     </style>
 </head>
 <body class="page-apropos">
 
     <div class="dashboard-header">
-        <div class="brand"><h1>Eco-Escapade</h1></div>
-        <div class="nav-links">
-            <a href="index.html">Accueil</a>
-            <a href="map.html">Carte</a>
-            <a href="#" class="active">À propos</a>
-            <a href="carnet.html">Mes favoris</a>
-        </div>
-        <div style="width: 80px;"></div> 
-    </div>
-
-    <div class="container">
+        <div class="container">
     
-        <div class="hero-section">
-            <div class="hero-title">À propos d'Eco-Escapade</div>
-            <div class="hero-subtitle">Voyagez vert, choisissez mieux</div>
-        </div>
-
-        <section class="section-card">
-            <h2 class="icon-title"><i class="fa-solid fa-lightbulb" style="color:#facc15;"></i> Concept</h2>
-            <div class="stack">
-                <p>Eco-Escapade t'aide à choisir une gare plus verte.</p>
-                <p>En deux clics, tu vois les bons plans proches.</p>
-                <div class="pill"><i class="fa-solid fa-map-location-dot" style="color:#22c55e;"></i>Carte live • Favoris • Comparateur</div>
+            <div class="hero-section parallax" aria-label="Hero Eco-Escapade">
+                <div class="hero-title">Eco-Escapade : Trouvez les gares éco-friendly en 1 clic</div>
+                <div class="hero-subtitle">Vue carte, score éco, sources live. Simple et clair.</div>
+                <button class="hero-cta" aria-label="Découvrir la carte" onclick="location.href='map.html'">
+                    <i class="fa-solid fa-compass"></i> Découvrir maintenant
+                </button>
             </div>
-        </section>
 
-        <section class="section-card">
-            <h2 class="icon-title"><i class="fa-solid fa-calculator" style="color:#38bdf8;"></i> Méthodologie</h2>
-            <div class="stack">
-                <div class="mini-line"><i class="fa-solid fa-train" style="color:#3b82f6;"></i>+1 si la gare est TGV.</div>
-                <div class="mini-line"><i class="fa-solid fa-bicycle" style="color:#0ea5e9;"></i>+1 par parking vélo à 800 m (max 7).</div>
-                <div class="mini-line"><i class="fa-solid fa-plug" style="color:#f59e0b;"></i>+0.5 par borne IRVE à 3 km (max 2).</div>
-                <div class="mini-line"><i class="fa-solid fa-car-side" style="color:#a855f7;"></i>+0.5 par aire covoit à 3 km (max 1).</div>
-                <div class="score-card">
-                    <div class="mini-line" style="justify-content: space-between;">
-                        <span><i class="fa-solid fa-gauge" style="color:#10b981;"></i>Jauge éco</span>
-                        <strong style="color:#10b981;">7 / 10 (exemple)</strong>
+            <section class="section-card" data-anim="true" aria-label="Concept">
+                <h2 class="icon-title"><i class="fa-solid fa-lightbulb" style="color:#facc15;"></i> Concept</h2>
+                <div class="stack">
+                    <p>Eco-Escapade t'aide à choisir une gare plus verte.</p>
+                    <p>En deux clics, tu vois les bons plans proches.</p>
+                    <div class="pill" aria-label="Fonctions clés"><i class="fa-solid fa-map-location-dot" style="color:#22c55e;"></i>Carte live • Favoris • Comparateur</div>
+                </div>
+            </section>
+
+            <section class="section-card" data-anim="true" aria-label="Méthodologie">
+                <h2 class="icon-title"><i class="fa-solid fa-calculator" style="color:#38bdf8;"></i> Méthodologie</h2>
+                <div class="stack">
+                    <div class="mini-line"><i class="fa-solid fa-train" style="color:#3b82f6;"></i>+1 si la gare est TGV.</div>
+                    <div class="mini-line"><i class="fa-solid fa-bicycle" style="color:#0ea5e9;"></i>+1 par parking vélo à 800 m (max 7).</div>
+                    <div class="mini-line"><i class="fa-solid fa-plug" style="color:#f59e0b;"></i>+0.5 par borne IRVE à 3 km (max 2).</div>
+                    <div class="mini-line"><i class="fa-solid fa-car-side" style="color:#a855f7;"></i>+0.5 par aire covoit à 3 km (max 1).</div>
+
+                    <div class="gauge-row" aria-label="Jauges critères">
+                        <div class="gauge" data-value="70" aria-label="TGV">
+                            <svg viewBox="0 0 120 120" aria-hidden="true">
+                                <circle cx="60" cy="60" r="52" stroke="#1f2937" stroke-width="12" fill="none" />
+                                <circle class="gauge-ring" cx="60" cy="60" r="52" stroke="#3b82f6" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="327" />
+                            </svg>
+                            <div class="value">TGV</div>
+                            <div class="tooltip">+1 si TGV</div>
+                        </div>
+                        <div class="gauge" data-value="90" aria-label="Vélos">
+                            <svg viewBox="0 0 120 120" aria-hidden="true">
+                                <circle cx="60" cy="60" r="52" stroke="#1f2937" stroke-width="12" fill="none" />
+                                <circle class="gauge-ring" cx="60" cy="60" r="52" stroke="#0ea5e9" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="327" />
+                            </svg>
+                            <div class="value">Vélos</div>
+                            <div class="tooltip">+1 par parking (max 7)</div>
+                        </div>
+                        <div class="gauge" data-value="55" aria-label="IRVE">
+                            <svg viewBox="0 0 120 120" aria-hidden="true">
+                                <circle cx="60" cy="60" r="52" stroke="#1f2937" stroke-width="12" fill="none" />
+                                <circle class="gauge-ring" cx="60" cy="60" r="52" stroke="#f59e0b" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="327" />
+                            </svg>
+                            <div class="value">IRVE</div>
+                            <div class="tooltip">+0.5 par borne (max 2)</div>
+                        </div>
+                        <div class="gauge" data-value="45" aria-label="Covoit">
+                            <svg viewBox="0 0 120 120" aria-hidden="true">
+                                <circle cx="60" cy="60" r="52" stroke="#1f2937" stroke-width="12" fill="none" />
+                                <circle class="gauge-ring" cx="60" cy="60" r="52" stroke="#a855f7" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="327" />
+                            </svg>
+                            <div class="value">Covoit</div>
+                            <div class="tooltip">+0.5 par aire (max 1)</div>
+                        </div>
                     </div>
-                    <div class="score-bar"><div class="score-fill"></div></div>
-                    <div class="mini-line" style="font-size:0.85rem; color:#94a3b8;">Rouge &lt;4 • Orange &lt;7 • Vert ≥7</div>
-                </div>
-            </div>
-        </section>
 
-        <section class="section-card">
-            <h2 class="icon-title"><i class="fa-solid fa-database" style="color:#f97316;"></i> Sources</h2>
-            <div class="sources-list">
-                <div class="source-item"><i class="fa-solid fa-train" style="color:#3b82f6;"></i><span>SNCF Open Data : gares, rails, propreté, défibrillateurs.</span></div>
-                <div class="source-item"><i class="fa-solid fa-bicycle" style="color:#0ea5e9;"></i><span>OpenDataSoft (OSM) : parkings vélos, bornes IRVE, covoiturage.</span></div>
-                <div class="source-item"><i class="fa-solid fa-cloud-sun" style="color:#38bdf8;"></i><span>Open-Meteo : météo en direct.</span></div>
-                <div class="source-item"><i class="fa-solid fa-wind" style="color:#22c55e;"></i><span>OpenAQ : qualité de l'air.</span></div>
-                <div class="source-item"><i class="fa-solid fa-leaf" style="color:#22c55e;"></i><span>iNaturalist : biodiversité locale.</span></div>
-                <div class="source-item"><i class="fa-solid fa-camera" style="color:#f472b6;"></i><span>Wikipedia : photos des villes.</span></div>
-                <div class="source-item"><i class="fa-solid fa-globe" style="color:#10b981;"></i><span>Google Satellite : fond hybride.</span></div>
-            </div>
-        </section>
+                    <div class="score-card" aria-label="Score écologique">
+                        <div class="mini-line" style="justify-content: space-between;">
+                            <span><i class="fa-solid fa-gauge" style="color:#10b981;"></i>Jauge éco</span>
+                            <strong style="color:#10b981;">7 / 10 (exemple)</strong>
+                        </div>
+                        <div class="score-bar"><div class="score-fill" id="scoreFill"></div></div>
+                        <div class="scale-dynamic">
+                            <div class="scale-chip" data-level="low" aria-label="Bas"><span>Bas</span><div class="tip">< 4 = Rouge</div></div>
+                            <div class="scale-chip" data-level="mid" aria-label="Moyen"><span>Moyen</span><div class="tip">4 à 6.9 = Orange</div></div>
+                            <div class="scale-chip" data-level="high" aria-label="Élevé"><span>Élevé</span><div class="tip">≥ 7 = Vert</div></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-        <section class="section-card">
-            <h2 class="icon-title"><i class="fa-solid fa-code" style="color:#22c55e;"></i> Technologies</h2>
-            <div class="stack">
-                <div class="mini-line" style="font-weight:700; color:#e2e8f0;">Frontend</div>
-                <div>
-                    <a class="badge-tech" href="https://leafletjs.com/" target="_blank" rel="noreferrer"><i class="fa-solid fa-map"></i>Leaflet 1.9</a>
-                    <a class="badge-tech" href="https://github.com/Leaflet/Leaflet.markercluster" target="_blank" rel="noreferrer"><i class="fa-solid fa-layer-group"></i>MarkerCluster</a>
-                    <a class="badge-tech" href="https://github.com/Norkart/Leaflet-MiniMap" target="_blank" rel="noreferrer"><i class="fa-solid fa-square"></i>MiniMap</a>
-                    <a class="badge-tech" href="https://github.com/rowanwins/leaflet-easyPrint" target="_blank" rel="noreferrer"><i class="fa-solid fa-print"></i>EasyPrint</a>
-                    <a class="badge-tech" href="https://osmbuildings.org/" target="_blank" rel="noreferrer"><i class="fa-solid fa-city"></i>OSM Buildings</a>
-                    <a class="badge-tech" href="https://fontawesome.com/" target="_blank" rel="noreferrer"><i class="fa-solid fa-icons"></i>Font Awesome 6</a>
-                    <a class="badge-tech" href="https://www.npmjs.com/package/canvas-confetti" target="_blank" rel="noreferrer"><i class="fa-solid fa-fire"></i>Canvas Confetti</a>
+            <section class="section-card" data-anim="true" aria-label="Sources">
+                <h2 class="icon-title"><i class="fa-solid fa-database" style="color:#f97316;"></i> Sources</h2>
+                <div class="sources-list">
+                    <div class="source-item"><i class="fa-solid fa-train" style="color:#3b82f6;"></i><span>SNCF Open Data : gares, rails, propreté, défibrillateurs.</span></div>
+                    <div class="source-item"><i class="fa-solid fa-bicycle" style="color:#0ea5e9;"></i><span>OpenDataSoft (OSM) : parkings vélos, bornes IRVE, covoiturage.</span></div>
+                    <div class="source-item"><i class="fa-solid fa-cloud-sun" style="color:#38bdf8;"></i><span>Open-Meteo : météo en direct.</span></div>
+                    <div class="source-item"><i class="fa-solid fa-wind" style="color:#22c55e;"></i><span>OpenAQ : qualité de l'air.</span></div>
+                    <div class="source-item"><i class="fa-solid fa-leaf" style="color:#22c55e;"></i><span>iNaturalist : biodiversité locale.</span></div>
+                    <div class="source-item"><i class="fa-solid fa-camera" style="color:#f472b6;"></i><span>Wikipedia : photos des villes.</span></div>
+                    <div class="source-item"><i class="fa-solid fa-globe" style="color:#10b981;"></i><span>Google Satellite : fond hybride.</span></div>
                 </div>
-                <div class="mini-line" style="font-weight:700; color:#e2e8f0; margin-top:8px;">Backend</div>
-                <div>
-                    <a class="badge-tech" href="https://nodejs.org/" target="_blank" rel="noreferrer"><i class="fa-brands fa-node-js"></i>Node.js</a>
-                    <a class="badge-tech" href="https://expressjs.com/" target="_blank" rel="noreferrer"><i class="fa-solid fa-server"></i>Express 5</a>
-                    <a class="badge-tech" href="https://axios-http.com/" target="_blank" rel="noreferrer"><i class="fa-solid fa-cloud-arrow-down"></i>Axios</a>
-                    <a class="badge-tech" href="https://www.npmjs.com/package/node-cache" target="_blank" rel="noreferrer"><i class="fa-solid fa-database"></i>node-cache</a>
-                    <a class="badge-tech" href="https://www.npmjs.com/package/dotenv" target="_blank" rel="noreferrer"><i class="fa-solid fa-key"></i>dotenv</a>
-                    <a class="badge-tech" href="https://www.npmjs.com/package/cors" target="_blank" rel="noreferrer"><i class="fa-solid fa-shield"></i>CORS</a>
+            </section>
+
+            <section class="section-card" data-anim="true" aria-label="Technologies">
+                <h2 class="icon-title"><i class="fa-solid fa-code" style="color:#22c55e;"></i> Technologies</h2>
+                <div class="stack">
+                    <div class="mini-line" style="font-weight:700; color:#e2e8f0;">Frontend</div>
+                    <div class="orbit" aria-label="Orbit frontend">
+                        <div class="orbit-center">Leaflet</div>
+                        <div class="orbit-icon"><i class="fa-solid fa-layer-group"></i></div>
+                        <div class="orbit-icon"><i class="fa-solid fa-square"></i></div>
+                        <div class="orbit-icon"><i class="fa-solid fa-print"></i></div>
+                        <div class="orbit-icon"><i class="fa-solid fa-city"></i></div>
+                    </div>
+                    <div class="mini-line" style="font-weight:700; color:#e2e8f0;">Backend</div>
+                    <div class="orbit" aria-label="Orbit backend">
+                        <div class="orbit-center" style="background:#22c55e;">Node</div>
+                        <div class="orbit-icon"><i class="fa-solid fa-server"></i></div>
+                        <div class="orbit-icon"><i class="fa-solid fa-cloud-arrow-down"></i></div>
+                        <div class="orbit-icon"><i class="fa-solid fa-database"></i></div>
+                        <div class="orbit-icon"><i class="fa-solid fa-key"></i></div>
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
+
+            <section class="section-card" data-anim="true" aria-label="Crédits">
+                <h2 class="icon-title"><i class="fa-solid fa-user-graduate" style="color:#f472b6;"></i> Crédits</h2>
+                <div class="stack">
+                    <div class="mini-line"><i class="fa-solid fa-user" style="color:#22c55e;"></i><strong>Développeur :</strong> Théo BAS</div>
+                    <div class="mini-line"><i class="fa-solid fa-school" style="color:#3b82f6;"></i>Licence Pro GGAT — IUT Auch</div>
+                    <div class="mini-line"><i class="fa-solid fa-calendar" style="color:#f59e0b;"></i>Année 2025-2026</div>
+                    <div class="mini-line" style="color:#94a3b8; font-size:0.9rem;"><i class="fa-solid fa-heart" style="color:#ef4444;"></i>Projet pédagogique, données publiques.</div>
+                </div>
+            </section>
+
+            <section class="section-card" data-anim="true" aria-label="Rigueur géomatique">
+                <h2 class="icon-title"><i class="fa-solid fa-map" style="color:#38bdf8;"></i> Rigueur géomatique</h2>
+                <div class="timeline">
+                    <div class="timeline-item" aria-label="Coordonnées"><strong>WGS84 EPSG:4326</strong> — toutes les données sont manipulées en coordonnées géographiques.</div>
+                    <div class="timeline-item" aria-label="Distances"><strong>Haversine</strong> — distances gare-équipements calculées en km.</div>
+                    <div class="timeline-item" aria-label="Interpolation"><strong>Interpolation bilinéaire</strong> — appliquée pour vent/ensoleillement (concept méthodo).</div>
+                    <div class="timeline-item" aria-label="Cache"><strong>Index spatial</strong> — filtrage bbox + rayon, prêt pour quadtree.</div>
+                </div>
+            </section>
+
+            <section class="section-card" data-anim="true" aria-label="Difficultés surmontées">
+                <h2 class="icon-title"><i class="fa-solid fa-trophy" style="color:#facc15;"></i> Difficultés surmontées</h2>
+                <div class="timeline">
+                    <div class="timeline-item">Intégration 5 APIs asynchrones → Promise.allSettled</div>
+                    <div class="timeline-item">Cache intelligent (node-cache) → -85% appels répétés</div>
+                    <div class="timeline-item">Score éco compact → pondérations simples et plafonds</div>
+                    <div class="timeline-item">Perf mobile → 60fps visé (cluster, debounce, canvas)</div>
+                </div>
+            </section>
 
         <section class="section-card">
             <h2 class="icon-title"><i class="fa-solid fa-user-graduate" style="color:#f472b6;"></i> Crédits</h2>
             <div class="stack">
-                <div class="mini-line"><i class="fa-solid fa-user" style="color:#22c55e;"></i><strong>Développeur :</strong> Théo BAS</div>
-                <div class="mini-line"><i class="fa-solid fa-school" style="color:#3b82f6;"></i>Licence Pro GGAT — IUT Auch</div>
+        <script>
+            // Parallax hero
+            window.addEventListener('scroll', () => {
+                document.documentElement.style.setProperty('--scrollY', window.scrollY);
+            }, { passive: true });
+
+            // Stagger + reveal
+            const cards = document.querySelectorAll('.section-card');
+            cards.forEach((card, idx) => {
+                card.style.transitionDelay = `${idx * 0.1}s`;
+            });
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('show'); });
+            }, { threshold: 0.15 });
+            cards.forEach(c => io.observe(c));
+
+            // Animated gauges
+            const TAU = 2 * Math.PI;
+            document.querySelectorAll('.gauge').forEach(g => {
+                const v = Number(g.dataset.value || 0);
+                const ring = g.querySelector('.gauge-ring');
+                const total = 327; // circumference approx
+                const offset = total - (total * v / 100);
+                requestAnimationFrame(() => {
+                    ring.style.transition = 'stroke-dashoffset 0.9s ease';
+                    ring.style.strokeDashoffset = offset;
+                });
+            });
+
+            // Score bar anim
+            const scoreFill = document.getElementById('scoreFill');
+            if (scoreFill) {
+                requestAnimationFrame(() => { scoreFill.style.width = '70%'; });
+            }
+        </script>
+
+    </body>
+    </html>
                 <div class="mini-line"><i class="fa-solid fa-calendar" style="color:#f59e0b;"></i>Année 2025-2026</div>
                 <div class="mini-line" style="color:#94a3b8; font-size:0.9rem;"><i class="fa-solid fa-heart" style="color:#ef4444;"></i>Projet pédagogique, données publiques.</div>
             </div>
