@@ -307,71 +307,105 @@ margin: 20px auto;">Scanner la carte</a>
         </div>
     </div>
     
+    <!-- Styles CSS pour les animations de la modale d'autodestruction -->
     <style>
+        /* Animation pulsation pour l'icône d'avertissement */
+        /* Agrandit l'icône de 10% toutes les secondes */
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.1); }
         }
+        /* Animation au survol du bouton Annuler : fond plus clair + zoom 5% */
         #nuke-no:hover {
             background: rgba(255,255,255,0.2);
             transform: scale(1.05);
         }
+        /* Animation au survol du bouton Détruire : rouge plus foncé + zoom + ombre élargie */
         #nuke-yes:hover {
             background: #dc2626;
             transform: scale(1.05);
             box-shadow: 0 8px 24px rgba(239, 68, 68, 0.5);
         }
     </style>
+    <!-- Modale de confirmation pour supprimer UN seul favori -->
+    <!-- S'ouvre quand l'utilisateur clique sur une carte de gare dans la grille -->
     <div id="deleteSingleModal" class="modal-overlay">
         <div class="modal-box">
+            <!-- Bouton de fermeture -->
             <button class="close-modal" onclick="closeAll()"><i class="fa-solid fa-xmark"></i></button>
+            <!-- Titre avec icône poubelle en rouge -->
             <h3 id="del-title" style="margin-bottom: 15px; font-size: 1.6rem; color: #ef4444;"><i class="fa-solid fa-trash-alt" style="margin-right: 10px;"></i>Supprimer ce favori ?</h3>
+            <!-- Avertissement : action irréversible -->
             <p id="del-text" style="color: #94a3b8; margin-bottom: 25px; font-size: 0.95rem;">Cette action est <strong style="color: #ef4444;">irréversible</strong></p>
+            <!-- Deux boutons : Annuler (gris) et Supprimer (rouge) -->
             <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                 <button id="del-no" onclick="closeAll()" style="padding: 12px 28px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Annuler</button>
+                <!-- Le onclick sera attaché dynamiquement par JavaScript avec l'ID du favori à supprimer -->
                 <button id="confirmDeleteBtn" style="padding: 12px 28px; background: #ef4444; border: none; color: white; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);">Supprimer</button>
             </div>
         </div>
     </div>
     
+    <!-- Styles CSS pour les animations de la modale de suppression individuelle -->
     <style>
+        /* Animation au survol du bouton Annuler */
         #del-no:hover {
             background: rgba(255,255,255,0.2);
             transform: scale(1.05);
         }
+        /* Animation au survol du bouton Supprimer */
         #confirmDeleteBtn:hover {
             background: #dc2626;
             transform: scale(1.05);
             box-shadow: 0 8px 24px rgba(239, 68, 68, 0.5);
         }
     </style>
+    <!-- Modale de comparaison côte à côte de 2 gares -->
+    <!-- S'ouvre quand exactement 2 gares sont sélectionnées via les checkboxes -->
     <div id="vsModal" class="modal-overlay">
+        <!-- Boîte modale large (850px) avec fond bleu très foncé -->
         <div class="modal-box" style="max-width: 850px; background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);">
+            <!-- Bouton de fermeture -->
             <button class="close-modal" onclick="closeAll()"><i class="fa-solid fa-xmark"></i></button>
             
+            <!-- En-tête avec titre et sous-titre -->
+            <!-- border-bottom : ligne de séparation en bas de l'en-tête -->
             <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 25px; margin-bottom: 35px;">
+                <!-- Titre "COMPARATEUR" en majuscules avec espacement de lettres -->
                 <h2 id="vs-title" style="color: white; font-size: 1.8rem; margin: 0; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
                     Comparateur
                 </h2>
+                <!-- Sous-titre descriptif en gris -->
                 <p style="color: #64748b; font-size: 0.9rem; margin-top: 10px;">Analyse comparative des équipements</p>
             </div>
             
+            <!-- Conteneur principal de la comparaison -->
+            <!-- Rempli dynamiquement par JavaScript avec les données des 2 gares -->
             <div id="vsContent"></div>
         </div>
     </div>
 
+    <!-- BLOC JAVASCRIPT PRINCIPAL -->
+    <!-- Gère toute la logique du tableau de bord : affichage, modales, favoris, carte -->
     <script>
-        const escapeHTML = (str) => str ? str.replace(/[&<>'"]/g, tag => ({ '&': '&', '<': '<', '>': '>', "'": "'", '"': '"' }[tag])) : '';
+        // Fonction de sécurité : échappe les caractères HTML pour éviter les injections XSS
+        // Remplace &, <, >, ', " par leurs équivalents HTML sécurisés
+        const escapeHTML = (str) => str ? str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])) : '';
 
-        // MODIFIÉ : Variable langue déplacée en haut pour être accessible dans render()
+        // Variable de langue : true = Français, false = Anglais
+        // MODIFIÉ : Déplacée en haut pour être accessible dans render()
         let isFrCarnet = true;
         
-        // Placeholder for DASHBOARD_TEXTS - will be imported by module script
+        // Placeholder pour les textes traduits du tableau de bord
+        // Sera rempli par l'import du module textes.js
         let DASHBOARD_TEXTS = {};
         
-        // Cache pour les images preloadées
+        // Cache pour les images Wikipedia préchargées
+        // Évite de refaire des appels API pour les mêmes villes
         let wikiImageCache = {};
 
+        // Récupération des favoris depuis le localStorage
+        // Si aucune donnée enregistrée : tableau vide par défaut
         let favoris = JSON.parse(localStorage.getItem('eco_favoris')) || [];
         favoris = favoris.map(f => {
             if(f.score 
