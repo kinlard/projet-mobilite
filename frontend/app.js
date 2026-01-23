@@ -1,4 +1,4 @@
-﻿//Importation des textes et messages depuis le fichier centralisé de traduction
+//Importation des textes et messages depuis le fichier centralisé de traduction
 import { 
     AVIS_BAD, AVIS_MID, AVIS_GOOD,
     MAJOR_CITIES, FALLBACK_IMAGES,
@@ -87,6 +87,9 @@ let GLOBAL_STATS = null;
 // Compteur affichant le nombre de gares visibles à l'écran
 const counterDiv = L.DomUtil.create('div', 'visible-counter');
 counterDiv.innerHTML = `<i class="fa-solid fa-eye"></i> <span id="count-val">0</span> gares`;
+counterDiv.style.cursor = 'pointer';
+counterDiv.style.pointerEvents = 'auto';
+counterDiv.onclick = () => showVisibleStationsPopup();
 document.body.appendChild(counterDiv);
 
 const toastDiv = document.createElement('div');
@@ -273,6 +276,167 @@ function showToast(msg, isError = false) {
     }
 }
 
+// Fonction pour afficher la popup avec la liste des gares visibles triées par note
+function showVisibleStationsPopup() {
+    // Récupérer les limites de la carte visible
+    const bounds = map.getBounds();
+    
+    // Collecter toutes les gares visibles avec leurs informations
+    const visibleStations = [];
+    markersLayer.eachLayer((marker) => {
+        const latLng = marker.getLatLng();
+        if (bounds.contains(latLng)) {
+            const gareData = marker.options.gareData;
+            if (gareData) {
+                visibleStations.push(gareData);
+            }
+        }
+    });
+    
+    // Trier les gares par score écologique (du meilleur au pire)
+    visibleStations.sort((a, b) => (b.computedScore || 0) - (a.computedScore || 0));
+    
+    // Créer l'overlay sombre
+    const overlay = document.createElement('div');
+    overlay.className = 'stations-list-overlay';
+    overlay.onclick = () => closeStationsPopup();
+    
+    // Créer la popup
+    const popup = document.createElement('div');
+    popup.className = 'stations-list-popup';
+    popup.id = 'stations-list-popup';
+    
+    // En-tête de la popup
+    const header = document.createElement('div');
+    header.className = 'stations-list-header';
+    
+    const title = document.createElement('div');
+    title.className = 'stations-list-title';
+    title.innerHTML = `<i class="fa-solid fa-train"></i> ${visibleStations.length} ${APP_TEXTS.stationsList.title[currentLang]}`;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'stations-list-close';
+    closeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+    closeBtn.onclick = () => closeStationsPopup();
+    
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+    
+    // Contenu de la popup
+    const content = document.createElement('div');
+    content.className = 'stations-list-content';
+    
+    if (visibleStations.length === 0) {
+        content.innerHTML = `
+            <div class="stations-list-empty">
+                <i class="fa-solid fa-map"></i>
+                <p>${APP_TEXTS.stationsList.noStations[currentLang]}</p>
+            </div>
+        `;
+    } else {
+        visibleStations.forEach((gare, index) => {
+            const item = document.createElement('div');
+            item.className = 'station-item';
+            
+            const info = document.createElement('div');
+            info.className = 'station-info';
+            
+            const name = document.createElement('div');
+            name.className = 'station-name';
+            name.textContent = `${index + 1}. ${gare.nom || 'Gare inconnue'}`;
+            
+            const scoreDiv = document.createElement('div');
+            scoreDiv.className = 'station-score';
+            
+            const scoreBadge = document.createElement('span');
+            scoreBadge.className = 'score-badge';
+            const scoreValue = (gare.computedScore || 0).toFixed(1);
+            scoreBadge.textContent = `${scoreValue}/10`;
+            
+            const scoreLabel = document.createElement('span');
+            scoreLabel.className = 'score-label';
+            scoreLabel.textContent = APP_TEXTS.stationsList.ecoScore[currentLang];
+            
+            scoreDiv.appendChild(scoreBadge);
+            scoreDiv.appendChild(scoreLabel);
+            
+            info.appendChild(name);
+            info.appendChild(scoreDiv);
+            
+            const actions = document.createElement('div');
+            actions.className = 'station-actions';
+            
+            const zoomBtn = document.createElement('button');
+            zoomBtn.className = 'station-action-btn';
+            zoomBtn.innerHTML = '<i class="fa-solid fa-location-dot"></i>';
+            zoomBtn.title = APP_TEXTS.stationsList.centerOnMap[currentLang];
+            zoomBtn.onclick = (e) => {
+                e.stopPropagation();
+                map.setView([gare.lat, gare.lon], 14);
+                closeStationsPopup();
+                // Ouvrir le popup de la gare après un court délai
+                setTimeout(() => {
+                    markersLayer.eachLayer((marker) => {
+                        if (marker.options.gareData && marker.options.gareData.id === gare.id) {
+                            marker.openPopup();
+                        }
+                    });
+                }, 300);
+            };
+            
+            actions.appendChild(zoomBtn);
+            
+            item.appendChild(info);
+            item.appendChild(actions);
+            
+            item.onclick = () => {
+                map.setView([gare.lat, gare.lon], 14);
+                closeStationsPopup();
+                // Ouvrir le popup de la gare après un court délai
+                setTimeout(() => {
+                    markersLayer.eachLayer((marker) => {
+                        if (marker.options.gareData && marker.options.gareData.id === gare.id) {
+                            marker.openPopup();
+                        }
+                    });
+                }, 300);
+            };
+            
+            content.appendChild(item);
+        });
+    }
+    
+    popup.appendChild(header);
+    popup.appendChild(content);
+    
+    document.body.appendChild(overlay);
+    document.body.appendChild(popup);
+    
+    // Ajouter le support de la touche Échap pour fermer la popup
+    const escapeHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeStationsPopup();
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    };
+    document.addEventListener('keydown', escapeHandler);
+    popup.escapeHandler = escapeHandler; // Stocker la référence pour le nettoyage
+}
+
+function closeStationsPopup() {
+    const popup = document.getElementById('stations-list-popup');
+    const overlay = document.querySelector('.stations-list-overlay');
+    
+    if (popup) {
+        // Supprimer le gestionnaire d'événements Escape si présent
+        if (popup.escapeHandler) {
+            document.removeEventListener('keydown', popup.escapeHandler);
+        }
+        popup.remove();
+    }
+    if (overlay) overlay.remove();
+}
+
 // Fonction de calcul de distance (formule Haversine) - retourne la distance en km
 function getDist(lat1, lon1, lat2, lon2) {
     const R = 6371; // Rayon de la Terre en km
@@ -430,6 +594,9 @@ window.updateAppLanguage = (isFr) => {
         const countVal = document.getElementById('count-val');
         const count = countVal ? countVal.textContent : '0';
         counterDiv.innerHTML = `<i class="fa-solid fa-eye"></i> <span id="count-val">${count}</span> ${APP_TEXTS.counter.stations[currentLang]}`;
+        counterDiv.style.cursor = 'pointer';
+        counterDiv.style.pointerEvents = 'auto';
+        counterDiv.onclick = () => showVisibleStationsPopup();
     }
 };
 
@@ -451,7 +618,7 @@ const escapeHTML = (str) => {
 // 3. CHARGEMENT
 // ============================================================
 
-const FETCH_TIMEOUT_MS = 12000;
+const FETCH_TIMEOUT_MS = 30000;
 
 async function fetchJsonWithTimeout(url, fallback, label) {
     const controller = new AbortController();
@@ -476,7 +643,7 @@ async function fetchJsonWithTimeout(url, fallback, label) {
  * @returns {Promise<void>}
  */
 async function loadEverything() {
-    console.log("D�but du chargement...");
+    console.log("Début du chargement...");
     const loaderText = document.getElementById('loader-msg');
     const startTime = Date.now();
     const MIN_LOADING_TIME = 2000; // Temps de chargement minimum réduit pour éviter l'attente
@@ -509,7 +676,7 @@ async function loadEverything() {
         ];
 
         // Sécurité : timeout global pour débloquer le loader
-        const globalTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('global-timeout')), 15000));
+        const globalTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('global-timeout')), 35000));
         const [rails, gares, irve, covoit, velos, proprete, defibrillateurs] = await Promise.race([
             Promise.all(promises),
             globalTimeout
@@ -734,7 +901,8 @@ function initMapMarkers() {
             });
 
             let m = L.marker([g.lat, g.lon], {
-                icon: icon
+                icon: icon,
+                gareData: g
             });
 
             m.bindPopup(() => generatePopupContent(g));
