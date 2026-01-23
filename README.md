@@ -104,7 +104,7 @@ Projet_Tourisme_Vert/
 
 ## 👨‍💻 Auteur
 
-**Hanan JEMMAL** - Projet IUT 2025
+*Théo BAS** - Projet IUT 2025
 
 ## 📄 Licence
 
