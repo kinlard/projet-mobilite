@@ -208,10 +208,10 @@ app.get('/api/parking-velo', async (req, res) => {
             );
         });
 
-        // Limitation à 5000 points maximum pour ne pas saturer le navigateur lors de l'affichage
-        // Si plus de 5000 points, on applique un échantillonnage régulier (1 point sur N)
-        const final = resList.length > 5000
-            ? resList.filter((_, i) => i % Math.ceil(resList.length / 5000) === 0)
+        // Limitation à 15000 points maximum pour charger tous les vélos
+        // Si plus de 15000 points, on applique un échantillonnage régulier (1 point sur N)
+        const final = resList.length > 15000
+            ? resList.filter((_, i) => i % Math.ceil(resList.length / 15000) === 0)
             : resList;
 
         console.log(`✅ API vélos OK : ${final.length} points renvoyés`);
@@ -235,9 +235,9 @@ app.get('/api/parking-velo', async (req, res) => {
                 );
             });
 
-            // Même limitation à 5000 points pour cohérence avec le cas API
-            const final = resList.length > 5000
-                ? resList.filter((_, i) => i % Math.ceil(resList.length / 5000) === 0)
+            // Même limitation à 15000 points pour cohérence avec le cas API
+            const final = resList.length > 15000
+                ? resList.filter((_, i) => i % Math.ceil(resList.length / 15000) === 0)
                 : resList;
 
             console.log(`🗂️ Fichier local utilisé : ${final.length} points`);
