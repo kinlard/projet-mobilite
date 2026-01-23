@@ -14,6 +14,9 @@ const API_BASE_URL = (window.location.hostname === 'localhost' || window.locatio
 //Initialisation de la carte interactive centrée sur la France
 console.log("🚀 Initialisation Eco-Escapade - FIX ZONE piétonne");
 
+// Langue courante de l'interface (français par défaut)
+let currentLang = 'fr';
+
 const map = L.map('map', {
     zoomControl: false,
     minZoom: 4,
@@ -518,8 +521,6 @@ function toggleFavori(id, nom, type) {
 }
 
 let osmb = null;
-
-let currentLang = 'fr';
 
 // Variable pour tracker l'étape affichée du tutoriel (1, 2, 3 ou 4)
 let currentTutoDisplayStep = 1;
