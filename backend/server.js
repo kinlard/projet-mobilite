@@ -186,8 +186,8 @@ app.get('/api/parking-velo', async (req, res) => {
         const url = 'https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/osm-france-bicycle-parking/exports/geojson?limit=-1';
         
         console.log('🔄 Tentative récupération API vélos...');
-        // Requête avec timeout de 8 secondes pour éviter les blocages prolongés
-        const r = await axios.get(url, { timeout: 8000 });
+        // Requête avec timeout de 60 secondes (augmenté pour charger tous les vélos)
+        const r = await axios.get(url, { timeout: 60000 });
         const data = r.data;
 
         // Extraction du tableau de features depuis la FeatureCollection
