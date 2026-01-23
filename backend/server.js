@@ -109,6 +109,34 @@ async function fetchAllIrveCached(maxLimit = 12000) {
     return irveFetchPromise;
 }
 
+// Promise race utilitaire pour éviter les attentes trop longues
+function waitWithTimeout(promise, ms, fallbackValue) {
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => resolve(fallbackValue), ms);
+        promise
+            .then((v) => { clearTimeout(timer); resolve(v); })
+            .catch((err) => { clearTimeout(timer); reject(err); });
+    });
+}
+
+// Préchargement périodique des datasets lourds pour éviter les cold-start lents
+async function warmHeavyDatasets() {
+    try {
+        await fetchAllVelosCached();
+    } catch (e) {
+        console.warn('⚠️ Préchargement vélos échoué:', e.message);
+    }
+    try {
+        await fetchAllIrveCached();
+    } catch (e) {
+        console.warn('⚠️ Préchargement IRVE échoué:', e.message);
+    }
+}
+
+// Lancer un préchargement initial puis rafraîchir toutes les 20 minutes
+warmHeavyDatasets();
+setInterval(warmHeavyDatasets, 20 * 60 * 1000);
+
 // ===================================================================================================
 // ROUTE : /api/gares - Liste complète des gares ferroviaires françaises
 // ===================================================================================================
@@ -183,8 +211,14 @@ app.get('/api/irve', async (req, res) => {
             ? Math.min(Math.max(requestedLimit, 1000), 20000) // borne min/max
             : 8000;
 
-        // Récupération via cache pour éviter les surcharges
-        const all = await fetchAllIrveCached(Math.max(irveLimit, 10000));
+        // Récupération via cache pour éviter les surcharges (avec timeout de grâce)
+        const cached = apiCache.get('irve_full');
+        if (cached) {
+            return res.json({ type: 'FeatureCollection', features: cached.slice(0, irveLimit) });
+        }
+
+        const fetchPromise = irveFetchPromise || fetchAllIrveCached(Math.max(irveLimit, 10000));
+        const all = await waitWithTimeout(fetchPromise, 25000, []);
         const subset = all.slice(0, irveLimit);
 
         res.json({ type: 'FeatureCollection', features: subset });
@@ -232,10 +266,15 @@ app.get('/api/parking-velo', async (req, res) => {
         return res.json({ type: 'FeatureCollection', features: [] });
     }
 
-    // TENTATIVE 1 : Récupération depuis l'API OpenDataSoft (source primaire)
+    // TENTATIVE 1 : Récupération depuis le cache (source primaire, non bloquante)
     try {
-        // Récupération via cache (téléchargement unique, puis filtrage en mémoire)
-        const all = await fetchAllVelosCached();
+        let all = apiCache.get('velo_full');
+
+        // Si pas encore en cache, lancer/réutiliser le fetch global mais ne pas bloquer trop longtemps
+        if (!all) {
+            const fetchPromise = veloFetchPromise || fetchAllVelosCached();
+            all = await waitWithTimeout(fetchPromise, 25000, veloDataCache.features || []);
+        }
 
         // Filtrage géographique : conservation uniquement des parkings dans la bounding box demandée
         const resList = all.filter((f) => {
