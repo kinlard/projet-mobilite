@@ -1,4 +1,4 @@
-﻿// ===================================================================================================
+// ===================================================================================================
 // SERVEUR BACKEND TOURISME VERT - API REST pour le calcul d'éco-scores des gares françaises
 // ===================================================================================================
 // Ce serveur Node.js fournit toutes les données nécessaires au frontend pour évaluer la mobilité verte
@@ -902,6 +902,15 @@ app.get('/api/enriched-stats', async (req, res) => {
 // Middleware pour servir les fichiers statiques du frontend (HTML, CSS, JS, images)
 // Tous les fichiers du dossier '../frontend' sont accessibles publiquement
 // Exemple : http://localhost:3000/style.css pointe vers frontend/style.css
+
+// Middleware pour définir le type MIME correct pour les fichiers JavaScript (modules ES6)
+app.use((req, res, next) => {
+    if (req.url.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    }
+    next();
+});
+
 app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Route racine : renvoi de la page d'accueil index.html
