@@ -129,12 +129,18 @@ app.get('/api/wfs-rails', async (req, res) => {
 
 app.get('/api/irve', async (req, res) => {
     try {
-        // Interrogation de l'API OpenDataSoft avec limite de 15000 bornes (suffisant pour couverture nationale)
+        // Permettre un réglage du volume IRVE pour limiter la charge (par défaut 8000)
+        const requestedLimit = parseInt(req.query.limit, 10);
+        const irveLimit = Number.isFinite(requestedLimit)
+            ? Math.min(Math.max(requestedLimit, 1000), 20000) // borne min/max
+            : 8000;
+
+        // Interrogation de l'API OpenDataSoft avec limite ajustable
         const r = await axios.get(
-            'https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/osm-france-charging-station/exports/geojson?limit=15000'
+            `https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/osm-france-charging-station/exports/geojson?limit=${irveLimit}`
         );
         
-        // Renvoi du GeoJSON contenant tous les points de recharge
+        // Renvoi du GeoJSON contenant les points de recharge
         res.json(r.data);
     } catch (e) {
         // Fallback sur collection vide si l'API est indisponible
