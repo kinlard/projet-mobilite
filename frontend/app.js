@@ -618,7 +618,7 @@ const escapeHTML = (str) => {
 // 3. CHARGEMENT
 // ============================================================
 
-const FETCH_TIMEOUT_MS = 30000;
+const FETCH_TIMEOUT_MS = 60000; // 60 secondes
 
 async function fetchJsonWithTimeout(url, fallback, label) {
     const controller = new AbortController();
@@ -676,7 +676,7 @@ async function loadEverything() {
         ];
 
         // Sécurité : timeout global pour débloquer le loader
-        const globalTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('global-timeout')), 35000));
+        const globalTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('global-timeout')), 70000));
         const [rails, gares, irve, covoit, velos, proprete, defibrillateurs] = await Promise.race([
             Promise.all(promises),
             globalTimeout
