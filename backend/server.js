@@ -30,6 +30,10 @@ const port = process.env.PORT || 3000;
 // Permet de réduire drastiquement le nombre d'appels aux APIs tierces
 const apiCache = new NodeCache({ stdTTL: 3600 });
 
+// Promises de récupération pour éviter les doublons lors de charges concurrentes
+let veloFetchPromise = null;
+let irveFetchPromise = null;
+
 // Activation du CORS (Cross-Origin Resource Sharing) pour autoriser les requêtes depuis n'importe quel domaine
 // Nécessaire pour que le frontend (qui tourne sur un port différent en dev) puisse communiquer avec le backend
 app.use(cors());
@@ -59,6 +63,50 @@ try {
 } catch (e) { 
     // Si le fichier est absent ou corrompu, on continue avec la collection vide
     console.warn("⚠️ Fichier velo.geojson introuvable");
+}
+
+// ===================================================================================================
+// HELPERS : CACHING POUR LES GROS DATASETS (VELO, IRVE)
+// ===================================================================================================
+
+async function fetchAllVelosCached() {
+    const cached = apiCache.get('velo_full');
+    if (cached) return cached;
+    if (veloFetchPromise) return veloFetchPromise;
+
+    veloFetchPromise = (async () => {
+        const url = 'https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/osm-france-bicycle-parking/exports/geojson?limit=-1';
+        console.log('🔄 [VELO] Téléchargement dataset complet...');
+        const r = await axios.get(url, { timeout: 60000 });
+        const all = Array.isArray(r.data.features) ? r.data.features : [];
+        apiCache.set('velo_full', all, 1800); // cache 30 min
+        console.log(`✅ [VELO] Dataset en cache : ${all.length} points`);
+        return all;
+    })().finally(() => {
+        veloFetchPromise = null;
+    });
+
+    return veloFetchPromise;
+}
+
+async function fetchAllIrveCached(maxLimit = 12000) {
+    const cached = apiCache.get('irve_full');
+    if (cached) return cached;
+    if (irveFetchPromise) return irveFetchPromise;
+
+    irveFetchPromise = (async () => {
+        const url = `https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/osm-france-charging-station/exports/geojson?limit=${maxLimit}`;
+        console.log('🔄 [IRVE] Téléchargement dataset...');
+        const r = await axios.get(url, { timeout: 20000 });
+        const all = Array.isArray(r.data.features) ? r.data.features : [];
+        apiCache.set('irve_full', all, 1800); // cache 30 min
+        console.log(`✅ [IRVE] Dataset en cache : ${all.length} points`);
+        return all;
+    })().finally(() => {
+        irveFetchPromise = null;
+    });
+
+    return irveFetchPromise;
 }
 
 // ===================================================================================================
@@ -135,13 +183,11 @@ app.get('/api/irve', async (req, res) => {
             ? Math.min(Math.max(requestedLimit, 1000), 20000) // borne min/max
             : 8000;
 
-        // Interrogation de l'API OpenDataSoft avec limite ajustable
-        const r = await axios.get(
-            `https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/osm-france-charging-station/exports/geojson?limit=${irveLimit}`
-        );
-        
-        // Renvoi du GeoJSON contenant les points de recharge
-        res.json(r.data);
+        // Récupération via cache pour éviter les surcharges
+        const all = await fetchAllIrveCached(Math.max(irveLimit, 10000));
+        const subset = all.slice(0, irveLimit);
+
+        res.json({ type: 'FeatureCollection', features: subset });
     } catch (e) {
         // Fallback sur collection vide si l'API est indisponible
         console.error('❌ Erreur API IRVE:', e.message);
@@ -188,16 +234,8 @@ app.get('/api/parking-velo', async (req, res) => {
 
     // TENTATIVE 1 : Récupération depuis l'API OpenDataSoft (source primaire)
     try {
-        // URL de l'API avec limit=-1 pour obtenir TOUS les parkings (dataset complet)
-        const url = 'https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/osm-france-bicycle-parking/exports/geojson?limit=-1';
-        
-        console.log('🔄 Tentative récupération API vélos...');
-        // Requête avec timeout de 60 secondes (augmenté pour charger tous les vélos)
-        const r = await axios.get(url, { timeout: 60000 });
-        const data = r.data;
-
-        // Extraction du tableau de features depuis la FeatureCollection
-        const all = Array.isArray(data.features) ? data.features : [];
+        // Récupération via cache (téléchargement unique, puis filtrage en mémoire)
+        const all = await fetchAllVelosCached();
 
         // Filtrage géographique : conservation uniquement des parkings dans la bounding box demandée
         const resList = all.filter((f) => {
@@ -224,12 +262,31 @@ app.get('/api/parking-velo', async (req, res) => {
         return res.json({ type: 'FeatureCollection', features: final });
 
     } catch (apiError) {
-        // TENTATIVE 2 : Basculement sur le fichier de secours local (fallback)
+        // TENTATIVE 2 : Si une version en cache existe malgré l'erreur, on la sert
+        const cached = apiCache.get('velo_full');
+        if (cached && Array.isArray(cached)) {
+            const resList = cached.filter(f => {
+                if (!f.geometry || !f.geometry.coordinates) return false;
+                const c = f.geometry.coordinates;
+                return (
+                    c[1] >= parseFloat(minLat) &&
+                    c[1] <= parseFloat(maxLat) &&
+                    c[0] >= parseFloat(minLon) &&
+                    c[0] <= parseFloat(maxLon)
+                );
+            });
+
+            const final = resList.length > 15000
+                ? resList.filter((_, i) => i % Math.ceil(resList.length / 15000) === 0)
+                : resList;
+
+            console.warn(`⚠️ API vélos échouée, mais cache servi : ${final.length} points`);
+            return res.json({ type: 'FeatureCollection', features: final });
+        }
+
+        // TENTATIVE 3 : Basculement sur le fichier de secours local (fallback)
         console.warn('⚠️ API vélos échouée, basculement sur fichier local...');
-        
-        // Vérification de la disponibilité du fichier de secours chargé au démarrage
         if (veloDataCache.features.length > 0) {
-            // Application du même filtrage géographique sur les données locales
             const resList = veloDataCache.features.filter(f => {
                 if (!f.geometry || !f.geometry.coordinates) return false;
                 const c = f.geometry.coordinates;
@@ -241,7 +298,6 @@ app.get('/api/parking-velo', async (req, res) => {
                 );
             });
 
-            // Même limitation à 15000 points pour cohérence avec le cas API
             const final = resList.length > 15000
                 ? resList.filter((_, i) => i % Math.ceil(resList.length / 15000) === 0)
                 : resList;
@@ -250,7 +306,7 @@ app.get('/api/parking-velo', async (req, res) => {
             return res.json({ type: 'FeatureCollection', features: final });
         }
 
-        // TENTATIVE 3 : Si aucune source n'est disponible, renvoyer une collection vide
+        // TENTATIVE 4 : Si aucune source n'est disponible, renvoyer une collection vide
         console.error('❌ Aucune source vélo disponible');
         res.json({ type: 'FeatureCollection', features: [] });
     }
