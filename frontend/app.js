@@ -620,6 +620,7 @@ const escapeHTML = (str) => {
 // ============================================================
 
 const FETCH_TIMEOUT_MS = 60000; // 60 secondes
+const IRVE_LIMIT = 10000; // Nombre de bornes IRVE chargé après les vélos
 
 async function fetchJsonWithTimeout(url, fallback, label) {
     const controller = new AbortController();
@@ -666,10 +667,10 @@ async function loadEverything() {
     try {
         // === DÉBUT DU CHARGEMENT DES DONNÉES ===
         // Gestion d'erreurs robuste
+        // Charger en priorité les vélos (critique) puis IRVE ensuite pour lisser la charge
         const promises = [
             fetchJsonWithTimeout(`${API_BASE_URL}/api/wfs-rails`, { type: 'FeatureCollection', features: [] }, 'Rails'),
             fetchJsonWithTimeout(`${API_BASE_URL}/api/gares`, [], 'Gares'),
-            fetchJsonWithTimeout(`${API_BASE_URL}/api/irve`, { features: [] }, 'IRVE'),
             fetchJsonWithTimeout(`${API_BASE_URL}/api/covoiturage`, { features: [] }, 'Covoit'),
             fetchJsonWithTimeout(`${API_BASE_URL}/api/parking-velo?minLat=41&maxLat=52&minLon=-5&maxLon=10`, { features: [] }, 'Vélos'),
             fetchJsonWithTimeout(`${API_BASE_URL}/api/proprete-gares`, [], 'Propreté'),
@@ -678,7 +679,7 @@ async function loadEverything() {
 
         // Sécurité : timeout global pour débloquer le loader
         const globalTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('global-timeout')), 70000));
-        const [rails, gares, irve, covoit, velos, proprete, defibrillateurs] = await Promise.race([
+        const [rails, gares, covoit, velos, proprete, defibrillateurs] = await Promise.race([
             Promise.all(promises),
             globalTimeout
         ]);
@@ -695,11 +696,14 @@ async function loadEverything() {
             lon: f.geometry.coordinates[0]
         }));
         console.log(`🚲 Vélos chargés : ${DATA.velos.length} parkings`);
+
+        // Charger ensuite les IRVE en volume réduit pour ménager le serveur
+        const irve = await fetchJsonWithTimeout(`${API_BASE_URL}/api/irve?limit=${IRVE_LIMIT}`, { features: [] }, 'IRVE');
         DATA.bornes = (irve.features || []).filter(f => f.geometry && f.geometry.coordinates).map(f => ({
             lat: f.geometry.coordinates[1],
             lon: f.geometry.coordinates[0]
         }));
-        console.log(`⚡ Bornes IRVE chargées : ${DATA.bornes.length} points`);
+        console.log(`⚡ Bornes IRVE chargées : ${DATA.bornes.length} points (limite ${IRVE_LIMIT})`);
         DATA.covoit = (covoit.features || []).filter(f => f.geometry && f.geometry.coordinates).map(f => ({
             lat: f.geometry.coordinates[1],
             lon: f.geometry.coordinates[0]
