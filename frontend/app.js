@@ -48,10 +48,10 @@ const DATA = {
 //Création de groupes de marqueurs qui se regroupent automatiquement au zoom arrière
 const createCluster = (cls) => L.markerClusterGroup({
     showCoverageOnHover: false,
-    // PERF: Optimisations clusters low-end
+    // PERF: Optimisations clusters low-end - augmenté pour gérer plus de marqueurs
     chunkedLoading: true,
-    chunkInterval: 50,
-    chunkDelay: 25,
+    chunkInterval: 100,  // Augmenté de 50 à 100 pour charger plus de marqueurs par lot
+    chunkDelay: 10,      // Réduit de 25 à 10ms pour charger plus rapidement
     removeOutsideVisibleBounds: true,
     disableClusteringAtZoom: 18,
     spiderfyOnMaxZoom: false,
