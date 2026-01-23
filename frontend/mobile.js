@@ -24,9 +24,9 @@
         lastResize: Date.now()
     };
     
-    // ============================================================
-    // LEAFLET MAP INVALIDATION (CRITICAL)
-    // ============================================================
+    /* ============================================================
+       LEAFLET MAP INVALIDATION (CRITICAL)
+       ============================================================ */
     
     /**
      * Force Leaflet à recalculer les dimensions de la carte
@@ -34,7 +34,6 @@
      */
     function invalidateMapSize() {
         if (typeof map !== 'undefined' && map && map.invalidateSize) {
-            // Delay pour laisser le DOM se stabiliser après resize
             setTimeout(() => {
                 map.invalidateSize({
                     pan: false,
@@ -46,7 +45,7 @@
     }
     
     /**
-     * Debounce pour éviter les appels excessifs lors du resize
+     * Debounce pour éviter les appels excessifs
      */
     function debounce(func, wait) {
         let timeout;
@@ -60,9 +59,177 @@
         };
     }
     
-    // ============================================================
-    // WINDOW RESIZE HANDLER
-    // ============================================================
+    /* ============================================================
+       GESTION VUES PLEIN ÉCRAN MOBILE
+       ============================================================ */
+    
+    /**
+     * Ouvre une vue plein écran (Stats ou Découvrir)
+     * @param {string} viewType - 'stats' ou 'discover'
+     */
+    function openMobileFullView(viewType) {
+        if (!mobileState.isMobile) return;
+        
+        mobileState.currentView = viewType;
+        document.body.style.overflow = 'hidden';
+        
+        setTimeout(invalidateMapSize, 350);
+        
+        console.log('📱 Full-screen view opened:', viewType);
+    }
+    
+    /**
+     * Ferme la vue plein écran active
+     */
+    function closeMobileFullView() {
+        if (!mobileState.isMobile) return;
+        
+        mobileState.currentView = null;
+        document.body.style.overflow = '';
+        
+        setTimeout(invalidateMapSize, 350);
+        
+        console.log('📱 Full-screen view closed');
+    }
+    
+    /**
+     * Hook sur le bouton Stats pour mode mobile
+     */
+    function hookStatsButton() {
+        const btnStats = document.getElementById('btnStats');
+        if (!btnStats) return;
+        
+        const originalOnClick = btnStats.onclick;
+        
+        btnStats.onclick = function(e) {
+            if (mobileState.isMobile) {
+                e.preventDefault();
+                openStatsFullView();
+            } else if (originalOnClick) {
+                originalOnClick.call(this, e);
+            }
+        };
+    }
+    
+    /**
+     * Ouvre le panneau Stats en mode plein écran mobile
+     */
+    function openStatsFullView() {
+        const statsPanel = document.getElementById('statsPanel');
+        if (!statsPanel) return;
+        
+        statsPanel.classList.add('active');
+        openMobileFullView('stats');
+        
+        let closeBtn = statsPanel.querySelector('.close-btn');
+        if (!closeBtn) {
+            closeBtn = document.createElement('button');
+            closeBtn.className = 'close-btn';
+            closeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            
+            const header = statsPanel.querySelector('.stats-header');
+            if (header) {
+                header.appendChild(closeBtn);
+            }
+        }
+        
+        closeBtn.onclick = function() {
+            statsPanel.classList.remove('active');
+            closeMobileFullView();
+        };
+    }
+    
+    /**
+     * Hook sur openDiscoverModal pour mode mobile
+     */
+    function hookDiscoverModal() {
+        const originalOpenDiscover = window.openDiscoverModal;
+        
+        window.openDiscoverModal = function() {
+            if (mobileState.isMobile) {
+                openDiscoverFullView();
+            } else if (originalOpenDiscover) {
+                originalOpenDiscover();
+            }
+        };
+        
+        const originalCloseDiscover = window.closeDiscover;
+        
+        window.closeDiscover = function() {
+            if (mobileState.isMobile) {
+                closeDiscoverFullView();
+            } else if (originalCloseDiscover) {
+                originalCloseDiscover();
+            }
+        };
+    }
+    
+    /**
+     * Ouvre la modale Découvrir en plein écran mobile
+     */
+    function openDiscoverFullView() {
+        const modal = document.getElementById('discoverModal');
+        if (!modal) return;
+        
+        modal.classList.add('active');
+        openMobileFullView('discover');
+    }
+    
+    /**
+     * Ferme la modale Découvrir
+     */
+    function closeDiscoverFullView() {
+        const modal = document.getElementById('discoverModal');
+        if (!modal) return;
+        
+        modal.classList.remove('active');
+        closeMobileFullView();
+    }
+    
+    /* ============================================================
+       SYNCHRONISATION RECHERCHE MOBILE <-> DESKTOP
+       ============================================================ */
+    
+    function syncSearchInputs() {
+        const desktopInput = document.getElementById('search-input');
+        const mobileInput = document.getElementById('mobile-search-input');
+        const desktopDatalist = document.getElementById('gares-list');
+        const mobileDatalist = document.getElementById('mobile-gares-list');
+        
+        if (!desktopInput || !mobileInput) return;
+        
+        mobileInput.addEventListener('input', function() {
+            desktopInput.value = this.value;
+        });
+        
+        desktopInput.addEventListener('input', function() {
+            mobileInput.value = this.value;
+        });
+        
+        if (desktopDatalist && mobileDatalist) {
+            const observer = new MutationObserver(() => {
+                mobileDatalist.innerHTML = desktopDatalist.innerHTML;
+            });
+            
+            observer.observe(desktopDatalist, {
+                childList: true,
+                subtree: true
+            });
+        }
+        
+        mobileInput.addEventListener('change', function() {
+            const event = new Event('change', { bubbles: true });
+            desktopInput.dispatchEvent(event);
+            
+            if (typeof window.handleSearchSelection === 'function') {
+                window.handleSearchSelection(this.value);
+            }
+        });
+    }
+    
+    /* ============================================================
+       WINDOW RESIZE HANDLER
+       ============================================================ */
     
     const handleResize = debounce(function() {
         const now = Date.now();
@@ -83,6 +250,18 @@
         // Mettre à jour la classe body
         updateBodyClasses();
         
+        // Fermer les vues mobiles si passage en desktop
+        if (!mobileState.isMobile && mobileState.currentView) {
+            const statsPanel = document.getElementById('statsPanel');
+            const discoverModal = document.getElementById('discoverModal');
+            
+            if (statsPanel) statsPanel.classList.remove('active');
+            if (discoverModal) discoverModal.classList.remove('active');
+            
+            mobileState.currentView = null;
+            document.body.style.overflow = '';
+        }
+        
         console.log('📱 Resize detected:', {
             isMobile: mobileState.isMobile,
             isTablet: mobileState.isTablet,
@@ -91,22 +270,21 @@
         });
     }, 250);
     
-    // ============================================================
-    // ORIENTATION CHANGE HANDLER
-    // ============================================================
+    /* ============================================================
+       ORIENTATION CHANGE HANDLER
+       ============================================================ */
     
     function handleOrientationChange() {
         console.log('📱 Orientation changed to:', screen.orientation?.type || 'unknown');
         
-        // Force l'invalidation avec un délai plus long pour stabilité
         setTimeout(() => {
             invalidateMapSize();
         }, 300);
     }
     
-    // ============================================================
-    // BODY CLASSES UPDATE
-    // ============================================================
+    /* ============================================================
+       BODY CLASSES UPDATE
+       ============================================================ */
     
     function updateBodyClasses() {
         if (mobileState.isMobile) {
@@ -121,9 +299,9 @@
         }
     }
     
-    // ============================================================
-    // BURGER MENU TOGGLE (MOBILE NAVIGATION)
-    // ============================================================
+    /* ============================================================
+       BURGER MENU TOGGLE (MOBILE NAVIGATION)
+       ============================================================ */
     
     function initBurgerMenu() {
         const burgerBtn = document.getElementById('burgerMenu');
@@ -175,16 +353,12 @@
         }
     }
     
-    // ============================================================
-    // TOUCH OPTIMIZATIONS
-    // ============================================================
+    /* ============================================================
+       TOUCH OPTIMIZATIONS
+       ============================================================ */
     
-    /**
-     * Optimise les événements touch pour éviter les delays
-     */
     function initTouchOptimizations() {
-        // Supprimer le delay 300ms sur tous les boutons et liens
-        const touchElements = document.querySelectorAll('button, a, .btn-tool, .cta-btn');
+        const touchElements = document.querySelectorAll('button, a, .btn-tool, .cta-btn, .mobile-tool-btn');
         
         touchElements.forEach(element => {
             element.style.touchAction = 'manipulation';
@@ -208,52 +382,64 @@
         }, { passive: false });
     }
     
-    // ============================================================
-    // LEAFLET MOBILE FIXES
-    // ============================================================
+    /* ============================================================
+       LEAFLET MOBILE FIXES
+       ============================================================ */
     
-    /**
-     * Applique des corrections spécifiques Leaflet pour mobile
-     */
     function applyLeafletMobileFixes() {
-        // Attendre que Leaflet soit chargé
         const checkLeaflet = setInterval(() => {
             if (typeof L !== 'undefined' && typeof map !== 'undefined' && map) {
                 clearInterval(checkLeaflet);
                 
                 console.log('📱 Applying Leaflet mobile fixes...');
                 
-                // Désactiver tap pour éviter conflits avec touch
                 if (map.tap) {
                     map.tap.disable();
                 }
                 
-                // Optimiser les options pour mobile
                 if (mobileState.isMobile) {
                     map.options.zoomSnap = 0.5;
                     map.options.zoomDelta = 0.5;
                     map.options.wheelPxPerZoomLevel = 120;
-                    
-                    // Activer l'inertie pour un défilement fluide
                     map.options.inertia = true;
                     map.options.inertiaDeceleration = 3000;
                     map.options.inertiaMaxSpeed = 1500;
                 }
                 
-                // Invalider au chargement
                 invalidateMapSize();
                 
                 console.log('✅ Leaflet mobile fixes applied');
             }
         }, 100);
         
-        // Timeout de sécurité
         setTimeout(() => clearInterval(checkLeaflet), 5000);
     }
     
-    // ============================================================
-    // SCROLL LOCK (Pour modales mobiles)
-    // ============================================================
+    /* ============================================================
+       GESTION LANGUE MOBILE
+       ============================================================ */
+    
+    function updateMobileLangText() {
+        const langText = document.getElementById('mobile-lang-text');
+        if (!langText) return;
+        
+        const originalSwitchLang = window.switchLangMap;
+        
+        window.switchLangMap = function() {
+            if (originalSwitchLang) {
+                originalSwitchLang();
+            }
+            
+            setTimeout(() => {
+                const currentLang = window.isFrMap ? 'FR' : 'EN';
+                langText.textContent = currentLang;
+            }, 100);
+        };
+    }
+    
+    /* ============================================================
+       SCROLL LOCK (Pour modales mobiles)
+       ============================================================ */
     
     function enableScrollLock() {
         document.body.style.overflow = 'hidden';
@@ -267,25 +453,17 @@
         document.body.style.width = '';
     }
     
-    // Exposer les fonctions pour utilisation externe
-    window.mobileUtils = {
-        enableScrollLock,
-        disableScrollLock,
-        invalidateMapSize,
-        isMobile: () => mobileState.isMobile,
-        isTablet: () => mobileState.isTablet
-    };
-    
-    // ============================================================
-    // PERFORMANCE MONITORING (DEV ONLY)
-    // ============================================================
+    /* ============================================================
+       PERFORMANCE MONITORING (DEV ONLY)
+       ============================================================ */
     
     function monitorPerformance() {
-        if (window.location.hostname === 'localhost') {
-            let frameCount = 0;
-            let lastTime = performance.now();
-            
-            function countFrame() {
+        if (window.location.hostname !== 'localhost') return;
+        
+        let frameCount = 0;
+        let lastTime = performance.now();
+        
+        function countFrame() {
                 frameCount++;
                 const currentTime = performance.now();
                 
@@ -304,30 +482,52 @@
             }
             
             requestAnimationFrame(countFrame);
-        }
     }
     
-    // ============================================================
-    // INITIALIZATION
-    // ============================================================
+    /* ============================================================
+       EXPOSITION API PUBLIQUE
+       ============================================================ */
+    
+    window.mobileUtils = {
+        enableScrollLock,
+        disableScrollLock,
+        invalidateMapSize,
+        isMobile: () => mobileState.isMobile,
+        isTablet: () => mobileState.isTablet,
+        openMobileFullView,
+        closeMobileFullView
+    };
+    
+    /* ============================================================
+       INITIALIZATION
+       ============================================================ */
     
     function init() {
-        console.log('📱 Mobile.js initializing...');
-        
-        // Mise à jour initiale
+        // Update body classes
         updateBodyClasses();
         
-        // Event Listeners
-        window.addEventListener('resize', handleResize);
-        window.addEventListener('orientationchange', handleOrientationChange);
+        // Sync search inputs
+        syncSearchInputs();
         
-        // Écouter les événements screen.orientation si disponible
+        // Hook buttons
+        hookStatsButton();
+        hookDiscoverModal();
+        
+        // Burger menu
+        initBurgerMenu();
+        
+        // Update mobile lang
+        updateMobileLangText();
+        
+        // Window resize handler
+        window.addEventListener('resize', handleResize);
+        
+        // Orientation change
         if (screen.orientation) {
             screen.orientation.addEventListener('change', handleOrientationChange);
+        } else {
+            window.addEventListener('orientationchange', handleOrientationChange);
         }
-        
-        // Init burger menu
-        initBurgerMenu();
         
         // Touch optimizations
         initTouchOptimizations();
@@ -353,9 +553,9 @@
         });
     }
     
-    // ============================================================
-    // AUTO-INIT
-    // ============================================================
+    /* ============================================================
+       AUTO-INIT
+       ============================================================ */
     
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
@@ -363,7 +563,6 @@
         init();
     }
     
-    // Hook pour invalidation manuelle de la carte
     window.addEventListener('load', () => {
         setTimeout(invalidateMapSize, 500);
     });
